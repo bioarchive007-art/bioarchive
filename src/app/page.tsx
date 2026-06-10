@@ -7,6 +7,8 @@ import { CURRICULUM } from '@/data/curriculum';
 import Navbar from '@/components/Navbar';
 import SemesterBlock from '@/components/SemesterBlock';
 import GlobalSearch from '@/components/GlobalSearch';
+import AOS from 'aos';
+import 'aos/dist/aos.css';
 
 const UploadModal = dynamic(() => import('@/components/UploadModal'), {
   ssr: false,
@@ -24,6 +26,12 @@ export default function HomePage() {
 
   useEffect(() => {
     setMounted(true);
+    AOS.init({
+      duration: 1000,
+      easing: 'ease-out-cubic',
+      once: false,
+      offset: 120,
+    });
   }, []);
 
   const scrollToSemester = useCallback((sem: string) => {
@@ -75,8 +83,8 @@ export default function HomePage() {
                 <div
                   key={sem}
                   ref={(el) => { semRefs.current[sem] = el; }}
-                  className="sem-fade-in"
-                  style={{ animationDelay: `${0.1 + idx * 0.05}s` }}
+                  data-aos="fade-right"
+                  data-aos-delay={idx * 50}
                 >
                   <SemesterBlock
                     semesterNumber={sem}
@@ -153,9 +161,7 @@ export default function HomePage() {
         .hero-fade-in-delay {
           animation-delay: 0.2s;
         }
-        .sem-fade-in {
-          animation: heroFadeIn 0.4s ease-out both;
-        }
+
         @keyframes heroFadeIn {
           from { opacity: 0; transform: translateY(14px); }
           to   { opacity: 1; transform: translateY(0); }
