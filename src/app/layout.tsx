@@ -22,13 +22,8 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head />
       <body>
-        {/* Ambient orb background */}
-        <div className="orb-bg" aria-hidden="true">
-          <div className="orb orb-1" />
-          <div className="orb orb-2" />
-          <div className="orb orb-3" />
-          <div className="orb orb-4" />
-        </div>
+        {/* Ambient background */}
+        <div className="orb-bg" aria-hidden="true" />
 
         {/* Loading screen */}
         <div className="loading-screen" id="loading-screen">

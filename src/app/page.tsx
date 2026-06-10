@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
 import { CONFIG } from '@/config';
 import { CURRICULUM } from '@/data/curriculum';
 import Navbar from '@/components/Navbar';
@@ -18,11 +17,6 @@ export default function HomePage() {
   const [activeCourse, setActiveCourse] = useState('');
 
   const semRefs = useRef<Record<string, HTMLDivElement | null>>({});
-
-  const { scrollY } = useScroll();
-  const heroOpacity = useTransform(scrollY, [0, 180], [1, 0]);
-  const heroScale = useTransform(scrollY, [0, 180], [1, 0.94]);
-  const heroY = useTransform(scrollY, [0, 180], [0, -25]);
 
   useEffect(() => {
     setMounted(true);
@@ -56,35 +50,15 @@ export default function HomePage() {
           {/* Hero */}
           <section className="hero">
             <div className="hero-glow" aria-hidden="true" />
-            <motion.div
-              style={{
-                opacity: heroOpacity,
-                scale: heroScale,
-                y: heroY,
-                width: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-              }}
-            >
-              <motion.h1
-                className="hero-heading"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1, duration: 0.6 }}
-              >
+            <div className="hero-animate-wrap">
+              <h1 className="hero-heading hero-fade-in">
                 BIO <em className="hero-archive">Archive</em>
-              </motion.h1>
+              </h1>
 
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-                className="hero-search-wrap"
-              >
+              <div className="hero-search-wrap hero-fade-in hero-fade-in-delay">
                 <GlobalSearch />
-              </motion.div>
-            </motion.div>
+              </div>
+            </div>
           </section>
 
           {/* Semester blocks */}
@@ -94,12 +68,11 @@ export default function HomePage() {
               if (!courses || courses.length === 0) return null;
 
               return (
-                <motion.div
+                <div
                   key={sem}
                   ref={(el) => { semRefs.current[sem] = el; }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 + idx * 0.06, duration: 0.4 }}
+                  className="sem-fade-in"
+                  style={{ animationDelay: `${0.1 + idx * 0.05}s` }}
                 >
                   <SemesterBlock
                     semesterNumber={sem}
@@ -109,7 +82,7 @@ export default function HomePage() {
                     onToggle={() => handleToggleSemester(sem)}
                     onCourseActivate={(code) => handleCourseSelect(code, sem)}
                   />
-                </motion.div>
+                </div>
               );
             })}
           </section>
@@ -142,16 +115,11 @@ export default function HomePage() {
           filter: blur(80px);
           pointer-events: none;
         }
-        .hero-label {
-          display: block;
-          font-family: 'Outfit', sans-serif;
-          font-size: 0.72rem;
-          font-weight: 500;
-          color: var(--text-3);
-          letter-spacing: 0.16em;
-          text-transform: uppercase;
-          margin-bottom: 16px;
-          position: relative;
+        .hero-animate-wrap {
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
         }
         .hero-heading {
           font-family: 'Cormorant Garamond', serif;
@@ -175,6 +143,19 @@ export default function HomePage() {
           max-width: 560px;
           display: flex;
           justify-content: center;
+        }
+        .hero-fade-in {
+          animation: heroFadeIn 0.6s ease-out both;
+        }
+        .hero-fade-in-delay {
+          animation-delay: 0.2s;
+        }
+        .sem-fade-in {
+          animation: heroFadeIn 0.4s ease-out both;
+        }
+        @keyframes heroFadeIn {
+          from { opacity: 0; transform: translateY(14px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
         .semesters-section {
           padding: 8px 20px 60px;
