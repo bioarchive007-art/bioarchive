@@ -4,10 +4,10 @@ compatibility_date = "2024-09-23"
 
 [[kv_namespaces]]
 binding = "BIOARCHIVE_CACHE"
-id = "PLACEHOLDER_KV_ID"
+id = "0e78e1d8be9d42e08e340193683f81e9"
 
 [vars]
 SITE_NAME = "BioArchive"
-DRIVE_FOLDER_ID = "your_google_drive_folder_id_here"
-DRIVE_QUARANTINE_FOLDER_ID = "your_google_drive_quarantine_folder_id_here"
-SHEET_ID = "your_google_sheet_id_here"
+DRIVE_FOLDER_ID = "1AcpuO4CFHMAttp1gYOgjJH7GbOnQg9ve"
+DRIVE_QUARANTINE_FOLDER_ID = "1_WpOQsN42kn5mbrz2rwEpdViucTYvWVX"
+SHEET_ID = "1-SEUn_HG62-T06ZRV_vkeHZ5eDTOi4Fuu566KvDDMOo"
