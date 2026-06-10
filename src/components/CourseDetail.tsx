@@ -342,7 +342,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           display: flex;
           align-items: center;
           gap: 5px;
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.82rem;
           color: var(--text-2);
           padding: 6px 10px;
@@ -356,7 +356,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           min-width: 0;
         }
         .cd-code {
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.68rem;
           font-weight: 600;
           color: var(--gold);
@@ -378,7 +378,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           align-items: center;
           gap: 5px;
           margin-top: 3px;
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.72rem;
           color: var(--text-3);
         }
@@ -389,7 +389,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           flex-shrink: 0;
         }
         .cd-file-count {
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.72rem;
           color: var(--text-3);
         }
@@ -426,7 +426,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           text-align: center;
           padding: 40px;
           color: #f87171;
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.9rem;
         }
 
@@ -464,12 +464,12 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
         .cd-type-label {
           flex: 1;
           text-align: left;
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.88rem;
           font-weight: 600;
         }
         .cd-type-count {
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.72rem;
           color: var(--text-3);
           background: var(--glass);
@@ -519,7 +519,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           border-bottom: none;
         }
         .cd-book-name {
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.84rem;
           color: rgba(255, 255, 255, 0.85);
           line-height: 1.4;
@@ -530,7 +530,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           flex-shrink: 0;
         }
         .cd-book-btn {
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.7rem;
           font-weight: 600;
           padding: 4px 10px;

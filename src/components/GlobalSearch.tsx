@@ -294,7 +294,7 @@ export default function GlobalSearch() {
           border: 1px solid var(--glass-border);
           border-radius: 12px;
           padding: 12px 42px 12px 40px;
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.88rem;
           color: var(--text);
           outline: none;
@@ -361,7 +361,7 @@ export default function GlobalSearch() {
         .search-no-results {
           padding: 20px;
           text-align: center;
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.84rem;
           color: var(--text-3);
         }
@@ -376,7 +376,7 @@ export default function GlobalSearch() {
           flex-direction: column;
         }
         .search-section-title {
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.68rem;
           font-weight: 600;
           color: var(--text-3);
@@ -406,7 +406,7 @@ export default function GlobalSearch() {
           color: var(--text);
         }
         .sci-badge {
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.6rem;
           font-weight: 700;
           color: var(--green-light);
@@ -424,7 +424,7 @@ export default function GlobalSearch() {
           font-size: 0.8rem;
         }
         .sci-code {
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-weight: 600;
           color: var(--gold);
         }
@@ -471,7 +471,7 @@ export default function GlobalSearch() {
           gap: 2px;
         }
         .sfi-name {
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.8rem;
           color: rgba(255, 255, 255, 0.85);
           white-space: nowrap;
@@ -482,7 +482,7 @@ export default function GlobalSearch() {
           display: flex;
           align-items: center;
           gap: 4px;
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.68rem;
           color: var(--text-3);
         }

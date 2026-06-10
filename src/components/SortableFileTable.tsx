@@ -159,7 +159,7 @@ export default function SortableFileTable({
         .sft-th {
           padding: 10px 14px;
           text-align: left;
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.7rem;
           font-weight: 600;
           color: rgba(255,255,255,0.4);
@@ -182,7 +182,7 @@ export default function SortableFileTable({
         .sft-row:hover { background: rgba(255,255,255,0.03); }
         .sft-td {
           padding: 10px 14px;
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.82rem;
           color: rgba(255,255,255,0.7);
           border-bottom: 1px solid rgba(255,255,255,0.03);

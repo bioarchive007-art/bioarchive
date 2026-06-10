@@ -412,7 +412,7 @@ export default function BoardPage() {
           display: flex;
           align-items: center;
           gap: 5px;
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.82rem;
           color: var(--text-2);
           padding: 6px 10px;
@@ -436,7 +436,7 @@ export default function BoardPage() {
         .wb { color: var(--green-light); font-style: italic; }
         .wa { color: rgba(255,255,255,0.4); }
         .board-title {
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 1.15rem;
           font-weight: 600;
           color: var(--text);
@@ -466,7 +466,7 @@ export default function BoardPage() {
           gap: 12px;
           padding: 100px 20px;
           color: var(--text-3);
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.88rem;
         }
         .spinner {
@@ -503,7 +503,7 @@ export default function BoardPage() {
         .title-accent.info { background: var(--green-light); }
         .title-accent.request { background: var(--gold); }
         .column-title-wrap h3 {
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.98rem;
           font-weight: 600;
           color: #f0f0f0;
@@ -526,7 +526,7 @@ export default function BoardPage() {
           border-radius: 14px;
           text-align: center;
           color: var(--text-3);
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.84rem;
         }
         /* --- Notices --- */
@@ -548,7 +548,7 @@ export default function BoardPage() {
           margin-bottom: 8px;
         }
         .notice-type-badge {
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.6rem;
           font-weight: 700;
           letter-spacing: 0.04em;
@@ -562,19 +562,19 @@ export default function BoardPage() {
         .update .notice-type-badge { background: rgba(212, 168, 83, 0.12); color: var(--gold); }
         .info .notice-type-badge { background: rgba(2, 132, 199, 0.15); color: var(--green-light); }
         .notice-date {
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.68rem;
           color: var(--text-3);
         }
         .notice-card-title {
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.9rem;
           font-weight: 600;
           color: #f0f0f0;
           margin: 0 0 6px;
         }
         .notice-card-content {
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.82rem;
           color: var(--text-2);
           line-height: 1.5;
@@ -598,14 +598,14 @@ export default function BoardPage() {
           align-items: center;
         }
         .request-course-code {
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.72rem;
           font-weight: 600;
           color: var(--gold);
           letter-spacing: 0.04em;
         }
         .request-date {
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.68rem;
           color: var(--text-3);
           display: flex;
@@ -627,14 +627,14 @@ export default function BoardPage() {
         }
         .req-label { color: var(--text-3); }
         .req-val-badge {
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.68rem;
           font-weight: 600;
           padding: 2px 8px;
           border-radius: 6px;
         }
         .request-remarks {
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-style: italic;
           font-size: 0.78rem;
           color: var(--text-2);
@@ -651,7 +651,7 @@ export default function BoardPage() {
           padding-top: 8px;
         }
         .request-by {
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.7rem;
           color: var(--text-3);
           display: flex;
@@ -666,7 +666,7 @@ export default function BoardPage() {
           border: 1px solid rgba(2, 132, 199, 0.25);
           border-radius: 6px;
           color: var(--green-light);
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.68rem;
           font-weight: 600;
           cursor: pointer;
@@ -678,7 +678,7 @@ export default function BoardPage() {
           border-color: rgba(2, 132, 199, 0.4);
         }
         .request-fulfilled-badge {
-          font-family: 'Roboto', sans-serif;
+          font-family: 'Playwrite GB S Guides', sans-serif;
           font-size: 0.68rem;
           color: rgba(2, 132, 199, 0.75);
           display: flex;
