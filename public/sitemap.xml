@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!--
+    INSTRUCTION: Update SITE_URL below to match your deployment domain before going live.
+    Example replacements:
+    - For Vercel: https://bioarchive.vercel.app
+    - For custom domain: https://bioarchive.niser.ac.in
+    
+    TODO: Add dynamic URLs for each semester if needed in the future
+    Currently only the homepage is included.
+  -->
+  
+  <!-- Homepage -->
+  <url>
+    <loc>https://bioarchive.vercel.app/</loc>
+    <lastmod>2024-06-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- TODO: Future enhancement - add individual semester pages if created -->
+  <!-- TODO: Future enhancement - add individual course pages if needed -->
+</urlset>

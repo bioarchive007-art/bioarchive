@@ -1,0 +1,13 @@
+name = "bioarchive"
+pages_build_output_dir = ".vercel/output/static"
+compatibility_date = "2024-09-23"
+
+[[kv_namespaces]]
+binding = "BIOARCHIVE_CACHE"
+id = "PLACEHOLDER_KV_ID"
+
+[vars]
+SITE_NAME = "BioArchive"
+DRIVE_FOLDER_ID = "your_google_drive_folder_id_here"
+DRIVE_QUARANTINE_FOLDER_ID = "your_google_drive_quarantine_folder_id_here"
+SHEET_ID = "your_google_sheet_id_here"

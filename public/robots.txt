@@ -1,0 +1,22 @@
+# BioArchive robots.txt
+# Allow all crawlers to index the public site
+# Disallow crawlers from accessing API routes and internal endpoints
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /_next/
+Disallow: /admin/
+
+# Specific rules for common crawlers
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Crawl delay (optional - 1 second delay between requests)
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://bioarchive.vercel.app/sitemap.xml
