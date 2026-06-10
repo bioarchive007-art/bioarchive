@@ -93,7 +93,7 @@ export default function SemesterBlock({
           border-color: rgba(2, 132, 199, 0.25);
         }
         .sem-block-badge {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.68rem;
           font-weight: 700;
           color: var(--green-bright);
@@ -112,7 +112,7 @@ export default function SemesterBlock({
           margin: 0;
         }
         .sem-block-count {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.72rem;
           color: rgba(255, 255, 255, 0.3);
         }

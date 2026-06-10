@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft, BookOpen, Upload, ChevronDown, Users,
+  ArrowLeft, BookOpen, Upload, ChevronDown, Users, AlertTriangle,
 } from 'lucide-react';
 import { SheetRow } from '@/types';
 import { CONFIG } from '@/config';
@@ -25,12 +25,12 @@ const FILE_TYPE_CONFIG: Record<
   string,
   { label: string; emoji: string; colorHex: string; badgeClass: string }
 > = {
-  qpaper: { label: 'Question Papers', emoji: '📝', colorHex: '#EF4444', badgeClass: 'badge-qpaper' },
-  notes: { label: 'Notes', emoji: '📚', colorHex: '#3B82F6', badgeClass: 'badge-notes' },
-  slides: { label: 'Slides', emoji: '📊', colorHex: '#8B5CF6', badgeClass: 'badge-slides' },
-  lab: { label: 'Lab Materials', emoji: '🧪', colorHex: '#10B981', badgeClass: 'badge-lab' },
-  assignment: { label: 'Assignments', emoji: '✍️', colorHex: '#F59E0B', badgeClass: 'badge-assignment' },
-  other: { label: 'Other', emoji: '📎', colorHex: '#6B7280', badgeClass: 'badge-other' },
+  qpaper: { label: 'Question Papers', emoji: '', colorHex: '#EF4444', badgeClass: 'badge-qpaper' },
+  notes: { label: 'Notes', emoji: '', colorHex: '#3B82F6', badgeClass: 'badge-notes' },
+  slides: { label: 'Slides', emoji: '', colorHex: '#8B5CF6', badgeClass: 'badge-slides' },
+  lab: { label: 'Lab Materials', emoji: '', colorHex: '#10B981', badgeClass: 'badge-lab' },
+  assignment: { label: 'Assignments', emoji: '', colorHex: '#F59E0B', badgeClass: 'badge-assignment' },
+  other: { label: 'Other', emoji: '', colorHex: '#6B7280', badgeClass: 'badge-other' },
 };
 
 const FILE_TYPE_ORDER = ['qpaper', 'notes', 'slides', 'lab', 'assignment', 'other'];
@@ -151,7 +151,20 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
         </div>
 
         {/* Content */}
-        <div className="cd-content">
+        <motion.div
+          className="cd-content"
+          variants={{
+            hidden: { opacity: 0 },
+            show: {
+              opacity: 1,
+              transition: {
+                staggerChildren: 0.08
+              }
+            }
+          }}
+          initial="hidden"
+          animate="show"
+        >
           {/* Loading */}
           {loading && (
             <div className="cd-skeletons">
@@ -166,7 +179,10 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
 
           {/* Error */}
           {!loading && error && (
-            <div className="cd-error">⚠️ {error}</div>
+            <div className="cd-error" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              <AlertTriangle size={18} />
+              <span>{error}</span>
+            </div>
           )}
 
           {/* Empty */}
@@ -189,13 +205,16 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           {!loading && !error && course?.textbooks && course.textbooks.length > 0 && (
             <motion.section
               className="cd-type-section"
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
+              variants={{
+                hidden: { opacity: 0, y: 14 },
+                show: { opacity: 1, y: 0 }
+              }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
               style={{ marginBottom: '20px' }}
             >
               <div className="cd-books-header">
                 <span className="cd-books-accent" />
-                <span className="cd-type-emoji">📚</span>
+                <BookOpen size={16} style={{ marginRight: 4 }} />
                 <span className="cd-type-label">Recommended Reference Books</span>
               </div>
               <div className="cd-books-body">
@@ -240,9 +259,11 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
                   <motion.section
                     key={type}
                     className="cd-type-section"
-                    initial={{ opacity: 0, y: 14 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
+                    variants={{
+                      hidden: { opacity: 0, y: 14 },
+                      show: { opacity: 1, y: 0 }
+                    }}
+                    transition={{ duration: 0.3, ease: 'easeOut' }}
                   >
                     <button
                       className="cd-type-header"
@@ -252,7 +273,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
                         className="cd-type-accent"
                         style={{ background: config.colorHex }}
                       />
-                      <span className="cd-type-emoji">{config.emoji}</span>
+
                       <span className="cd-type-label">{config.label}</span>
                       <span className="cd-type-count">{typeFiles.length}</span>
                       <motion.span
@@ -291,7 +312,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
               })}
             </div>
           )}
-        </div>
+        </motion.div>
       </div>
 
       <UploadModal isOpen={uploadOpen} onClose={() => setUploadOpen(false)} />
@@ -310,7 +331,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           border-bottom: 1px solid var(--glass-border);
         }
         .cd-header-inner {
-          max-width: 1100px;
+          max-width: 1000px;
           margin: 0 auto;
           padding: 14px 24px;
           display: flex;
@@ -321,7 +342,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           display: flex;
           align-items: center;
           gap: 5px;
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.82rem;
           color: var(--text-2);
           padding: 6px 10px;
@@ -335,7 +356,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           min-width: 0;
         }
         .cd-code {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.68rem;
           font-weight: 600;
           color: var(--gold);
@@ -357,7 +378,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           align-items: center;
           gap: 5px;
           margin-top: 3px;
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.72rem;
           color: var(--text-3);
         }
@@ -368,7 +389,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           flex-shrink: 0;
         }
         .cd-file-count {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.72rem;
           color: var(--text-3);
         }
@@ -381,7 +402,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
         }
         .cd-content {
           flex: 1;
-          max-width: 1100px;
+          max-width: 1000px;
           margin: 0 auto;
           width: 100%;
           padding: 20px 24px 40px;
@@ -405,7 +426,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           text-align: center;
           padding: 40px;
           color: #f87171;
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.9rem;
         }
 
@@ -443,12 +464,12 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
         .cd-type-label {
           flex: 1;
           text-align: left;
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.88rem;
           font-weight: 600;
         }
         .cd-type-count {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.72rem;
           color: var(--text-3);
           background: var(--glass);
@@ -498,7 +519,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           border-bottom: none;
         }
         .cd-book-name {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.84rem;
           color: rgba(255, 255, 255, 0.85);
           line-height: 1.4;
@@ -509,7 +530,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           flex-shrink: 0;
         }
         .cd-book-btn {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.7rem;
           font-weight: 600;
           padding: 4px 10px;

@@ -19,7 +19,7 @@ const ALL_SEMESTERS = [...CONFIG.NISER_SEMESTERS.map(String), 'ADVANCE COURSES']
 export default function HomePage() {
   const [mounted, setMounted] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [expandedSemester, setExpandedSemester] = useState('1');
+  const [expandedSemester, setExpandedSemester] = useState('');
   const [activeCourse, setActiveCourse] = useState('');
 
   const semRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -64,7 +64,7 @@ export default function HomePage() {
             <div className="hero-glow" aria-hidden="true" />
             <div className="hero-animate-wrap">
               <h1 className="hero-heading hero-fade-in">
-                BIO <em className="hero-archive">Archive</em>
+                BIO<em className="hero-archive">Archive</em>
               </h1>
 
               <div className="hero-search-wrap hero-fade-in hero-fade-in-delay">
@@ -143,10 +143,18 @@ export default function HomePage() {
           margin: 0 0 16px;
         }
         .hero-archive {
-          background: linear-gradient(135deg, var(--green-light) 0%, var(--green-bright) 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          font-style: italic;
+          font-family: 'Tangerine', cursive;
+          font-size: 1.45em;
+          font-weight: 700;
+          color: #10b981;
+          font-style: normal;
+          text-shadow: 0 0 15px rgba(16, 185, 129, 0.25);
+          background: none;
+          -webkit-background-clip: initial;
+          -webkit-text-fill-color: initial;
+          margin-left: 8px;
+          display: inline-block;
+          vertical-align: middle;
         }
         .hero-search-wrap {
           margin-top: 28px;

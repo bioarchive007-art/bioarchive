@@ -86,7 +86,7 @@ export default function CourseCard({ course, semester }: CourseCardProps) {
           border-radius: 10px;
         }
         .cc-icon-fallback {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.85rem;
           font-weight: 700;
           color: var(--green-bright);
@@ -97,7 +97,7 @@ export default function CourseCard({ course, semester }: CourseCardProps) {
           min-width: 0;
         }
         .cc-code {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.7rem;
           font-weight: 600;
           color: #daa520;
@@ -112,7 +112,7 @@ export default function CourseCard({ course, semester }: CourseCardProps) {
           line-height: 1.25;
         }
         .cc-desc {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.72rem;
           color: rgba(255, 255, 255, 0.4);
           margin-top: 3px;

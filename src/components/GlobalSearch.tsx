@@ -15,6 +15,7 @@ export default function GlobalSearch() {
   const [matchingFiles, setMatchingFiles] = useState<SheetRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Flatten courses with their semester for easy searching
@@ -101,7 +102,7 @@ export default function GlobalSearch() {
 
   return (
     <div className="global-search-container" ref={containerRef}>
-      <div className="search-input-wrapper">
+      <div className={`search-input-wrapper ${isFocused ? 'focused' : ''}`}>
         <Search size={18} className="search-icon" />
         <input
           type="text"
@@ -111,7 +112,8 @@ export default function GlobalSearch() {
             setQuery(e.target.value);
             setIsOpen(true);
           }}
-          onFocus={() => setIsOpen(true)}
+          onFocus={() => { setIsOpen(true); setIsFocused(true); }}
+          onBlur={() => setIsFocused(false)}
           className="search-input"
         />
         {isLoading && (
@@ -146,12 +148,15 @@ export default function GlobalSearch() {
                   <div className="search-section">
                     <h4 className="search-section-title">Courses</h4>
                     <div className="search-courses-list">
-                      {matchedCourses.map(({ course, semester }) => (
-                        <a
+                      {matchedCourses.map(({ course, semester }, idx) => (
+                        <motion.a
                           key={course.code}
                           href={`/course/${encodeURIComponent(course.code)}?semester=${semester}`}
                           className="search-course-item"
                           onClick={() => setIsOpen(false)}
+                          initial={{ opacity: 0, x: -8 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: idx * 0.03, duration: 0.2 }}
                         >
                           <div className="sci-badge">
                             {semester === 'ADVANCE COURSES' ? 'ADV' : `S${semester}`}
@@ -161,7 +166,7 @@ export default function GlobalSearch() {
                             <span className="sci-name">{course.name}</span>
                           </div>
                           <BookOpen size={14} className="sci-icon" />
-                        </a>
+                        </motion.a>
                       ))}
                     </div>
                   </div>
@@ -172,18 +177,21 @@ export default function GlobalSearch() {
                   <div className="search-section">
                     <h4 className="search-section-title">Files</h4>
                     <div className="search-files-list">
-                      {matchingFiles.map((file) => {
+                      {matchingFiles.map((file, idx) => {
                         const fileTypeLower = file.fileType?.toLowerCase();
                         const cat = categoryMeta[fileTypeLower as keyof typeof categoryMeta] || categoryMeta.other;
                         return (
-                          <div
+                          <motion.div
                             key={file.fileId}
                             className="search-file-item"
                             onClick={(e) => handlePreview(file, e)}
                             title="Preview file"
+                            initial={{ opacity: 0, x: -8 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: idx * 0.03, duration: 0.2 }}
                           >
                             <div className="sfi-type-icon" style={{ background: cat.colorHex + '18', color: cat.colorHex }}>
-                              {cat.emoji || '📎'}
+                              <FileText size={14} />
                             </div>
                             <div className="sfi-info">
                               <span className="sfi-name">{file.fileName}</span>
@@ -223,7 +231,7 @@ export default function GlobalSearch() {
                                 <Download size={13} />
                               </button>
                             </div>
-                          </div>
+                          </motion.div>
                         );
                       })}
                     </div>
@@ -248,6 +256,28 @@ export default function GlobalSearch() {
           display: flex;
           align-items: center;
           width: 100%;
+          transition: transform 0.2s var(--ease-spring);
+        }
+        .search-input-wrapper.focused {
+          transform: scale(1.015);
+        }
+        .search-input-wrapper.focused::after {
+          content: '';
+          position: absolute;
+          inset: -1px;
+          border-radius: 12px;
+          background: linear-gradient(90deg, #ff007f, #00f0ff, #00ff66, #ffb700, #ff007f);
+          background-size: 300% 100%;
+          z-index: -1;
+          animation: moveRgbBorder 3s linear infinite;
+        }
+        .search-input-wrapper.focused .search-input {
+          border-color: transparent;
+          background: #051022; /* Opaque background to hide inner overflow of gradient */
+        }
+        @keyframes moveRgbBorder {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 300% 50%; }
         }
         .search-icon {
           position: absolute;
@@ -256,6 +286,7 @@ export default function GlobalSearch() {
           transform: translateY(-50%);
           color: var(--text-3);
           pointer-events: none;
+          z-index: 10;
         }
         .search-input {
           width: 100%;
@@ -263,18 +294,18 @@ export default function GlobalSearch() {
           border: 1px solid var(--glass-border);
           border-radius: 12px;
           padding: 12px 42px 12px 40px;
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.88rem;
           color: var(--text);
           outline: none;
           transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+          position: relative;
+          z-index: 5;
         }
         .search-input::placeholder {
           color: var(--text-3);
         }
         .search-input:focus {
-          border-color: rgba(2, 132, 199, 0.4);
-          background: rgba(255, 255, 255, 0.05);
           box-shadow: 0 4px 24px rgba(2, 132, 199, 0.06);
         }
         .search-loader {
@@ -330,7 +361,7 @@ export default function GlobalSearch() {
         .search-no-results {
           padding: 20px;
           text-align: center;
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.84rem;
           color: var(--text-3);
         }
@@ -345,7 +376,7 @@ export default function GlobalSearch() {
           flex-direction: column;
         }
         .search-section-title {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.68rem;
           font-weight: 600;
           color: var(--text-3);
@@ -375,7 +406,7 @@ export default function GlobalSearch() {
           color: var(--text);
         }
         .sci-badge {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.6rem;
           font-weight: 700;
           color: var(--green-light);
@@ -393,7 +424,7 @@ export default function GlobalSearch() {
           font-size: 0.8rem;
         }
         .sci-code {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-weight: 600;
           color: var(--gold);
         }
@@ -440,7 +471,7 @@ export default function GlobalSearch() {
           gap: 2px;
         }
         .sfi-name {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.8rem;
           color: rgba(255, 255, 255, 0.85);
           white-space: nowrap;
@@ -451,7 +482,7 @@ export default function GlobalSearch() {
           display: flex;
           align-items: center;
           gap: 4px;
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.68rem;
           color: var(--text-3);
         }

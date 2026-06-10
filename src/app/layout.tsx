@@ -23,7 +23,7 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Roboto:wght@300;400;500;700&family=Tangerine:wght@400;700&display=swap" rel="stylesheet" />
       </head>
       <body>
         {/* Ambient background */}
@@ -47,7 +47,7 @@ export default function RootLayout({
             </div>
           </div>
           <div className="loader-wordmark">
-            <em>Bio</em>Archive
+            <span>Bio</span><span className="loader-archive">Archive</span>
           </div>
           <span className="loader-tag">NISER · Biological Sciences</span>
         </div>

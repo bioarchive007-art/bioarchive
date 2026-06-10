@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Eye, Download, ArrowUp, ArrowDown } from 'lucide-react';
 import { SheetRow } from '@/types';
 import { CONFIG } from '@/config';
@@ -116,21 +117,25 @@ export default function SortableFileTable({
               <td className="sft-td">
                 <div className="sft-actions">
                   {file.driveWebViewLink && (
-                    <button
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                       className="sft-action-btn"
                       onClick={() => handlePreview(file)}
                       title="Preview"
                     >
                       <Eye size={14} />
-                    </button>
+                    </motion.button>
                   )}
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     className="sft-action-btn sft-dl-btn"
                     onClick={() => handleDownload(file)}
                     title="Download"
                   >
                     <Download size={14} />
-                  </button>
+                  </motion.button>
                 </div>
               </td>
             </tr>
@@ -154,7 +159,7 @@ export default function SortableFileTable({
         .sft-th {
           padding: 10px 14px;
           text-align: left;
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.7rem;
           font-weight: 600;
           color: rgba(255,255,255,0.4);
@@ -177,7 +182,7 @@ export default function SortableFileTable({
         .sft-row:hover { background: rgba(255,255,255,0.03); }
         .sft-td {
           padding: 10px 14px;
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.82rem;
           color: rgba(255,255,255,0.7);
           border-bottom: 1px solid rgba(255,255,255,0.03);

@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
         reply_to: `${name} <${email}>`,
         subject: `[BioArchive Contact] ${subject}`,
         html: `
-          <h2>✉️ New Contact Form Message</h2>
+          <h2>New Contact Form Message</h2>
           <p><strong>From:</strong> ${name} (&lt;${email}&gt;)</p>
           <p><strong>Subject:</strong> ${subject}</p>
           <hr style="border:0;border-top:1px solid #ccc;margin:20px 0;" />

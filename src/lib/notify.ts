@@ -38,7 +38,7 @@ export async function notifyModsOfUpload(metadata: {
         to: recipients,
         subject: `[BioArchive] New upload: ${metadata.fileName}`,
         html: `
-          <h2>📁 New File Uploaded to BioArchive</h2>
+          <h2>New File Uploaded to BioArchive</h2>
           <table style="border-collapse:collapse;">
             <tr><td style="padding:4px 12px;font-weight:bold;">File</td><td style="padding:4px 12px;">${metadata.fileName}</td></tr>
             <tr><td style="padding:4px 12px;font-weight:bold;">Course</td><td style="padding:4px 12px;">${metadata.courseCode} — ${metadata.courseName}</td></tr>

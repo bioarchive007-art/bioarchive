@@ -26,6 +26,20 @@ interface UploadModalProps {
 }
 
 const STEPS = ['Details', 'Files', 'Review & Submit'];
+const stepVariants = {
+  enter: (dir: number) => ({
+    x: dir > 0 ? 50 : dir < 0 ? -50 : 0,
+    opacity: 0,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+  },
+  exit: (dir: number) => ({
+    x: dir > 0 ? -50 : dir < 0 ? 50 : 0,
+    opacity: 0,
+  }),
+};
 const FILE_CATEGORY_KEYS = Object.keys(CONFIG.FILE_CATEGORIES) as (keyof typeof CONFIG.FILE_CATEGORIES)[];
 const EXAM_TYPES = ['Mid-Semester', 'End-Semester', 'Quiz', 'Supplementary', 'Other'];
 const SEMESTER_KEYS = [...CONFIG.NISER_SEMESTERS.map(String), 'ADVANCE COURSES'];
@@ -40,6 +54,7 @@ export default function UploadModal({
   initialRequestId = '',
 }: UploadModalProps) {
   const [step, setStep] = useState(0);
+  const [direction, setDirection] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Step 0: Details
@@ -106,6 +121,7 @@ export default function UploadModal({
     } else {
       setTimeout(() => {
         setStep(0);
+        setDirection(0);
         setFiles([]);
         setFileType('');
         setExamType('');
@@ -372,9 +388,19 @@ export default function UploadModal({
                 </motion.div>
               ) : (
                 <>
-                  {/* ===== STEP 0: Details ===== */}
-                  {step === 0 && (
-                    <div className="um-body">
+                  <AnimatePresence mode="wait" initial={false} custom={direction}>
+                    {/* ===== STEP 0: Details ===== */}
+                    {step === 0 && (
+                      <motion.div
+                        key="step0"
+                        custom={direction}
+                        variants={stepVariants}
+                        initial="enter"
+                        animate="center"
+                        exit="exit"
+                        transition={{ duration: 0.22, ease: 'easeInOut' }}
+                        className="um-body"
+                      >
                       {/* File type selector */}
                       <label className="um-label">File Type</label>
                       <div className="um-type-grid">
@@ -387,7 +413,6 @@ export default function UploadModal({
                               onClick={() => { setFileType(key); setFiles([]); }}
                               style={fileType === key ? { borderColor: cat.colorHex, background: cat.colorHex + '15' } : {}}
                             >
-                              <span>{cat.emoji}</span>
                               <span>{cat.label}</span>
                             </button>
                           );
@@ -494,16 +519,25 @@ export default function UploadModal({
                           </select>
                         </>
                       )}
-                    </div>
-                  )}
+                      </motion.div>
+                    )}
 
-                  {/* ===== STEP 1: Files ===== */}
-                  {step === 1 && (
-                    <div className="um-body">
+                    {/* ===== STEP 1: Files ===== */}
+                    {step === 1 && (
+                      <motion.div
+                        key="step1"
+                        custom={direction}
+                        variants={stepVariants}
+                        initial="enter"
+                        animate="center"
+                        exit="exit"
+                        transition={{ duration: 0.22, ease: 'easeInOut' }}
+                        className="um-body"
+                      >
                       <div className="um-file-mode-hint">
                         {isQpaper
-                          ? '📝 Question Paper — single file only'
-                          : `📂 ${CONFIG.FILE_CATEGORIES[fileType as keyof typeof CONFIG.FILE_CATEGORIES]?.label || 'Files'} — you can upload multiple files`
+                          ? 'Question Paper — single file only'
+                          : `${CONFIG.FILE_CATEGORIES[fileType as keyof typeof CONFIG.FILE_CATEGORIES]?.label || 'Files'} — you can upload multiple files`
                         }
                       </div>
 
@@ -562,12 +596,21 @@ export default function UploadModal({
                           </div>
                         </div>
                       )}
-                    </div>
-                  )}
+                      </motion.div>
+                    )}
 
-                  {/* ===== STEP 2: Review & Submit ===== */}
-                  {step === 2 && (
-                    <div className="um-body">
+                    {/* ===== STEP 2: Review & Submit ===== */}
+                    {step === 2 && (
+                      <motion.div
+                        key="step2"
+                        custom={direction}
+                        variants={stepVariants}
+                        initial="enter"
+                        animate="center"
+                        exit="exit"
+                        transition={{ duration: 0.22, ease: 'easeInOut' }}
+                        className="um-body"
+                      >
                       <label className="um-label">Your Name</label>
                       <input
                         type="text"
@@ -639,8 +682,9 @@ export default function UploadModal({
                           </>
                         )}
                       </div>
-                    </div>
+                    </motion.div>
                   )}
+                </AnimatePresence>
 
                   {/* Progress bar */}
                   {uploading && (
@@ -660,7 +704,7 @@ export default function UploadModal({
                   {/* Navigation */}
                   <div className="um-footer">
                     {step > 0 && !uploading && (
-                      <button className="um-nav-btn" onClick={() => setStep(step - 1)}>
+                      <button className="um-nav-btn" onClick={() => { setDirection(-1); setStep(step - 1); }}>
                         <ChevronLeft size={16} /> Back
                       </button>
                     )}
@@ -669,7 +713,7 @@ export default function UploadModal({
                       <button
                         className="um-nav-btn um-next"
                         disabled={step === 0 ? !canProceedStep0 : !canProceedStep1}
-                        onClick={() => setStep(step + 1)}
+                        onClick={() => { setDirection(1); setStep(step + 1); }}
                       >
                         Next <ChevronRight size={16} />
                       </button>
@@ -714,6 +758,7 @@ export default function UploadModal({
           max-width: 560px;
           max-height: 90vh;
           overflow-y: auto;
+          overflow-x: hidden;
           background: rgba(3, 10, 24, 0.96);
           backdrop-filter: blur(24px);
           border: 1px solid rgba(2, 132, 199, 0.25);
@@ -761,7 +806,7 @@ export default function UploadModal({
           gap: 6px;
           padding: 5px 10px;
           border-radius: 20px;
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.7rem;
           color: rgba(255,255,255,0.3);
           transition: all 0.2s;
@@ -793,7 +838,7 @@ export default function UploadModal({
           border: 1px solid rgba(239,68,68,0.2);
           border-radius: 10px;
           color: #f87171;
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.8rem;
           margin-bottom: 14px;
         }
@@ -803,7 +848,7 @@ export default function UploadModal({
           gap: 10px;
         }
         .um-label {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.72rem;
           font-weight: 600;
           color: rgba(255,255,255,0.5);
@@ -836,12 +881,12 @@ export default function UploadModal({
           align-items: center;
           gap: 8px;
           color: rgba(255,255,255,0.4);
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.85rem;
         }
         .um-drop-hint { font-size: 0.68rem; color: rgba(255,255,255,0.2); }
         .um-file-mode-hint {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.78rem;
           color: rgba(212, 168, 83, 0.85);
           text-align: center;
@@ -877,7 +922,7 @@ export default function UploadModal({
           gap: 2px;
         }
         .um-file-item-name {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.8rem;
           color: #e0e0e0;
           white-space: nowrap;
@@ -885,7 +930,7 @@ export default function UploadModal({
           text-overflow: ellipsis;
         }
         .um-file-item-size {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.66rem;
           color: rgba(255,255,255,0.3);
         }
@@ -904,7 +949,7 @@ export default function UploadModal({
         }
         .um-file-item-remove:hover { background: rgba(239,68,68,0.15); color: #f87171; }
         .um-file-count-summary {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.7rem;
           color: rgba(255,255,255,0.3);
           text-align: right;
@@ -928,7 +973,7 @@ export default function UploadModal({
           border-radius: 8px;
           background: rgba(255,255,255,0.02);
           color: rgba(255,255,255,0.6);
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.76rem;
           cursor: pointer;
           transition: all 0.15s;
@@ -946,7 +991,7 @@ export default function UploadModal({
           border-radius: 20px;
           background: rgba(255,255,255,0.02);
           color: rgba(255,255,255,0.55);
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.74rem;
           cursor: pointer;
           transition: all 0.15s;
@@ -965,7 +1010,7 @@ export default function UploadModal({
           border: 1px solid rgba(255,255,255,0.08);
           border-radius: 10px;
           padding: 10px 14px;
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.85rem;
           color: #e0e0e0;
           outline: none;
@@ -1009,7 +1054,7 @@ export default function UploadModal({
         }
         .um-toggle.on .um-toggle-knob { transform: translateX(18px); }
         .um-consent-text {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.78rem;
           color: rgba(255,255,255,0.5);
         }
@@ -1020,7 +1065,7 @@ export default function UploadModal({
           background: rgba(2,132,199,0.06);
           border: 1px solid rgba(2,132,199,0.15);
           border-radius: 10px;
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.78rem;
           color: var(--green-light);
           word-break: break-all;
@@ -1042,7 +1087,7 @@ export default function UploadModal({
         .um-summary-row {
           display: flex;
           justify-content: space-between;
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.76rem;
           padding: 4px 0;
           border-bottom: 1px solid rgba(255,255,255,0.03);
@@ -1072,7 +1117,7 @@ export default function UploadModal({
           transition: width 0.3s ease;
         }
         .um-progress-text {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.75rem;
           font-weight: 600;
           color: var(--green-light);
@@ -1080,7 +1125,7 @@ export default function UploadModal({
           text-align: right;
         }
         .um-upload-status {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.72rem;
           color: rgba(255,255,255,0.4);
           margin-top: 6px;
@@ -1106,7 +1151,7 @@ export default function UploadModal({
           border-radius: 10px;
           background: rgba(255,255,255,0.03);
           color: rgba(255,255,255,0.6);
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.82rem;
           cursor: pointer;
           transition: all 0.15s;
@@ -1128,7 +1173,7 @@ export default function UploadModal({
           padding: 10px 20px;
           background: linear-gradient(135deg, #b8860b, #daa520);
           color: #0a0f0a;
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.85rem;
           font-weight: 600;
           border: none;
@@ -1179,7 +1224,7 @@ export default function UploadModal({
           margin: 6px 0 0;
         }
         .um-success-file {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.8rem;
           color: rgba(255,255,255,0.45);
           word-break: break-all;
@@ -1189,7 +1234,7 @@ export default function UploadModal({
           padding: 10px 28px;
           background: linear-gradient(135deg, #b8860b, #daa520);
           color: #0a0f0a;
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.85rem;
           font-weight: 600;
           border: none;

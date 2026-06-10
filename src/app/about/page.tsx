@@ -242,7 +242,7 @@ export default function AboutPage() {
           display: flex;
           align-items: center;
           gap: 5px;
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.82rem;
           color: var(--text-2);
           padding: 6px 10px;
@@ -266,7 +266,7 @@ export default function AboutPage() {
         .wb { color: var(--green-light); font-style: italic; }
         .wa { color: rgba(255,255,255,0.4); }
         .about-title {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 1.15rem;
           font-weight: 600;
           color: var(--text);
@@ -320,14 +320,14 @@ export default function AboutPage() {
         .info-icon.check { color: #3b82f6; }
         .info-icon.alert { color: #ef4444; }
         .info-card h3 {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.98rem;
           font-weight: 600;
           color: #f0f0f0;
           margin: 0;
         }
         .info-card p {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.85rem;
           color: var(--text-2);
           line-height: 1.6;
@@ -336,7 +336,7 @@ export default function AboutPage() {
         .info-card p:last-of-type { margin-bottom: 0; }
         .guidelines-list {
           padding-left: 20px;
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.82rem;
           color: var(--text-2);
           display: flex;
@@ -368,14 +368,14 @@ export default function AboutPage() {
           color: var(--gold);
         }
         .contact-card h3 {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.98rem;
           font-weight: 600;
           color: #f0f0f0;
           margin: 0;
         }
         .contact-desc {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.8rem;
           color: var(--text-3);
           line-height: 1.5;
@@ -392,7 +392,7 @@ export default function AboutPage() {
           gap: 5px;
         }
         .form-group label {
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.72rem;
           font-weight: 600;
           color: rgba(255, 255, 255, 0.5);
@@ -405,7 +405,7 @@ export default function AboutPage() {
           border: 1px solid var(--glass-border);
           border-radius: 8px;
           padding: 8px 12px;
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.84rem;
           color: var(--text);
           outline: none;
@@ -430,7 +430,7 @@ export default function AboutPage() {
           border: 1px solid rgba(239, 68, 68, 0.2);
           border-radius: 8px;
           color: #f87171;
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-size: 0.78rem;
           margin-bottom: 12px;
         }
@@ -442,7 +442,7 @@ export default function AboutPage() {
           gap: 12px;
           padding: 30px 10px;
           color: var(--text-2);
-          font-family: 'Outfit', sans-serif;
+          font-family: 'Roboto', sans-serif;
         }
         .success-icon {
           color: var(--green-light);
