@@ -806,7 +806,7 @@ export default function UploadModal({
           gap: 6px;
           padding: 5px 10px;
           border-radius: 20px;
-          font-family: 'Playwrite GB S Guides', sans-serif;
+          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
           font-size: 0.7rem;
           color: rgba(255,255,255,0.3);
           transition: all 0.2s;
@@ -838,7 +838,7 @@ export default function UploadModal({
           border: 1px solid rgba(239,68,68,0.2);
           border-radius: 10px;
           color: #f87171;
-          font-family: 'Playwrite GB S Guides', sans-serif;
+          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
           font-size: 0.8rem;
           margin-bottom: 14px;
         }
@@ -848,7 +848,7 @@ export default function UploadModal({
           gap: 10px;
         }
         .um-label {
-          font-family: 'Playwrite GB S Guides', sans-serif;
+          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
           font-size: 0.72rem;
           font-weight: 600;
           color: rgba(255,255,255,0.5);
@@ -881,12 +881,12 @@ export default function UploadModal({
           align-items: center;
           gap: 8px;
           color: rgba(255,255,255,0.4);
-          font-family: 'Playwrite GB S Guides', sans-serif;
+          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
           font-size: 0.85rem;
         }
         .um-drop-hint { font-size: 0.68rem; color: rgba(255,255,255,0.2); }
         .um-file-mode-hint {
-          font-family: 'Playwrite GB S Guides', sans-serif;
+          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
           font-size: 0.78rem;
           color: rgba(212, 168, 83, 0.85);
           text-align: center;
@@ -922,7 +922,7 @@ export default function UploadModal({
           gap: 2px;
         }
         .um-file-item-name {
-          font-family: 'Playwrite GB S Guides', sans-serif;
+          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
           font-size: 0.8rem;
           color: #e0e0e0;
           white-space: nowrap;
@@ -930,7 +930,7 @@ export default function UploadModal({
           text-overflow: ellipsis;
         }
         .um-file-item-size {
-          font-family: 'Playwrite GB S Guides', sans-serif;
+          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
           font-size: 0.66rem;
           color: rgba(255,255,255,0.3);
         }
@@ -949,7 +949,7 @@ export default function UploadModal({
         }
         .um-file-item-remove:hover { background: rgba(239,68,68,0.15); color: #f87171; }
         .um-file-count-summary {
-          font-family: 'Playwrite GB S Guides', sans-serif;
+          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
           font-size: 0.7rem;
           color: rgba(255,255,255,0.3);
           text-align: right;
@@ -973,7 +973,7 @@ export default function UploadModal({
           border-radius: 8px;
           background: rgba(255,255,255,0.02);
           color: rgba(255,255,255,0.6);
-          font-family: 'Playwrite GB S Guides', sans-serif;
+          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
           font-size: 0.76rem;
           cursor: pointer;
           transition: all 0.15s;
@@ -991,7 +991,7 @@ export default function UploadModal({
           border-radius: 20px;
           background: rgba(255,255,255,0.02);
           color: rgba(255,255,255,0.55);
-          font-family: 'Playwrite GB S Guides', sans-serif;
+          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
           font-size: 0.74rem;
           cursor: pointer;
           transition: all 0.15s;
@@ -1010,7 +1010,7 @@ export default function UploadModal({
           border: 1px solid rgba(255,255,255,0.08);
           border-radius: 10px;
           padding: 10px 14px;
-          font-family: 'Playwrite GB S Guides', sans-serif;
+          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
           font-size: 0.85rem;
           color: #e0e0e0;
           outline: none;
@@ -1054,7 +1054,7 @@ export default function UploadModal({
         }
         .um-toggle.on .um-toggle-knob { transform: translateX(18px); }
         .um-consent-text {
-          font-family: 'Playwrite GB S Guides', sans-serif;
+          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
           font-size: 0.78rem;
           color: rgba(255,255,255,0.5);
         }
@@ -1065,7 +1065,7 @@ export default function UploadModal({
           background: rgba(2,132,199,0.06);
           border: 1px solid rgba(2,132,199,0.15);
           border-radius: 10px;
-          font-family: 'Playwrite GB S Guides', sans-serif;
+          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
           font-size: 0.78rem;
           color: var(--green-light);
           word-break: break-all;
@@ -1087,7 +1087,7 @@ export default function UploadModal({
         .um-summary-row {
           display: flex;
           justify-content: space-between;
-          font-family: 'Playwrite GB S Guides', sans-serif;
+          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
           font-size: 0.76rem;
           padding: 4px 0;
           border-bottom: 1px solid rgba(255,255,255,0.03);
@@ -1117,7 +1117,7 @@ export default function UploadModal({
           transition: width 0.3s ease;
         }
         .um-progress-text {
-          font-family: 'Playwrite GB S Guides', sans-serif;
+          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
           font-size: 0.75rem;
           font-weight: 600;
           color: var(--green-light);
@@ -1125,7 +1125,7 @@ export default function UploadModal({
           text-align: right;
         }
         .um-upload-status {
-          font-family: 'Playwrite GB S Guides', sans-serif;
+          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
           font-size: 0.72rem;
           color: rgba(255,255,255,0.4);
           margin-top: 6px;
@@ -1151,7 +1151,7 @@ export default function UploadModal({
           border-radius: 10px;
           background: rgba(255,255,255,0.03);
           color: rgba(255,255,255,0.6);
-          font-family: 'Playwrite GB S Guides', sans-serif;
+          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
           font-size: 0.82rem;
           cursor: pointer;
           transition: all 0.15s;
@@ -1173,7 +1173,7 @@ export default function UploadModal({
           padding: 10px 20px;
           background: linear-gradient(135deg, #b8860b, #daa520);
           color: #0a0f0a;
-          font-family: 'Playwrite GB S Guides', sans-serif;
+          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
           font-size: 0.85rem;
           font-weight: 600;
           border: none;
@@ -1224,7 +1224,7 @@ export default function UploadModal({
           margin: 6px 0 0;
         }
         .um-success-file {
-          font-family: 'Playwrite GB S Guides', sans-serif;
+          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
           font-size: 0.8rem;
           color: rgba(255,255,255,0.45);
           word-break: break-all;
@@ -1234,7 +1234,7 @@ export default function UploadModal({
           padding: 10px 28px;
           background: linear-gradient(135deg, #b8860b, #daa520);
           color: #0a0f0a;
-          font-family: 'Playwrite GB S Guides', sans-serif;
+          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
           font-size: 0.85rem;
           font-weight: 600;
           border: none;

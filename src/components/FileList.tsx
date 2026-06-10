@@ -121,7 +121,7 @@ export default function FileList({ courseCode, semester }: FileListProps) {
             text-align: center;
             padding: 40px;
             color: #ef4444;
-            font-family: 'Playwrite GB S Guides', sans-serif;
+            font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
             font-size: 0.9rem;
           }
         `}</style>
@@ -152,7 +152,7 @@ export default function FileList({ courseCode, semester }: FileListProps) {
             margin: 0;
           }
           .fl-empty p {
-            font-family: 'Playwrite GB S Guides', sans-serif;
+            font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
             font-size: 0.85rem;
             margin: 0;
           }
@@ -292,13 +292,13 @@ export default function FileList({ courseCode, semester }: FileListProps) {
           width: fit-content;
           padding: 3px 10px;
           border-radius: 20px;
-          font-family: 'Playwrite GB S Guides', sans-serif;
+          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
           font-size: 0.68rem;
           font-weight: 600;
           letter-spacing: 0.02em;
         }
         .fl-title {
-          font-family: 'Playwrite GB S Guides', sans-serif;
+          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
           font-size: 0.88rem;
           font-weight: 500;
           color: #e8e8e8;
@@ -315,7 +315,7 @@ export default function FileList({ courseCode, semester }: FileListProps) {
           display: flex;
           align-items: center;
           gap: 4px;
-          font-family: 'Playwrite GB S Guides', sans-serif;
+          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
           font-size: 0.72rem;
           color: rgba(255,255,255,0.45);
         }
@@ -329,7 +329,7 @@ export default function FileList({ courseCode, semester }: FileListProps) {
           display: flex;
           align-items: flex-start;
           gap: 5px;
-          font-family: 'Playwrite GB S Guides', sans-serif;
+          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
           font-size: 0.7rem;
           color: rgba(255,255,255,0.35);
           background: rgba(255,255,255,0.03);
@@ -346,7 +346,7 @@ export default function FileList({ courseCode, semester }: FileListProps) {
           border-top: 1px solid rgba(255,255,255,0.04);
         }
         .fl-uploader {
-          font-family: 'Playwrite GB S Guides', sans-serif;
+          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
           font-size: 0.66rem;
           color: rgba(255,255,255,0.25);
           font-style: italic;
