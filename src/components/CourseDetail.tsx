@@ -519,7 +519,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           border-bottom: none;
         }
         .cd-book-name {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: system-ui, -apple-system, sans-serif;
           font-size: 0.84rem;
           color: rgba(255, 255, 255, 0.85);
           line-height: 1.4;

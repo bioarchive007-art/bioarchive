@@ -298,7 +298,7 @@ export default function FileList({ courseCode, semester }: FileListProps) {
           letter-spacing: 0.02em;
         }
         .fl-title {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: system-ui, -apple-system, sans-serif;
           font-size: 0.88rem;
           font-weight: 500;
           color: #e8e8e8;

@@ -197,6 +197,7 @@ export default function SortableFileTable({
           text-overflow: ellipsis;
           white-space: nowrap;
           color: #e0e0e0;
+          font-family: system-ui, -apple-system, sans-serif;
         }
         .sft-prof, .sft-uploader {
           color: rgba(255,255,255,0.5);
