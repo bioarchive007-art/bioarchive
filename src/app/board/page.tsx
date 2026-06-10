@@ -398,9 +398,7 @@ export default function BoardPage() {
           position: sticky;
           top: 0;
           z-index: 50;
-          background: rgba(10, 26, 15, 0.88);
-          backdrop-filter: blur(18px);
-          -webkit-backdrop-filter: blur(18px);
+          background: rgba(3, 10, 24, 0.97);
           border-bottom: 1px solid var(--glass-border);
         }
         .board-header-inner {

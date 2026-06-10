@@ -1,12 +1,16 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { CONFIG } from '@/config';
 import { CURRICULUM } from '@/data/curriculum';
 import Navbar from '@/components/Navbar';
 import SemesterBlock from '@/components/SemesterBlock';
-import UploadModal from '@/components/UploadModal';
 import GlobalSearch from '@/components/GlobalSearch';
+
+const UploadModal = dynamic(() => import('@/components/UploadModal'), {
+  ssr: false,
+});
 
 const ALL_SEMESTERS = [...CONFIG.NISER_SEMESTERS.map(String), 'ADVANCE COURSES'];
 
@@ -111,8 +115,7 @@ export default function HomePage() {
           width: 500px;
           height: 500px;
           transform: translate(-50%, -50%);
-          background: radial-gradient(circle, rgba(2, 132, 199, 0.04) 0%, transparent 70%);
-          filter: blur(80px);
+          background: radial-gradient(circle, rgba(2, 132, 199, 0.08) 0%, rgba(2, 132, 199, 0.03) 40%, transparent 70%);
           pointer-events: none;
         }
         .hero-animate-wrap {
