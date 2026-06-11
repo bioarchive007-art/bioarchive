@@ -670,7 +670,7 @@ img { max-width: 100%; display: block; }
 }
 .navbar-wordmark {
   text-decoration: none;
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-cinzel), 'Cinzel', serif;
   font-size: 1.55rem;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -683,7 +683,7 @@ img { max-width: 100%; display: block; }
   font-style: normal;
 }
 .wordmark-archive {
-  font-family: 'Tangerine', cursive;
+  font-family: var(--font-tangerine), 'Tangerine', cursive;
   font-size: 2.25rem;
   font-weight: 700;
   color: #10b981;

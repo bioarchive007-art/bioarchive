@@ -156,7 +156,7 @@ export default function HomePage() {
           gap: 6px;
           cursor: pointer;
           color: var(--text-3);
-          font-family: 'Outfit', sans-serif;
+          font-family: var(--font-outfit), 'Outfit', sans-serif;
           font-size: 0.68rem;
           font-weight: 700;
           letter-spacing: 0.12em;
@@ -196,7 +196,7 @@ export default function HomePage() {
           text-align: left;
         }
         .hero-heading {
-          font-family: 'Cinzel', serif;
+          font-family: var(--font-cinzel), 'Cinzel', serif;
           font-size: clamp(3.6rem, 9vw, 5.8rem);
           font-weight: 700;
           color: var(--text);
@@ -206,7 +206,7 @@ export default function HomePage() {
           margin: 0 0 16px;
         }
         .hero-archive {
-          font-family: 'Tangerine', cursive;
+          font-family: var(--font-tangerine), 'Tangerine', cursive;
           font-size: 1.45em;
           font-weight: 700;
           color: #10b981;
@@ -220,7 +220,7 @@ export default function HomePage() {
           vertical-align: middle;
         }
         .hero-description {
-          font-family: 'Plus Jakarta Sans', sans-serif;
+          font-family: var(--font-plus-jakarta-sans), 'Plus Jakarta Sans', sans-serif;
           font-size: 0.95rem;
           line-height: 1.6;
           color: var(--text-2);
