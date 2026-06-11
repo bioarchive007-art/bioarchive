@@ -133,9 +133,9 @@ export default function BoardPage() {
               <span>Back</span>
             </a>
             <div className="board-header-info">
-              <a href="/" className="board-wordmark">
-                <span className="wb">Bio</span>
-                <span className="wa">Archive</span>
+              <a href="/" className="navbar-wordmark">
+                <span className="wordmark-bio">BIO</span>
+                <span className="wordmark-archive">Archive</span>
               </a>
               <h1 className="board-title">Notice Board & Requests</h1>
             </div>
@@ -440,14 +440,7 @@ export default function BoardPage() {
           flex-direction: column;
           min-width: 0;
         }
-        .board-wordmark {
-          font-family: 'Cinzel', serif;
-          font-size: 0.9rem;
-          font-weight: 700;
-          letter-spacing: -0.01em;
-        }
-        .wb { color: var(--green-light); font-style: italic; }
-        .wa { color: rgba(255,255,255,0.4); }
+
         .board-title {
           font-family: 'Outfit', sans-serif;
           font-size: 1.15rem;

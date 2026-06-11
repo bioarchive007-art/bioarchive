@@ -57,9 +57,9 @@ export default function AboutPage() {
               <span>Back</span>
             </a>
             <div className="about-header-info">
-              <a href="/" className="about-wordmark">
-                <span className="wb">Bio</span>
-                <span className="wa">Archive</span>
+              <a href="/" className="navbar-wordmark">
+                <span className="wordmark-bio">BIO</span>
+                <span className="wordmark-archive">Archive</span>
               </a>
               <h1 className="about-title">About & Contact</h1>
             </div>
@@ -257,14 +257,7 @@ export default function AboutPage() {
           flex-direction: column;
           min-width: 0;
         }
-        .about-wordmark {
-          font-family: 'Cinzel', serif;
-          font-size: 0.9rem;
-          font-weight: 700;
-          letter-spacing: -0.01em;
-        }
-        .wb { color: var(--green-light); font-style: italic; }
-        .wa { color: rgba(255,255,255,0.4); }
+
         .about-title {
           font-family: 'Outfit', sans-serif;
           font-size: 1.15rem;
