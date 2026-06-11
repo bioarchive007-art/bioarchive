@@ -242,7 +242,7 @@ export default function AboutPage() {
           display: flex;
           align-items: center;
           gap: 5px;
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.82rem;
           color: var(--text-2);
           padding: 6px 10px;
@@ -258,7 +258,7 @@ export default function AboutPage() {
           min-width: 0;
         }
         .about-wordmark {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Cinzel', serif;
           font-size: 0.9rem;
           font-weight: 700;
           letter-spacing: -0.01em;
@@ -266,7 +266,7 @@ export default function AboutPage() {
         .wb { color: var(--green-light); font-style: italic; }
         .wa { color: rgba(255,255,255,0.4); }
         .about-title {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 1.15rem;
           font-weight: 600;
           color: var(--text);
@@ -303,10 +303,19 @@ export default function AboutPage() {
           gap: 20px;
         }
         .info-card {
-          background: rgba(255, 255, 255, 0.02);
+          background: var(--panel);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
           border: 1px solid var(--glass-border);
           border-radius: 14px;
           padding: 24px;
+          transition: transform 0.4s var(--ease-out), border-color 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out);
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+        }
+        .info-card:hover {
+          transform: translateY(-4px);
+          border-color: rgba(0, 229, 255, 0.25);
+          box-shadow: 0 16px 32px rgba(0, 229, 255, 0.06), 0 8px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
         }
         .info-card-header {
           display: flex;
@@ -320,14 +329,14 @@ export default function AboutPage() {
         .info-icon.check { color: #3b82f6; }
         .info-icon.alert { color: #ef4444; }
         .info-card h3 {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.98rem;
           font-weight: 600;
           color: #f0f0f0;
           margin: 0;
         }
         .info-card p {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.85rem;
           color: var(--text-2);
           line-height: 1.6;
@@ -336,7 +345,7 @@ export default function AboutPage() {
         .info-card p:last-of-type { margin-bottom: 0; }
         .guidelines-list {
           padding-left: 20px;
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.82rem;
           color: var(--text-2);
           display: flex;
@@ -353,10 +362,19 @@ export default function AboutPage() {
           flex-direction: column;
         }
         .contact-card {
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid var(--glass-border-hover);
+          background: var(--panel);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border: 1px solid var(--glass-border);
           border-radius: 14px;
           padding: 24px;
+          transition: transform 0.4s var(--ease-out), border-color 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out);
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+        }
+        .contact-card:hover {
+          transform: translateY(-4px);
+          border-color: rgba(0, 229, 255, 0.25);
+          box-shadow: 0 16px 32px rgba(0, 229, 255, 0.06), 0 8px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
         }
         .contact-card-header {
           display: flex;
@@ -368,14 +386,14 @@ export default function AboutPage() {
           color: var(--gold);
         }
         .contact-card h3 {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.98rem;
           font-weight: 600;
           color: #f0f0f0;
           margin: 0;
         }
         .contact-desc {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.8rem;
           color: var(--text-3);
           line-height: 1.5;
@@ -392,7 +410,7 @@ export default function AboutPage() {
           gap: 5px;
         }
         .form-group label {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.72rem;
           font-weight: 600;
           color: rgba(255, 255, 255, 0.5);
@@ -405,7 +423,7 @@ export default function AboutPage() {
           border: 1px solid var(--glass-border);
           border-radius: 8px;
           padding: 8px 12px;
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.84rem;
           color: var(--text);
           outline: none;
@@ -430,7 +448,7 @@ export default function AboutPage() {
           border: 1px solid rgba(239, 68, 68, 0.2);
           border-radius: 8px;
           color: #f87171;
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.78rem;
           margin-bottom: 12px;
         }
@@ -442,7 +460,7 @@ export default function AboutPage() {
           gap: 12px;
           padding: 30px 10px;
           color: var(--text-2);
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
         }
         .success-icon {
           color: var(--green-light);

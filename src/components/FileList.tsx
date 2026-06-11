@@ -121,7 +121,7 @@ export default function FileList({ courseCode, semester }: FileListProps) {
             text-align: center;
             padding: 40px;
             color: #ef4444;
-            font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             font-size: 0.9rem;
           }
         `}</style>
@@ -146,13 +146,13 @@ export default function FileList({ courseCode, semester }: FileListProps) {
             color: rgba(255,255,255,0.3);
           }
           .fl-empty h3 {
-            font-family: 'Cormorant Garamond', serif;
+            font-family: 'Cinzel', serif;
             font-size: 1.3rem;
-            color: rgba(255,255,255,0.5);
+            color: rgba(255, 255, 255, 0.5);
             margin: 0;
           }
           .fl-empty p {
-            font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             font-size: 0.85rem;
             margin: 0;
           }
@@ -186,19 +186,19 @@ export default function FileList({ courseCode, semester }: FileListProps) {
               <div className="fl-meta">
                 {file.professor && (
                   <span className="fl-meta-item">
-                    <User size={12} /> {file.professor}
+                    <User size={12} strokeWidth={1.5} /> {file.professor}
                   </span>
                 )}
                 {file.year && (
                   <span className="fl-meta-item fl-year">
-                    <Calendar size={12} /> {file.year}
+                    <Calendar size={12} strokeWidth={1.5} /> {file.year}
                   </span>
                 )}
               </div>
 
               {file.remarks && (
                 <div className="fl-remarks">
-                  <MessageCircle size={11} />
+                  <MessageCircle size={11} strokeWidth={1.5} />
                   <span>{file.remarks}</span>
                 </div>
               )}
@@ -215,7 +215,7 @@ export default function FileList({ courseCode, semester }: FileListProps) {
                       onClick={() => handlePreview(file)}
                       title="Preview"
                     >
-                      <Eye size={15} />
+                      <Eye size={15} strokeWidth={1.5} />
                     </button>
                   )}
                   <button
@@ -223,7 +223,7 @@ export default function FileList({ courseCode, semester }: FileListProps) {
                     onClick={() => handleDownload(file)}
                     title="Download"
                   >
-                    <Download size={15} />
+                    <Download size={15} strokeWidth={1.5} />
                   </button>
                 </div>
               </div>
@@ -273,17 +273,25 @@ export default function FileList({ courseCode, semester }: FileListProps) {
           gap: 14px;
         }
         .fl-card {
-          background: rgba(255,255,255,0.03);
-          border: 1px solid rgba(255,255,255,0.06);
+          background: var(--panel);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border: 1px solid var(--glass-border);
           border-radius: 14px;
           padding: 16px;
           display: flex;
           flex-direction: column;
           gap: 8px;
-          transition: border-color 0.2s;
+          transition: transform 0.4s var(--ease-out), border-color 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out), background 0.3s;
+          transform-style: preserve-3d;
+          perspective: 1000px;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.03);
         }
         .fl-card:hover {
-          border-color: rgba(2, 132, 199, 0.25);
+          background: var(--glass-hover);
+          border-color: rgba(0, 229, 255, 0.25);
+          box-shadow: 0 16px 32px rgba(0, 229, 255, 0.06), 0 8px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+          transform: translateY(-5px) rotateX(2deg) rotateY(-1deg) translateZ(6px);
         }
         .fl-badge {
           display: inline-flex;
@@ -292,15 +300,16 @@ export default function FileList({ courseCode, semester }: FileListProps) {
           width: fit-content;
           padding: 3px 10px;
           border-radius: 20px;
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.68rem;
-          font-weight: 600;
-          letter-spacing: 0.02em;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
         }
         .fl-title {
-          font-family: system-ui, -apple-system, sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.88rem;
-          font-weight: 500;
+          font-weight: 600;
           color: #e8e8e8;
           margin: 0;
           line-height: 1.35;
@@ -315,9 +324,10 @@ export default function FileList({ courseCode, semester }: FileListProps) {
           display: flex;
           align-items: center;
           gap: 4px;
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.72rem;
           color: rgba(255,255,255,0.45);
+          font-weight: 500;
         }
         .fl-year {
           background: rgba(218,165,32,0.1);
@@ -329,13 +339,14 @@ export default function FileList({ courseCode, semester }: FileListProps) {
           display: flex;
           align-items: flex-start;
           gap: 5px;
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.7rem;
           color: rgba(255,255,255,0.35);
           background: rgba(255,255,255,0.03);
           padding: 6px 10px;
           border-radius: 8px;
           line-height: 1.4;
+          font-weight: 400;
         }
         .fl-footer {
           display: flex;
@@ -346,10 +357,11 @@ export default function FileList({ courseCode, semester }: FileListProps) {
           border-top: 1px solid rgba(255,255,255,0.04);
         }
         .fl-uploader {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.66rem;
           color: rgba(255,255,255,0.25);
           font-style: italic;
+          font-weight: 300;
         }
         .fl-actions {
           display: flex;

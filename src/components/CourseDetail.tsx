@@ -153,7 +153,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
         <div className="cd-header">
           <div className="cd-header-inner">
             <a href="/" className="cd-back">
-              <ArrowLeft size={18} />
+              <ArrowLeft size={18} strokeWidth={1.5} />
               <span>Back</span>
             </a>
             <div className="cd-header-info">
@@ -161,7 +161,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
               <h1 className="cd-title">{course?.name || courseCode}</h1>
               {course && course.professors.length > 0 && (
                 <div className="cd-profs">
-                  <Users size={13} />
+                  <Users size={13} strokeWidth={1.5} />
                   <span>{course.professors.filter((p) => p !== 'Other').join(' · ')}</span>
                 </div>
               )}
@@ -169,7 +169,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
             <div className="cd-header-right">
               <span className="cd-file-count">{totalFiles} file{totalFiles !== 1 ? 's' : ''}</span>
               <button className="btn-gold cd-upload-btn" onClick={() => setUploadOpen(true)}>
-                <Upload size={15} /> Upload
+                <Upload size={15} strokeWidth={1.5} /> Upload
               </button>
             </div>
           </div>
@@ -239,7 +239,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
             >
               <div className="cd-books-header">
                 <span className="cd-books-accent" />
-                <BookOpen size={16} style={{ marginRight: 4 }} />
+                <BookOpen size={16} strokeWidth={1.5} style={{ marginRight: 4 }} />
                 <span className="cd-type-label">Recommended Reference Books</span>
               </div>
               <div className="cd-books-body">
@@ -310,7 +310,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
                         animate={{ rotate: isExpanded ? 180 : 0 }}
                         transition={{ duration: 0.2 }}
                       >
-                        <ChevronDown size={18} />
+                        <ChevronDown size={18} strokeWidth={1.5} />
                       </motion.span>
                     </button>
 
@@ -371,7 +371,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           display: flex;
           align-items: center;
           gap: 5px;
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.82rem;
           color: var(--text-2);
           padding: 6px 10px;
@@ -385,14 +385,14 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           min-width: 0;
         }
         .cd-code {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.68rem;
-          font-weight: 600;
+          font-weight: 700;
           color: var(--gold);
           letter-spacing: 0.06em;
         }
         .cd-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Cinzel', serif;
           font-size: 1.35rem;
           font-weight: 700;
           color: var(--text);
@@ -407,9 +407,10 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           align-items: center;
           gap: 5px;
           margin-top: 3px;
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.72rem;
           color: var(--text-3);
+          font-weight: 500;
         }
         .cd-header-right {
           display: flex;
@@ -418,9 +419,10 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           flex-shrink: 0;
         }
         .cd-file-count {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.72rem;
           color: var(--text-3);
+          font-weight: 500;
         }
         @media (max-width: 600px) {
           .cd-header-inner { padding: 12px 14px; gap: 10px; }
@@ -455,7 +457,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           text-align: center;
           padding: 40px;
           color: #f87171;
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Plus Jakarta Sans', sans-serif;
           font-size: 0.9rem;
         }
 
@@ -493,12 +495,12 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
         .cd-type-label {
           flex: 1;
           text-align: left;
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.88rem;
           font-weight: 600;
         }
         .cd-type-count {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.72rem;
           color: var(--text-3);
           background: var(--glass);
@@ -548,10 +550,11 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           border-bottom: none;
         }
         .cd-book-name {
-          font-family: system-ui, -apple-system, sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.84rem;
           color: rgba(255, 255, 255, 0.85);
           line-height: 1.4;
+          font-weight: 400;
         }
         .cd-book-actions {
           display: flex;
@@ -559,14 +562,16 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           flex-shrink: 0;
         }
         .cd-book-btn {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
-          font-size: 0.7rem;
-          font-weight: 600;
-          padding: 4px 10px;
+          font-family: 'Outfit', sans-serif;
+          font-size: 0.72rem;
+          font-weight: 700;
+          padding: 5px 12px;
           border-radius: 6px;
           transition: all 0.15s;
           cursor: pointer;
           text-decoration: none;
+          text-transform: uppercase;
+          letter-spacing: 0.03em;
         }
         .cd-book-btn.google {
           background: rgba(255, 255, 255, 0.05);

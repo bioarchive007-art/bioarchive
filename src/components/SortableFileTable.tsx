@@ -147,9 +147,12 @@ export default function SortableFileTable({
         .sft-wrapper {
           width: 100%;
           overflow-x: auto;
-          border: 1px solid rgba(255,255,255,0.06);
+          border: 1px solid var(--glass-border);
           border-radius: 14px;
-          background: rgba(255,255,255,0.02);
+          background: var(--panel);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.03);
         }
         .sft-table {
           width: 100%;
@@ -159,9 +162,9 @@ export default function SortableFileTable({
         .sft-th {
           padding: 10px 14px;
           text-align: left;
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.7rem;
-          font-weight: 600;
+          font-weight: 700;
           color: rgba(255,255,255,0.4);
           text-transform: uppercase;
           letter-spacing: 0.06em;
@@ -182,11 +185,12 @@ export default function SortableFileTable({
         .sft-row:hover { background: rgba(255,255,255,0.03); }
         .sft-td {
           padding: 10px 14px;
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.82rem;
           color: rgba(255,255,255,0.7);
           border-bottom: 1px solid rgba(255,255,255,0.03);
           vertical-align: middle;
+          font-weight: 400;
         }
         .sft-name {
           max-width: 260px;
@@ -197,7 +201,7 @@ export default function SortableFileTable({
           text-overflow: ellipsis;
           white-space: nowrap;
           color: #e0e0e0;
-          font-family: system-ui, -apple-system, sans-serif;
+          font-family: 'Outfit', sans-serif;
         }
         .sft-prof, .sft-uploader {
           color: rgba(255,255,255,0.5);
@@ -205,11 +209,12 @@ export default function SortableFileTable({
         }
         .sft-year-badge {
           font-size: 0.7rem;
-          font-weight: 600;
+          font-weight: 700;
           color: #daa520;
           background: rgba(218,165,32,0.1);
           padding: 2px 8px;
           border-radius: 10px;
+          font-family: 'Outfit', sans-serif;
         }
         .sft-exam-badge {
           font-size: 0.68rem;

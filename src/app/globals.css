@@ -13,24 +13,24 @@
    Design Tokens
    ================================================================ */
 :root {
-  --bg: #020813;
-  --bg2: #051022;
-  --bg3: #08172d;
-  --panel: #061226;
-  --glass: rgba(255,255,255,0.03);
-  --glass-hover: rgba(255,255,255,0.06);
-  --glass-border: rgba(255,255,255,0.07);
-  --glass-border-hover: rgba(255,255,255,0.14);
-  --green: #0284c7;
-  --green-light: #00e5ff;
+  --bg: #030816;
+  --bg2: #07122a;
+  --bg3: #0c1a3b;
+  --panel: rgba(10, 21, 45, 0.75);
+  --glass: rgba(255, 255, 255, 0.025);
+  --glass-hover: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --glass-border-hover: rgba(0, 229, 255, 0.35);
+  --green: #0ea5e9;
+  --green-light: #00f0ff;
   --green-bright: #38bdf8;
   --gold: #00e5ff;
   --gold-dim: rgba(0, 229, 255, 0.12);
-  --text: rgba(255,255,255,0.92);
-  --text-2: rgba(255,255,255,0.55);
-  --text-3: rgba(255,255,255,0.30);
+  --text: #f8fafc;
+  --text-2: #94a3b8;
+  --text-3: #64748b;
   --nav-h: 60px;
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -50,7 +50,7 @@ html {
 }
 
 body {
-  font-family: 'Playwrite England Joined', 'Playwrite GB J', system-ui, -apple-system, sans-serif;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
@@ -111,15 +111,16 @@ img { max-width: 100%; display: block; }
   pointer-events: none;
 }
 .loader-wordmark {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Cinzel', serif;
   font-size: 2.6rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.05em;
   color: var(--text);
   animation: fadeSlideUp 0.8s var(--ease-out) both;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  text-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
 }
 .loader-wordmark span {
   font-style: normal;
@@ -129,7 +130,7 @@ img { max-width: 100%; display: block; }
   font-size: 3.8rem;
   font-weight: 700;
   color: #10b981;
-  text-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+  text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
   margin-left: 6px;
 }
 
@@ -274,11 +275,11 @@ img { max-width: 100%; display: block; }
 
 
 .loader-tag {
-  font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+  font-family: 'Outfit', sans-serif;
   font-size: 0.68rem;
-  font-weight: 400;
+  font-weight: 500;
   color: var(--text-3);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   animation: fadeSlideUp 0.8s var(--ease-out) 0.3s both;
 }
@@ -323,38 +324,45 @@ img { max-width: 100%; display: block; }
 .sem-trigger {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
-  padding: 10px 12px;
+  padding: 14px 18px;
   background: var(--glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
-  border-radius: 10px;
+  border-radius: 14px;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.2s;
+  transition: transform 0.3s var(--ease-out), background 0.3s, border-color 0.3s, box-shadow 0.3s;
   color: var(--text);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 .sem-trigger:hover {
   background: var(--glass-hover);
-  border-color: var(--glass-border-hover);
+  border-color: rgba(0, 229, 255, 0.25);
+  transform: translateY(-3px) scale(1.002);
+  box-shadow: 0 12px 30px rgba(0, 229, 255, 0.05), 0 6px 18px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 .sem-badge {
-  font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
-  font-size: 0.62rem;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.65rem;
   font-weight: 700;
   color: var(--green-light);
-  background: rgba(82, 183, 136, 0.12);
-  padding: 3px 8px;
-  border-radius: 5px;
-  letter-spacing: 0.06em;
-  min-width: 34px;
+  background: rgba(0, 229, 255, 0.12);
+  padding: 4px 10px;
+  border-radius: 6px;
+  letter-spacing: 0.08em;
+  min-width: 38px;
   text-align: center;
+  border: 1px solid rgba(0, 229, 255, 0.2);
 }
 .sem-label {
   flex: 1;
   text-align: left;
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1rem;
-  font-weight: 600;
+  font-family: 'Cinzel', serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
 }
 .course-list {
   padding: 6px 0 6px 8px;
@@ -371,7 +379,7 @@ img { max-width: 100%; display: block; }
   border-radius: 7px;
   cursor: pointer;
   transition: background 0.12s;
-  font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 0.8rem;
   color: var(--text-2);
   border: none;
@@ -482,17 +490,25 @@ img { max-width: 100%; display: block; }
    ================================================================ */
 .file-card {
   background: var(--glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--glass-border);
-  border-radius: 14px;
-  padding: 16px;
+  border-radius: 16px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  transition: border-color 0.2s var(--ease-out), box-shadow 0.2s;
+  gap: 10px;
+  position: relative;
+  transition: transform 0.4s var(--ease-out), border-color 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out), background 0.3s;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 .file-card:hover {
-  border-color: var(--glass-border-hover);
-  box-shadow: 0 6px 28px rgba(0,0,0,0.2);
+  background: var(--glass-hover);
+  border-color: rgba(0, 229, 255, 0.35);
+  box-shadow: 0 20px 40px rgba(0, 229, 255, 0.08), 0 8px 16px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: translateY(-8px) rotateX(4deg) rotateY(-2deg) translateZ(10px);
 }
 
 /* ================================================================
@@ -527,42 +543,52 @@ img { max-width: 100%; display: block; }
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 9px 20px;
-  background: linear-gradient(135deg, #b8860b, #daa520);
-  color: #0a0f0a;
-  font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
-  font-size: 0.84rem;
-  font-weight: 600;
-  border: none;
+  padding: 10px 22px;
+  background: linear-gradient(135deg, #ffd700 0%, #daa520 50%, #b8860b 100%);
+  color: #020813;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.86rem;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 10px;
   cursor: pointer;
+  position: relative;
   transition: transform 0.15s var(--ease-spring), box-shadow 0.2s;
-  letter-spacing: 0.02em;
+  box-shadow: 0 4px 0 #8b6508, 0 10px 20px rgba(218, 165, 32, 0.15);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 .btn-gold:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 18px rgba(212, 168, 83, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #8b6508, 0 15px 25px rgba(218, 165, 32, 0.25);
 }
-.btn-gold:active { transform: translateY(0); }
+.btn-gold:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #8b6508, 0 6px 12px rgba(218, 165, 32, 0.15);
+}
 
 .btn-ghost {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 16px;
+  padding: 10px 18px;
   background: var(--glass);
   border: 1px solid var(--glass-border);
   border-radius: 10px;
   color: var(--text-2);
-  font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+  font-family: 'Outfit', sans-serif;
   font-size: 0.82rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.2s var(--ease-out);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
 }
 .btn-ghost:hover {
   background: var(--glass-hover);
-  border-color: var(--glass-border-hover);
+  border-color: rgba(0, 229, 255, 0.25);
   color: var(--text);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 229, 255, 0.05);
 }
 
 /* ================================================================
@@ -571,7 +597,7 @@ img { max-width: 100%; display: block; }
 .site-footer {
   text-align: center;
   padding: 28px 20px;
-  font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 0.72rem;
   color: var(--text-3);
   border-top: 1px solid var(--glass-border);
@@ -613,7 +639,7 @@ img { max-width: 100%; display: block; }
   .navbar-links { display: none; }
 }
 .nav-link {
-  font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.5);
   font-weight: 500;
@@ -644,10 +670,10 @@ img { max-width: 100%; display: block; }
 }
 .navbar-wordmark {
   text-decoration: none;
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Cinzel', serif;
   font-size: 1.55rem;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.05em;
   line-height: 1;
   display: inline-flex;
   align-items: center;
@@ -661,7 +687,7 @@ img { max-width: 100%; display: block; }
   font-size: 2.25rem;
   font-weight: 700;
   color: #10b981;
-  text-shadow: 0 0 10px rgba(16, 185, 129, 0.15);
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
   margin-left: 4px;
 }
 .navbar-right {
@@ -670,11 +696,11 @@ img { max-width: 100%; display: block; }
   gap: 16px;
 }
 .navbar-label {
-  font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+  font-family: 'Outfit', sans-serif;
   font-size: 0.72rem;
-  font-weight: 500;
+  font-weight: 600;
   color: rgba(255, 255, 255, 0.45);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
 }
 @media (max-width: 768px) {
@@ -686,24 +712,27 @@ img { max-width: 100%; display: block; }
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 16px;
-  background: linear-gradient(135deg, #b8860b, #daa520);
-  color: #0a0f0a;
-  font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+  padding: 8px 18px;
+  background: linear-gradient(135deg, #ffd700 0%, #daa520 50%, #b8860b 100%);
+  color: #020813;
+  font-family: 'Outfit', sans-serif;
   font-size: 0.82rem;
-  font-weight: 600;
-  border: none;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.2s;
-  letter-spacing: 0.02em;
+  transition: transform 0.15s var(--ease-spring), box-shadow 0.2s;
+  box-shadow: 0 3px 0 #8b6508, 0 8px 15px rgba(218, 165, 32, 0.15);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 .navbar-upload-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(218, 165, 32, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 0 #8b6508, 0 12px 20px rgba(218, 165, 32, 0.25);
 }
 .navbar-upload-btn:active {
-  transform: translateY(0);
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #8b6508, 0 4px 10px rgba(218, 165, 32, 0.15);
 }
 
 .mobile-menu-backdrop {
@@ -743,7 +772,7 @@ img { max-width: 100%; display: block; }
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 10px;
   color: rgba(255, 255, 255, 0.8);
-  font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 0.9rem;
   font-weight: 500;
   transition: all 0.15s;
@@ -763,7 +792,7 @@ img { max-width: 100%; display: block; }
   padding: 12px;
   background: linear-gradient(135deg, #b8860b, #daa520);
   color: #0a0f0a;
-  font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 0.9rem;
   font-weight: 600;
   border: none;
@@ -810,14 +839,14 @@ img { max-width: 100%; display: block; }
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
 }
 .cd-empty h3 {
-  font-family: 'Cormorant Garamond', serif !important;
+  font-family: 'Cinzel', serif !important;
   font-size: 1.6rem !important;
   font-weight: 700 !important;
   color: var(--text-2) !important;
   margin: 0 !important;
 }
 .cd-empty p {
-  font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
   font-size: 0.88rem !important;
   color: var(--text-3) !important;
   margin: 0 0 4px !important;

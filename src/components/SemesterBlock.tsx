@@ -43,7 +43,7 @@ export default function SemesterBlock({
           transition={{ duration: 0.25 }}
           className="sem-block-chevron"
         >
-          <ChevronDown size={20} />
+          <ChevronDown size={20} strokeWidth={1.5} />
         </motion.span>
       </button>
 
@@ -81,40 +81,49 @@ export default function SemesterBlock({
           align-items: center;
           gap: 12px;
           width: 100%;
-          padding: 14px 16px;
-          background: rgba(255, 255, 255, 0.02);
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          border-radius: 12px;
+          padding: 14px 18px;
+          background: var(--panel);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border: 1px solid var(--glass-border);
+          border-radius: 14px;
           cursor: pointer;
-          transition: background 0.15s, border-color 0.15s;
+          transition: transform 0.3s var(--ease-out), background 0.3s, border-color 0.3s, box-shadow 0.3s;
+          color: var(--text);
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05);
         }
         .sem-block-header:hover {
-          background: rgba(255, 255, 255, 0.04);
-          border-color: rgba(2, 132, 199, 0.25);
+          background: var(--glass-hover);
+          border-color: rgba(0, 229, 255, 0.25);
+          transform: translateY(-3px) scale(1.002);
+          box-shadow: 0 12px 30px rgba(0, 229, 255, 0.05), 0 6px 18px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
         .sem-block-badge {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.68rem;
           font-weight: 700;
           color: var(--green-bright);
-          background: rgba(2, 132, 199, 0.15);
+          background: rgba(0, 229, 255, 0.12);
           padding: 4px 10px;
           border-radius: 6px;
           letter-spacing: 0.06em;
+          border: 1px solid rgba(0, 229, 255, 0.2);
         }
         .sem-block-title {
           flex: 1;
           text-align: left;
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Cinzel', serif;
           font-size: 1.15rem;
-          font-weight: 600;
+          font-weight: 700;
           color: #f0f0f0;
           margin: 0;
+          letter-spacing: 0.03em;
         }
         .sem-block-count {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.72rem;
-          color: rgba(255, 255, 255, 0.3);
+          color: rgba(255, 255, 255, 0.35);
+          font-weight: 500;
         }
         .sem-block-chevron {
           display: flex;

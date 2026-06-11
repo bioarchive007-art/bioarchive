@@ -9,8 +9,13 @@ import SemesterBlock from '@/components/SemesterBlock';
 import GlobalSearch from '@/components/GlobalSearch';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
+import { ChevronDown } from 'lucide-react';
 
 const UploadModal = dynamic(() => import('@/components/UploadModal'), {
+  ssr: false,
+});
+
+const Hero3D = dynamic(() => import('@/components/Hero3D'), {
   ssr: false,
 });
 
@@ -61,14 +66,31 @@ export default function HomePage() {
         <main className="main-content">
           {/* Hero */}
           <section className="hero">
-            <div className="hero-glow" aria-hidden="true" />
             <div className="hero-animate-wrap">
               <h1 className="hero-heading hero-fade-in">
                 BIO<em className="hero-archive">Archive</em>
               </h1>
-
+              {/* <p className="hero-description hero-fade-in hero-fade-in-delay">
+              </p> */}
               <div className="hero-search-wrap hero-fade-in hero-fade-in-delay">
                 <GlobalSearch />
+              </div>
+            </div>
+            <div className="hero-3d-wrap">
+              <Hero3D />
+            </div>
+
+            {/* Pulsing Scroll down indicator */}
+            <div
+              className="scroll-indicator hero-fade-in hero-fade-in-delay"
+              onClick={() => {
+                const el = document.querySelector('.semesters-section');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+            >
+              <span className="scroll-text">Scroll Down</span>
+              <div className="scroll-arrow">
+                <ChevronDown size={13} strokeWidth={1.5} />
               </div>
             </div>
           </section>
@@ -106,34 +128,69 @@ export default function HomePage() {
       <style jsx>{`
         .hero {
           position: relative;
-          text-align: center;
-          padding: 80px 20px 48px;
-          max-width: 1100px;
+          display: grid;
+          grid-template-columns: 1.2fr 1fr;
+          gap: 40px;
+          align-items: center;
+          padding: 40px 20px 100px;
+          max-width: 1200px;
           margin: 0 auto;
           width: 100%;
+          min-height: calc(100vh - var(--nav-h));
           overflow: hidden;
+        }
+        .scroll-indicator {
+          position: absolute;
+          bottom: 24px;
+          left: 50%;
+          transform: translateX(-50%);
           display: flex;
           flex-direction: column;
           align-items: center;
+          gap: 6px;
+          cursor: pointer;
+          color: var(--text-3);
+          font-family: 'Outfit', sans-serif;
+          font-size: 0.68rem;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          transition: color 0.3s;
+          z-index: 10;
         }
-        .hero-glow {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          width: 500px;
-          height: 500px;
-          transform: translate(-50%, -50%);
-          background: radial-gradient(circle, rgba(2, 132, 199, 0.08) 0%, rgba(2, 132, 199, 0.03) 40%, transparent 70%);
-          pointer-events: none;
+        .scroll-indicator:hover {
+          color: var(--green-light);
+        }
+        .scroll-arrow {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          border: 1px solid var(--glass-border);
+          background: var(--glass);
+          transition: all 0.3s;
+          animation: scrollBounce 2s infinite;
+        }
+        .scroll-indicator:hover .scroll-arrow {
+          border-color: rgba(0, 229, 255, 0.35);
+          box-shadow: 0 0 10px rgba(0, 229, 255, 0.15);
+        }
+        @keyframes scrollBounce {
+          0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-6px); }
+          60% { transform: translateY(-3px); }
         }
         .hero-animate-wrap {
           width: 100%;
           display: flex;
           flex-direction: column;
-          align-items: center;
+          align-items: flex-start;
+          text-align: left;
         }
         .hero-heading {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Cinzel', serif;
           font-size: clamp(3.6rem, 9vw, 5.8rem);
           font-weight: 700;
           color: var(--text);
@@ -156,12 +213,26 @@ export default function HomePage() {
           display: inline-block;
           vertical-align: middle;
         }
+        .hero-description {
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          font-size: 0.95rem;
+          line-height: 1.6;
+          color: var(--text-2);
+          margin-bottom: 24px;
+          max-width: 520px;
+        }
         .hero-search-wrap {
-          margin-top: 28px;
           width: 100%;
-          max-width: 560px;
+          max-width: 480px;
+          display: flex;
+          justify-content: flex-start;
+        }
+        .hero-3d-wrap {
+          width: 100%;
+          height: 450px;
           display: flex;
           justify-content: center;
+          align-items: center;
         }
         .hero-fade-in {
           animation: heroFadeIn 0.6s ease-out both;
@@ -176,7 +247,7 @@ export default function HomePage() {
         }
         .semesters-section {
           padding: 8px 20px 60px;
-          max-width: 1000px;
+          max-width: 1200px;
           margin: 0 auto;
           width: 100%;
           display: flex;
@@ -184,7 +255,40 @@ export default function HomePage() {
           gap: 10px;
         }
         @media (max-width: 768px) {
-          .hero { padding: 60px 16px 36px; }
+          .hero {
+            grid-template-columns: 1fr;
+            text-align: center;
+            padding: 60px 16px 100px;
+            gap: 20px;
+            min-height: calc(100vh - var(--nav-h));
+            position: relative;
+            overflow: visible;
+          }
+          .hero-animate-wrap {
+            align-items: center !important;
+            text-align: center !important;
+            position: relative;
+            z-index: 5;
+          }
+          .hero-description {
+            text-align: center;
+            margin-bottom: 16px;
+          }
+          .hero-search-wrap {
+            justify-content: center !important;
+          }
+          .hero-3d-wrap {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            opacity: 0.15;
+            filter: blur(8px);
+            -webkit-filter: blur(8px);
+            pointer-events: none;
+          }
           .semesters-section { padding: 8px 12px 40px; }
         }
       `}</style>

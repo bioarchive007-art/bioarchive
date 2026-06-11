@@ -51,17 +51,24 @@ export default function CourseCard({ course, semester }: CourseCardProps) {
         .course-card {
           display: block;
           text-decoration: none;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.06);
+          background: var(--panel);
+          backdrop-filter: blur(14px);
+          -webkit-backdrop-filter: blur(14px);
+          border: 1px solid var(--glass-border);
           border-radius: 14px;
           padding: 16px;
-          transition: border-color 0.25s, box-shadow 0.25s;
+          transition: transform 0.4s var(--ease-out), border-color 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out), background 0.3s;
           position: relative;
           overflow: hidden;
+          transform-style: preserve-3d;
+          perspective: 1000px;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.03);
         }
         .course-card:hover {
-          border-color: rgba(2, 132, 199, 0.3);
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+          background: var(--glass-hover);
+          border-color: rgba(0, 229, 255, 0.25);
+          box-shadow: 0 16px 32px rgba(0, 229, 255, 0.06), 0 8px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+          transform: translateY(-6px) rotateX(3deg) rotateY(-2deg) translateZ(8px);
         }
         .cc-top {
           display: flex;
@@ -72,12 +79,13 @@ export default function CourseCard({ course, semester }: CourseCardProps) {
           width: 44px;
           height: 44px;
           border-radius: 10px;
-          background: rgba(2, 132, 199, 0.12);
+          background: rgba(0, 229, 255, 0.1);
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
           overflow: hidden;
+          border: 1px solid rgba(0, 229, 255, 0.15);
         }
         .cc-icon-img {
           width: 100%;
@@ -86,7 +94,7 @@ export default function CourseCard({ course, semester }: CourseCardProps) {
           border-radius: 10px;
         }
         .cc-icon-fallback {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.85rem;
           font-weight: 700;
           color: var(--green-bright);
@@ -97,22 +105,23 @@ export default function CourseCard({ course, semester }: CourseCardProps) {
           min-width: 0;
         }
         .cc-code {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.7rem;
-          font-weight: 600;
+          font-weight: 700;
           color: #daa520;
           letter-spacing: 0.06em;
         }
         .cc-name {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Cinzel', serif;
           font-size: 1.05rem;
-          font-weight: 600;
+          font-weight: 700;
           color: #f0f0f0;
           margin: 2px 0 0;
           line-height: 1.25;
+          letter-spacing: 0.02em;
         }
         .cc-desc {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Plus Jakarta Sans', sans-serif;
           font-size: 0.72rem;
           color: rgba(255, 255, 255, 0.4);
           margin-top: 3px;

@@ -331,7 +331,7 @@ export default function BoardPage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <label className="um-label">Year of Exam / Material</label>
                   {formYear && formYear.length === 4 && !isValidYear && (
-                    <span style={{ color: '#f87171', fontSize: '0.7rem', fontFamily: "'Playwrite England Joined', 'Playwrite GB J', sans-serif" }}>
+                    <span style={{ color: '#f87171', fontSize: '0.7rem', fontFamily: "'Outfit', sans-serif" }}>
                       {parseInt(formYear, 10) > new Date().getFullYear() ? "Future year is not allowed" : "Invalid year"}
                     </span>
                   )}
@@ -425,7 +425,7 @@ export default function BoardPage() {
           display: flex;
           align-items: center;
           gap: 5px;
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.82rem;
           color: var(--text-2);
           padding: 6px 10px;
@@ -441,7 +441,7 @@ export default function BoardPage() {
           min-width: 0;
         }
         .board-wordmark {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Cinzel', serif;
           font-size: 0.9rem;
           font-weight: 700;
           letter-spacing: -0.01em;
@@ -449,7 +449,7 @@ export default function BoardPage() {
         .wb { color: var(--green-light); font-style: italic; }
         .wa { color: rgba(255,255,255,0.4); }
         .board-title {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 1.15rem;
           font-weight: 600;
           color: var(--text);
@@ -479,7 +479,7 @@ export default function BoardPage() {
           gap: 12px;
           padding: 100px 20px;
           color: var(--text-3);
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.88rem;
         }
         .spinner {
@@ -516,7 +516,7 @@ export default function BoardPage() {
         .title-accent.info { background: var(--green-light); }
         .title-accent.request { background: var(--gold); }
         .column-title-wrap h3 {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.98rem;
           font-weight: 600;
           color: #f0f0f0;
@@ -539,18 +539,25 @@ export default function BoardPage() {
           border-radius: 14px;
           text-align: center;
           color: var(--text-3);
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.84rem;
         }
         /* --- Notices --- */
         .notice-card {
-          background: rgba(255, 255, 255, 0.03);
+          background: var(--panel);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
           border: 1px solid var(--glass-border);
           border-radius: 12px;
           padding: 16px;
-          transition: border-color 0.2s;
+          transition: transform 0.4s var(--ease-out), border-color 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out);
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.03);
         }
-        .notice-card:hover { border-color: rgba(255, 255, 255, 0.12); }
+        .notice-card:hover {
+          border-color: rgba(255, 255, 255, 0.15);
+          transform: translateY(-4px);
+          box-shadow: 0 12px 30px rgba(255, 255, 255, 0.03), 0 6px 18px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
         .notice-card.warning { border-left: 3px solid #ef4444; }
         .notice-card.update { border-left: 3px solid var(--gold); }
         .notice-card.info { border-left: 3px solid var(--green-light); }
@@ -561,7 +568,7 @@ export default function BoardPage() {
           margin-bottom: 8px;
         }
         .notice-type-badge {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.6rem;
           font-weight: 700;
           letter-spacing: 0.04em;
@@ -575,19 +582,19 @@ export default function BoardPage() {
         .update .notice-type-badge { background: rgba(212, 168, 83, 0.12); color: var(--gold); }
         .info .notice-type-badge { background: rgba(2, 132, 199, 0.15); color: var(--green-light); }
         .notice-date {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.68rem;
           color: var(--text-3);
         }
         .notice-card-title {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.9rem;
           font-weight: 600;
           color: #f0f0f0;
           margin: 0 0 6px;
         }
         .notice-card-content {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.82rem;
           color: var(--text-2);
           line-height: 1.5;
@@ -595,7 +602,9 @@ export default function BoardPage() {
         }
         /* --- Requests --- */
         .request-card {
-          background: rgba(255, 255, 255, 0.03);
+          background: var(--panel);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
           border: 1px solid var(--glass-border);
           border-radius: 12px;
           padding: 16px;
@@ -603,6 +612,13 @@ export default function BoardPage() {
           flex-direction: column;
           gap: 8px;
           position: relative;
+          transition: transform 0.4s var(--ease-out), border-color 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out);
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+        }
+        .request-card:hover {
+          transform: translateY(-4px);
+          border-color: rgba(0, 229, 255, 0.2);
+          box-shadow: 0 12px 30px rgba(0, 229, 255, 0.04), 0 6px 18px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
         }
         .request-card.fulfilled { opacity: 0.65; border-color: rgba(255, 255, 255, 0.03); }
         .request-card-header {
@@ -611,21 +627,21 @@ export default function BoardPage() {
           align-items: center;
         }
         .request-course-code {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.72rem;
           font-weight: 600;
           color: var(--gold);
           letter-spacing: 0.04em;
         }
         .request-date {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.68rem;
           color: var(--text-3);
           display: flex;
           align-items: center;
         }
         .request-course-name {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Cinzel', serif;
           font-size: 1.05rem;
           font-weight: 600;
           color: #f0f0f0;
@@ -640,14 +656,14 @@ export default function BoardPage() {
         }
         .req-label { color: var(--text-3); }
         .req-val-badge {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.68rem;
           font-weight: 600;
           padding: 2px 8px;
           border-radius: 6px;
         }
         .request-remarks {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-style: italic;
           font-size: 0.78rem;
           color: var(--text-2);
@@ -664,7 +680,7 @@ export default function BoardPage() {
           padding-top: 8px;
         }
         .request-by {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.7rem;
           color: var(--text-3);
           display: flex;
@@ -679,7 +695,7 @@ export default function BoardPage() {
           border: 1px solid rgba(2, 132, 199, 0.25);
           border-radius: 6px;
           color: var(--green-light);
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.68rem;
           font-weight: 600;
           cursor: pointer;
@@ -691,7 +707,7 @@ export default function BoardPage() {
           border-color: rgba(2, 132, 199, 0.4);
         }
         .request-fulfilled-badge {
-          font-family: 'Playwrite England Joined', 'Playwrite GB J', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 0.68rem;
           color: rgba(2, 132, 199, 0.75);
           display: flex;
