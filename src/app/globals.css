@@ -862,27 +862,10 @@ img { max-width: 100%; display: block; }
   margin-top: 8px !important;
 }
 
-/* ================================================================
-   Dropdown Select Option theme override
-   ================================================================ */
 select option {
   background-color: #0c1a3b !important;
   color: #f8fafc !important;
 }
 
-/* ================================================================
-   Instant Hydration Reveal (Core Web Vitals LCP Optimizer)
-   ================================================================ */
-.fast-load .loading-screen {
-  display: none !important;
-  opacity: 0 !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-  transition: none !important;
-}
-.fast-load .page-content {
-  opacity: 1 !important;
-  transition: none !important;
-}
 
 

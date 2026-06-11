@@ -54,19 +54,7 @@ export default function RootLayout({
       className={`${fontCinzel.variable} ${fontOutfit.variable} ${fontPlusJakartaSans.variable} ${fontTangerine.variable}`}
       suppressHydrationWarning
     >
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                if (sessionStorage.getItem('ba-loaded')) {
-                  document.documentElement.classList.add('fast-load');
-                }
-              } catch (e) {}
-            `,
-          }}
-        />
-      </head>
+      <head />
       <body>
         {/* Ambient background */}
         <div className="orb-bg" aria-hidden="true" />
@@ -107,32 +95,13 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
-                var delay = 350;
-                try {
-                  if (sessionStorage.getItem('ba-loaded')) {
-                    delay = 0;
-                  } else {
-                    sessionStorage.setItem('ba-loaded', 'true');
-                  }
-                } catch (e) {}
-
-                var transitionOut = function() {
+                var t = setTimeout(function() {
                   var ls = document.getElementById('loading-screen');
                   var pc = document.getElementById('page-content');
                   if (ls) ls.classList.add('hidden');
                   if (pc) pc.classList.add('visible');
-                };
-
-                if (delay === 0) {
-                  transitionOut();
-                } else {
-                  var t = setTimeout(transitionOut, delay);
-                  window.addEventListener('load', function() {
-                    clearTimeout(t);
-                    transitionOut();
-                  });
-                  window.__bioarchiveLoadingTimer = t;
-                }
+                }, 1800);
+                window.__bioarchiveLoadingTimer = t;
               })();
             `,
           }}
