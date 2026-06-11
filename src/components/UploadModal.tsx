@@ -173,8 +173,14 @@ export default function UploadModal({
   }, []);
 
   // Validation
+  const isValidYear = useMemo(() => {
+    if (!year) return false;
+    const y = parseInt(year, 10);
+    return /^\d{4}$/.test(year) && !isNaN(y) && y <= new Date().getFullYear();
+  }, [year]);
+
   const canProceedStep0 =
-    fileType && year && semester && courseCode && professor &&
+    fileType && isValidYear && semester && courseCode && professor &&
     (fileType !== 'qpaper' || examType);
   const canProceedStep1 = files.length > 0;
   const canSubmit = canProceedStep0 && canProceedStep1;
@@ -438,7 +444,14 @@ export default function UploadModal({
                       )}
 
                       {/* Year */}
-                      <label className="um-label">Year</label>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <label className="um-label">Year</label>
+                        {year && year.length === 4 && !isValidYear && (
+                          <span style={{ color: '#f87171', fontSize: '0.7rem', fontFamily: "'Playwrite England Joined', 'Playwrite GB J', sans-serif" }}>
+                            {parseInt(year, 10) > new Date().getFullYear() ? "Future year is not allowed" : "Invalid year"}
+                          </span>
+                        )}
+                      </div>
                       <input
                         type="text"
                         className="um-input"

@@ -1,4 +1,4 @@
-import { LIBGEN_BASE_URL } from '@/data/curriculum';
+
 
 /**
  * Computes a SHA-256 hash of an ArrayBuffer using Web Crypto API.
@@ -23,9 +23,3 @@ export function formatFileSize(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-/**
- * Generates search link targeting Library Genesis search queries.
- */
-export function getLibgenSearchURL(query: string): string {
-  return `${LIBGEN_BASE_URL}${encodeURIComponent(query)}`;
-}

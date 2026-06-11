@@ -40,6 +40,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
   const activeSemester = semester || searchParams.get('semester') || '1';
 
   const [files, setFiles] = useState<SheetRow[]>([]);
+  const [books, setBooks] = useState<Array<{ id: string; name: string; webViewLink: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -56,10 +57,20 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
     let cancelled = false;
     setLoading(true);
     setError('');
-    fetchFilesByCourse(courseCode, activeSemester)
-      .then((data) => { if (!cancelled) setFiles(data); })
+
+    Promise.all([
+      fetchFilesByCourse(courseCode, activeSemester),
+      fetch(`/api/books?semester=${encodeURIComponent(activeSemester)}`).then(res => res.json()).catch(() => [])
+    ])
+      .then(([filesData, booksData]) => {
+        if (!cancelled) {
+          setFiles(filesData);
+          setBooks(Array.isArray(booksData) ? booksData : []);
+        }
+      })
       .catch((err) => { if (!cancelled) setError(err.message); })
       .finally(() => { if (!cancelled) setLoading(false); });
+
     return () => { cancelled = true; };
   }, [courseCode, activeSemester]);
 
@@ -117,6 +128,20 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
       return { ...prev, [type]: { field, order: newOrder } };
     });
   }, []);
+
+  // Fuzzy match textbook name in curriculum to a filename in Google Drive
+  const findMatchingBook = useCallback((textbookName: string) => {
+    if (!books || books.length === 0) return null;
+
+    const cleanName = textbookName.toLowerCase().replace(/[^a-z0-9]/g, ' ');
+    const words = cleanName.split(/\s+/).filter(w => w.length > 3);
+
+    return books.find(b => {
+      const cleanFileName = b.name.toLowerCase().replace(/[^a-z0-9]/g, ' ');
+      const matchCount = words.filter(word => cleanFileName.includes(word)).length;
+      return matchCount >= Math.min(2, words.length) || cleanFileName.includes(cleanName) || cleanName.includes(cleanFileName);
+    });
+  }, [books]);
 
   const totalFiles = files.length;
   const hasAnyFiles = totalFiles > 0;
@@ -218,29 +243,33 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
                 <span className="cd-type-label">Recommended Reference Books</span>
               </div>
               <div className="cd-books-body">
-                {course.textbooks.map((book) => (
-                  <div key={book} className="cd-book-row">
-                    <span className="cd-book-name">{book}</span>
-                    <div className="cd-book-actions">
-                      <a
-                        href={`https://books.google.com/books?q=${encodeURIComponent(book)}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="cd-book-btn google"
-                      >
-                        Google Books
-                      </a>
-                      <a
-                        href={`https://openlibrary.org/search?q=${encodeURIComponent(book)}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="cd-book-btn openlib"
-                      >
-                        Open Library
-                      </a>
+                {course.textbooks.map((book) => {
+                  const matchedFile = findMatchingBook(book);
+                  return (
+                    <div key={book} className="cd-book-row">
+                      <span className="cd-book-name">{book}</span>
+                      <div className="cd-book-actions">
+                        {matchedFile && (
+                          <a
+                            href={`/api/books/download?fileId=${matchedFile.id}&bookName=${encodeURIComponent(book)}&courseCode=${courseCode}&semester=${activeSemester}`}
+                            className="cd-book-btn openlib"
+                            style={{ background: 'rgba(16, 185, 129, 0.12)', borderColor: 'rgba(16, 185, 129, 0.25)', color: '#10B981' }}
+                          >
+                            Download PDF
+                          </a>
+                        )}
+                        <a
+                          href={`https://books.google.com/books?q=${encodeURIComponent(book)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="cd-book-btn google"
+                        >
+                          Google Books
+                        </a>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </motion.section>
           )}

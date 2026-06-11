@@ -327,4 +327,3 @@ export const CURRICULUM: Record<string, Course[]> = {
   ],
 };
 
-export const LIBGEN_BASE_URL = 'https://libgen.is/search.php?req=';

@@ -217,3 +217,48 @@ export async function copyToBackupFolder(driveFileId: string, backupFolderId: st
   const data = await res.json() as { id: string };
   return data.id;
 }
+
+/**
+ * Finds a subfolder by name inside a parent folder and returns its ID.
+ */
+export async function findSubfolderId(parentFolderId: string, folderName: string): Promise<string | null> {
+  const token = await getAccessToken();
+  const url = new URL('https://www.googleapis.com/drive/v3/files');
+  url.searchParams.append('q', `'${parentFolderId}' in parents and name = '${folderName}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`);
+  url.searchParams.append('fields', 'files(id)');
+
+  const res = await fetch(url.toString(), {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to find subfolder in Google Drive: ${res.statusText} - ${errorText}`);
+  }
+
+  const data = await res.json() as { files?: Array<{ id: string }> };
+  return data.files?.[0]?.id || null;
+}
+
+/**
+ * Lists all files inside a specific Google Drive folder.
+ */
+export async function listFilesInFolder(folderId: string): Promise<Array<{ id: string; name: string; webViewLink: string }>> {
+  const token = await getAccessToken();
+  const url = new URL('https://www.googleapis.com/drive/v3/files');
+  url.searchParams.append('q', `'${folderId}' in parents and trashed = false`);
+  url.searchParams.append('fields', 'files(id, name, webViewLink)');
+  url.searchParams.append('pageSize', '1000');
+
+  const res = await fetch(url.toString(), {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to list files in Google Drive folder: ${res.statusText} - ${errorText}`);
+  }
+
+  const data = await res.json() as { files?: Array<{ id: string; name: string; webViewLink: string }> };
+  return data.files || [];
+}

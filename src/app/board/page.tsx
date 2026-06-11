@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Plus, Calendar, User, FileText, CheckCircle, Info, AlertTriangle, Upload, HelpCircle, Loader2 } from 'lucide-react';
 import { CURRICULUM } from '@/data/curriculum';
@@ -34,6 +34,12 @@ export default function BoardPage() {
   const [formRemarks, setFormRemarks] = useState('');
   const [submittingRequest, setSubmittingRequest] = useState(false);
   const [formError, setFormError] = useState('');
+
+  const isValidYear = useMemo(() => {
+    if (!formYear) return false;
+    const y = parseInt(formYear, 10);
+    return /^\d{4}$/.test(formYear) && !isNaN(y) && y <= new Date().getFullYear();
+  }, [formYear]);
 
   const coursesForSem = formSem ? CURRICULUM[formSem] || [] : [];
 
@@ -70,8 +76,8 @@ export default function BoardPage() {
 
   const handleCreateRequest = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formSem || !formCourse || !formFileType || !formName) {
-      setFormError('Please fill out all required fields.');
+    if (!formSem || !formCourse || !formFileType || !formName || !isValidYear) {
+      setFormError('Please fill out all required fields and ensure the year is valid (no future years allowed).');
       return;
     }
 
@@ -322,7 +328,14 @@ export default function BoardPage() {
                   </>
                 )}
 
-                <label className="um-label">Year of Exam / Material</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label className="um-label">Year of Exam / Material</label>
+                  {formYear && formYear.length === 4 && !isValidYear && (
+                    <span style={{ color: '#f87171', fontSize: '0.7rem', fontFamily: "'Playwrite England Joined', 'Playwrite GB J', sans-serif" }}>
+                      {parseInt(formYear, 10) > new Date().getFullYear() ? "Future year is not allowed" : "Invalid year"}
+                    </span>
+                  )}
+                </div>
                 <input
                   type="text"
                   className="um-input"
@@ -375,7 +388,7 @@ export default function BoardPage() {
                   <button
                     type="submit"
                     className="btn-gold"
-                    disabled={submittingRequest}
+                    disabled={submittingRequest || !isValidYear}
                   >
                     {submittingRequest ? <Loader2 size={14} className="spinner" /> : <Plus size={14} />}
                     Submit Request

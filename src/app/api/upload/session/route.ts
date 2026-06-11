@@ -17,6 +17,8 @@ const ALLOWED_MIME_TYPES = new Set([
   'application/zip',
   'application/x-zip-compressed',
   'image/png',
+  'image/jpeg',
+  'application/vnd.ms-powerpoint',
 ]);
 
 /**
@@ -65,6 +67,15 @@ export async function POST(request: NextRequest) {
     if (!ALLOWED_MIME_TYPES.has(mimeType)) {
       return NextResponse.json(
         { error: `MIME type "${mimeType}" is not allowed. Accepted types: ${Array.from(ALLOWED_MIME_TYPES).join(', ')}` },
+        { status: 400 }
+      );
+    }
+
+    const parsedYear = parseInt(year, 10);
+    const currentYear = new Date().getFullYear();
+    if (!year || isNaN(parsedYear) || !/^\d{4}$/.test(year.toString().trim()) || parsedYear > currentYear) {
+      return NextResponse.json(
+        { error: `Invalid year. Future years or non-4-digit years are not allowed. (Current year is ${currentYear})` },
         { status: 400 }
       );
     }

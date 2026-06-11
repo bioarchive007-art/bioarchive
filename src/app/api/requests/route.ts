@@ -60,6 +60,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const parsedYear = parseInt(year, 10);
+    const currentYear = new Date().getFullYear();
+    if (isNaN(parsedYear) || !/^\d{4}$/.test(year.toString().trim()) || parsedYear > currentYear) {
+      return NextResponse.json(
+        { error: `Invalid year. Future years or non-4-digit years are not allowed. (Current year is ${currentYear})` },
+        { status: 400 }
+      );
+    }
+
     const newRequest: FileRequest = {
       requestId: crypto.randomUUID(),
       courseCode: courseCode.trim().toUpperCase(),
