@@ -146,6 +146,115 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
   const totalFiles = files.length;
   const hasAnyFiles = totalFiles > 0;
 
+  if (loading) {
+    return (
+      <div className="dna-loader-wrap fullscreen">
+        <div className="dna-loader-card">
+          <div className="dna-helix">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className="dna-rung" style={{ '--i': i } as React.CSSProperties}>
+                <div className="dna-dot dot-1" />
+                <div className="dna-rung-bar" />
+                <div className="dna-dot dot-2" />
+              </div>
+            ))}
+          </div>
+          <div className="dna-loader-text">Loading Materials</div>
+        </div>
+        <style jsx>{`
+          .dna-loader-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            width: 100%;
+          }
+          .dna-loader-wrap.fullscreen {
+            min-height: calc(100vh - var(--nav-h));
+          }
+          .dna-loader-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 48px;
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+            max-width: 380px;
+            width: 100%;
+            text-align: center;
+          }
+          .dna-helix {
+            display: flex;
+            gap: 7px;
+            height: 60px;
+            align-items: center;
+            justify-content: center;
+            perspective: 600px;
+            width: 100%;
+          }
+          .dna-rung {
+            position: relative;
+            width: 3px;
+            height: 52px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            transform-style: preserve-3d;
+            animation: dnaRotate 1.8s infinite linear;
+            animation-delay: calc(var(--i) * -0.15s);
+          }
+          .dna-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+          }
+          .dot-1 {
+            background: var(--gold);
+            box-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
+          }
+          .dot-2 {
+            background: var(--green-light);
+            box-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+          }
+          .dna-rung-bar {
+            width: 1px;
+            flex: 1;
+            background: rgba(255, 255, 255, 0.12);
+            margin: 2px 0;
+          }
+          .dna-loader-text {
+            margin-top: 20px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.76rem;
+            color: var(--text-2);
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            font-weight: 700;
+            animation: textPulse 1.6s infinite ease-in-out;
+          }
+          @keyframes dnaRotate {
+            0% {
+              transform: rotateX(0deg);
+            }
+            100% {
+              transform: rotateX(360deg);
+            }
+          }
+          @keyframes textPulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="cd-wrapper">
@@ -190,23 +299,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           initial="hidden"
           animate="show"
         >
-          {/* Loading */}
-          {loading && (
-            <div className="dna-loader-wrap">
-              <div className="dna-loader-card">
-                <div className="dna-helix">
-                  {Array.from({ length: 12 }).map((_, i) => (
-                    <div key={i} className="dna-rung" style={{ '--i': i } as React.CSSProperties}>
-                      <div className="dna-dot dot-1" />
-                      <div className="dna-rung-bar" />
-                      <div className="dna-dot dot-2" />
-                    </div>
-                  ))}
-                </div>
-                <div className="dna-loader-text">Loading Materials</div>
-              </div>
-            </div>
-          )}
+
 
           {/* Error */}
           {!loading && error && (
