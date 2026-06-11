@@ -360,7 +360,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           border-bottom: 1px solid var(--glass-border);
         }
         .cd-header-inner {
-          max-width: 1000px;
+          max-width: 800px;
           margin: 0 auto;
           padding: 14px 24px;
           display: flex;
@@ -433,7 +433,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
         }
         .cd-content {
           flex: 1;
-          max-width: 1000px;
+          max-width: 800px;
           margin: 0 auto;
           width: 100%;
           padding: 20px 24px 40px;
