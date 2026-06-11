@@ -1,14 +1,44 @@
 import './globals.css';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
+import { Cinzel, Outfit, Plus_Jakarta_Sans, Tangerine } from 'next/font/google';
+
+const fontCinzel = Cinzel({
+  subsets: ['latin'],
+  weight: ['600', '700', '900'],
+  variable: '--font-cinzel',
+  display: 'swap',
+});
+
+const fontOutfit = Outfit({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700', '800'],
+  variable: '--font-outfit',
+  display: 'swap',
+});
+
+const fontPlusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-plus-jakarta-sans',
+  display: 'swap',
+});
+
+const fontTangerine = Tangerine({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-tangerine',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'BioArchive | NISER Biology Resources',
   description:
     'The definitive study material portal for NISER SBS Students. Access question papers, notes, slides, lab materials, and more.',
+};
+
+export const viewport: Viewport = {
   themeColor: '#0a1a0f',
-  other: {
-    'color-scheme': 'dark',
-  },
+  colorScheme: 'dark',
 };
 
 export default function RootLayout({
@@ -19,11 +49,23 @@ export default function RootLayout({
   const year = new Date().getFullYear();
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${fontCinzel.variable} ${fontOutfit.variable} ${fontPlusJakartaSans.variable} ${fontTangerine.variable}`}
+      suppressHydrationWarning
+    >
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Tangerine:wght@400;700&display=swap" rel="stylesheet" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                if (sessionStorage.getItem('ba-loaded')) {
+                  document.documentElement.classList.add('fast-load');
+                }
+              } catch (e) {}
+            `,
+          }}
+        />
       </head>
       <body>
         {/* Ambient background */}
@@ -65,13 +107,32 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
-                var t = setTimeout(function() {
+                var delay = 350;
+                try {
+                  if (sessionStorage.getItem('ba-loaded')) {
+                    delay = 0;
+                  } else {
+                    sessionStorage.setItem('ba-loaded', 'true');
+                  }
+                } catch (e) {}
+
+                var transitionOut = function() {
                   var ls = document.getElementById('loading-screen');
                   var pc = document.getElementById('page-content');
                   if (ls) ls.classList.add('hidden');
                   if (pc) pc.classList.add('visible');
-                }, 1800);
-                window.__bioarchiveLoadingTimer = t;
+                };
+
+                if (delay === 0) {
+                  transitionOut();
+                } else {
+                  var t = setTimeout(transitionOut, delay);
+                  window.addEventListener('load', function() {
+                    clearTimeout(t);
+                    transitionOut();
+                  });
+                  window.__bioarchiveLoadingTimer = t;
+                }
               })();
             `,
           }}

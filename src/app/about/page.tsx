@@ -81,7 +81,7 @@ export default function AboutPage() {
                   BioArchive is a community-driven repository designed specifically for students at the <strong>School of Biological Sciences, NISER</strong>. It serves as a central hub to access, share, and preserve past academic materials including lecture notes, course slides, past year question papers, and laboratory guides.
                 </p>
                 <p>
-                  Our goal is to make academic resources easily accessible to help peer students study efficiently and succeed in their integrated MSc curriculum.
+                  Our goal is to make academic resources easily accessible to help students study efficiently and succeed in their respective curriculum.
                 </p>
               </section>
 
@@ -93,7 +93,7 @@ export default function AboutPage() {
                 </div>
                 <p>To keep the archive clean and reliable, please adhere to these rules when sharing files:</p>
                 <ul className="guidelines-list">
-                  <li><strong>Standard Formats:</strong> Upload documents as PDFs, Slides as PPTX, and combined packages as ZIP archives.</li>
+                  <li><strong>Standard Formats:</strong> Upload documents as PDFs, Slides as PPTX or PPT, Images as JPG, JPEG or PNG and combined packages as ZIP archives.</li>
                   <li><strong>Correct Metadata:</strong> Make sure to select the correct course, semester, year, and professor co-teaching the module.</li>
                   <li><strong>Legibility:</strong> If scanning physically written papers or laboratory notebooks, ensure the image is bright and easily readable.</li>
                   <li><strong>No Spam:</strong> Avoid uploading duplicate files. Our system checks hashes and metadata duplicates to keep the sheet registry lean.</li>

@@ -56,8 +56,6 @@ export default function HomePage() {
     setExpandedSemester((prev) => (prev === sem ? '' : sem));
   }, []);
 
-  if (!mounted) return null;
-
   return (
     <>
       <Navbar onUploadClick={() => setUploadOpen(true)} />

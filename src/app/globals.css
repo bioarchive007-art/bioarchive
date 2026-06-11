@@ -50,7 +50,7 @@ html {
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-plus-jakarta-sans), 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
@@ -111,7 +111,7 @@ img { max-width: 100%; display: block; }
   pointer-events: none;
 }
 .loader-wordmark {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-cinzel), 'Cinzel', serif;
   font-size: 2.6rem;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -126,7 +126,7 @@ img { max-width: 100%; display: block; }
   font-style: normal;
 }
 .loader-archive {
-  font-family: 'Tangerine', cursive;
+  font-family: var(--font-tangerine), 'Tangerine', cursive;
   font-size: 3.8rem;
   font-weight: 700;
   color: #10b981;
@@ -275,7 +275,7 @@ img { max-width: 100%; display: block; }
 
 
 .loader-tag {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-outfit), 'Outfit', sans-serif;
   font-size: 0.68rem;
   font-weight: 500;
   color: var(--text-3);
@@ -869,4 +869,20 @@ select option {
   background-color: #0c1a3b !important;
   color: #f8fafc !important;
 }
+
+/* ================================================================
+   Instant Hydration Reveal (Core Web Vitals LCP Optimizer)
+   ================================================================ */
+.fast-load .loading-screen {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  transition: none !important;
+}
+.fast-load .page-content {
+  opacity: 1 !important;
+  transition: none !important;
+}
+
 
