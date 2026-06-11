@@ -81,16 +81,18 @@ export default function HomePage() {
             </div>
 
             {/* Pulsing Scroll down indicator */}
-            <div
-              className="scroll-indicator hero-fade-in hero-fade-in-delay"
-              onClick={() => {
-                const el = document.querySelector('.semesters-section');
-                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }}
-            >
-              <span className="scroll-text">Scroll Down</span>
-              <div className="scroll-arrow">
-                <ChevronDown size={13} strokeWidth={1.5} />
+            <div className="scroll-indicator-wrap">
+              <div
+                className="scroll-indicator hero-fade-in hero-fade-in-delay"
+                onClick={() => {
+                  const el = document.querySelector('.semesters-section');
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+              >
+                <span className="scroll-text">Scroll Down</span>
+                <div className="scroll-arrow">
+                  <ChevronDown size={13} strokeWidth={1.5} />
+                </div>
               </div>
             </div>
           </section>
@@ -139,11 +141,17 @@ export default function HomePage() {
           min-height: calc(100vh - var(--nav-h));
           overflow: hidden;
         }
-        .scroll-indicator {
+        .scroll-indicator-wrap {
           position: absolute;
           bottom: 24px;
-          left: 50%;
-          transform: translateX(-50%);
+          left: 0;
+          width: 100%;
+          display: flex;
+          justify-content: center;
+          pointer-events: none;
+          z-index: 10;
+        }
+        .scroll-indicator {
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -156,7 +164,7 @@ export default function HomePage() {
           letter-spacing: 0.12em;
           text-transform: uppercase;
           transition: color 0.3s;
-          z-index: 10;
+          pointer-events: auto;
         }
         .scroll-indicator:hover {
           color: var(--green-light);

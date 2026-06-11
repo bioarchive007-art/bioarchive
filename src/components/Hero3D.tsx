@@ -21,8 +21,9 @@ export default function Hero3D() {
       canvas,
       antialias: true,
       alpha: true,
+      powerPreference: 'high-performance', // Hint to browser to use discrete GPU if available
     });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // Capped at 1.5 for performance on mobile
 
     // Scene
     const scene = new THREE.Scene();
@@ -52,21 +53,21 @@ export default function Hero3D() {
     scene.add(dnaGroup);
 
     // DNA Geometry parameters
-    const numPoints = 36; // Increased density for smoothness
+    const numPoints = 36; 
     const radius = 2.0;
     const turns = 2.5;
     const height = 7.5;
     
-    // Biological realism: major and minor grooves are created by an offset angle of ~2.4 radians (137.5 degrees)
     const angleOffset = 2.4; 
 
-    const sphereGeom = new THREE.SphereGeometry(0.16, 16, 16);
-    const connectorGeom = new THREE.CylinderGeometry(0.032, 0.032, 1, 8);
-    const centerNodeGeom = new THREE.SphereGeometry(0.07, 8, 8);
+    // Optimized segment counts: Spheres (8,8) instead of (16,16) saves 75% polygon overhead
+    const sphereGeom = new THREE.SphereGeometry(0.16, 8, 8);
+    const connectorGeom = new THREE.CylinderGeometry(0.032, 0.032, 1, 6); // 6 segments instead of 8
+    const centerNodeGeom = new THREE.SphereGeometry(0.07, 6, 6); // 6 segments instead of 8
 
     // Materials with glassmorphic/glowing properties
     const materialStrand1 = new THREE.MeshStandardMaterial({
-      color: 0x00e5ff, // Neon Cyan
+      color: 0x00e5ff,
       roughness: 0.1,
       metalness: 0.2,
       emissive: 0x008ebb,
@@ -74,14 +75,13 @@ export default function Hero3D() {
     });
 
     const materialStrand2 = new THREE.MeshStandardMaterial({
-      color: 0x10b981, // Neon Emerald
+      color: 0x10b981,
       roughness: 0.1,
       metalness: 0.2,
       emissive: 0x076d49,
       emissiveIntensity: 0.6,
     });
 
-    // Color-coded base pairings matching the backbone strands
     const materialRung1 = new THREE.MeshStandardMaterial({
       color: 0x00e5ff,
       roughness: 0.2,
@@ -105,8 +105,8 @@ export default function Hero3D() {
       roughness: 0.1,
     });
 
-    // Central axis support line (spine) representing rotation axis
-    const axisGeo = new THREE.CylinderGeometry(0.015, 0.015, height, 8);
+    // Central axis support line (spine) representing rotation axis (4 segments prism is highly efficient)
+    const axisGeo = new THREE.CylinderGeometry(0.015, 0.015, height, 4);
     const axisMat = new THREE.MeshBasicMaterial({
       color: 0x00e5ff,
       transparent: true,
@@ -130,7 +130,7 @@ export default function Hero3D() {
       sphere1.position.copy(pos1);
       dnaGroup.add(sphere1);
 
-      // Strand 2 (Offset by 2.4 radians for realistic major/minor grooves)
+      // Strand 2
       const x2 = Math.cos(angle + angleOffset) * radius;
       const z2 = Math.sin(angle + angleOffset) * radius;
       const pos2 = new THREE.Vector3(x2, y, z2);
@@ -146,7 +146,7 @@ export default function Hero3D() {
         const halfDistance = distance / 2;
         
         const direction = new THREE.Vector3().subVectors(pos2, pos1).normalize();
-        const alignAxis = new THREE.Vector3(0, 1, 0); // cylinders are vertical by default
+        const alignAxis = new THREE.Vector3(0, 1, 0);
 
         // Rung half 1 (Cyan tint)
         const rung1 = new THREE.Mesh(connectorGeom, materialRung1);
@@ -210,7 +210,6 @@ export default function Hero3D() {
     let mouseY = 0;
 
     const handleMouseMove = (event: MouseEvent) => {
-      // Normalise coordinates
       mouseX = (event.clientX / window.innerWidth) - 0.5;
       mouseY = (event.clientY / window.innerHeight) - 0.5;
     };
@@ -230,19 +229,35 @@ export default function Hero3D() {
       const { width, height } = entries[0].contentRect;
 
       renderer.setSize(width, height);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
     });
 
     resizeObserver.observe(container);
 
+    // Visibility Observer: pause WebGL render loop when component is scrolled off-screen
+    let isVisible = true;
+    const intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          isVisible = entry.isIntersecting;
+        });
+      },
+      { threshold: 0.05 }
+    );
+    intersectionObserver.observe(container);
+
     // Animation Loop
     let animationFrameId: number;
     const clock = new THREE.Clock();
 
     const animate = () => {
+      // Request next frame but skip execution if canvas is off-screen
+      if (!isVisible) {
+        animationFrameId = requestAnimationFrame(animate);
+        return;
+      }
+
       const elapsedTime = clock.getElapsedTime();
 
       // Smooth interpolation for mouse tracking
@@ -262,7 +277,6 @@ export default function Hero3D() {
       // Animate background particles
       const positionsArr = particles.geometry.attributes.position.array as Float32Array;
       for (let i = 0; i < particleCount; i++) {
-        // Subtle floating y-drift
         positionsArr[i * 3 + 1] += Math.sin(elapsedTime + i) * 0.002;
       }
       particles.geometry.attributes.position.needsUpdate = true;
@@ -280,6 +294,7 @@ export default function Hero3D() {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('scroll', handleScroll);
       resizeObserver.disconnect();
+      intersectionObserver.disconnect();
       
       // Clean up WebGL resources
       sphereGeom.dispose();
