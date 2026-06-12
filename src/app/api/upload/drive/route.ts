@@ -26,27 +26,30 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Read the entire request body as ArrayBuffer
-    const body = await request.arrayBuffer();
+    const contentLength = request.headers.get('content-length');
+    const contentRange = request.headers.get('Content-Range');
 
-    if (!body || body.byteLength === 0) {
+    if (!request.body) {
       return NextResponse.json(
         { error: 'Empty file body' },
         { status: 400 }
       );
     }
 
-    // Forward the file data to Google Drive's resumable upload URL
+    // Forward the file data stream directly to Google Drive's resumable upload URL
     const driveRes = await fetch(uploadUrl, {
       method: 'PUT',
       headers: {
         'Content-Type': contentType,
-        'Content-Length': body.byteLength.toString(),
+        ...(contentLength ? { 'Content-Length': contentLength } : {}),
+        ...(contentRange ? { 'Content-Range': contentRange } : {}),
       },
-      body: body,
+      body: request.body,
+      // @ts-ignore
+      duplex: 'half',
     });
 
-    if (!driveRes.ok) {
+    if (driveRes.status !== 308 && !driveRes.ok) {
       const errorText = await driveRes.text().catch(() => 'Unknown error');
       console.error('[api/upload/drive] Drive upload failed:', driveRes.status, errorText);
       return NextResponse.json(
@@ -55,9 +58,18 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    if (driveRes.status === 308) {
+      const range = driveRes.headers.get('Range') || '';
+      return NextResponse.json(
+        { status: 308, range },
+        { status: 308, headers: { 'Range': range } }
+      );
+    }
+
     const driveData = await driveRes.json().catch(() => ({}));
 
     return NextResponse.json({
+      status: driveRes.status,
       id: driveData.id || '',
       webViewLink: driveData.webViewLink || '',
       md5Checksum: driveData.md5Checksum || '',

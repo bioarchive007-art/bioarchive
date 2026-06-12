@@ -91,7 +91,15 @@ export function generateRenamedFilename(
     const examType = sanitizeForFilename(metadata.examType);
     newName = `${courseCode}_${professorName}_${fileType}_${year}_${examType}${suffix}_${dateStr}`;
   } else {
-    newName = `${courseCode}_${professorName}_${fileType}_${year}${suffix}_${dateStr}`;
+    // Extract base original name, sanitize it, and limit length to keep file name reasonable
+    const dotIndex = originalFileName.lastIndexOf('.');
+    const originalNameWithoutExt = dotIndex !== -1 ? originalFileName.substring(0, dotIndex) : originalFileName;
+    let sanitizedOriginal = sanitizeForFilename(originalNameWithoutExt);
+    if (sanitizedOriginal.length > 80) {
+      sanitizedOriginal = sanitizedOriginal.substring(0, 80);
+    }
+    const topicPart = sanitizedOriginal ? `_${sanitizedOriginal}` : '';
+    newName = `${courseCode}_${professorName}_${fileType}_${year}${topicPart}${suffix}_${dateStr}`;
   }
 
   return newName + extension;

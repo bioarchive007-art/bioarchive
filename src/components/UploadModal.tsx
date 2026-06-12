@@ -83,6 +83,7 @@ export default function UploadModal({
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [dragOver, setDragOver] = useState(false);
+  const [showWarning, setShowWarning] = useState(false);
 
   const isQpaper = fileType === 'qpaper';
   const allowMultiple = !isQpaper && fileType !== '';
@@ -140,6 +141,7 @@ export default function UploadModal({
         setUploadStatus('');
         setSuccess(false);
         setError('');
+        setShowWarning(false);
       }, 300);
     }
   }, [isOpen, initialCourseCode, initialSemester, initialFileType, initialYear, initialRequestId]);
@@ -190,23 +192,19 @@ export default function UploadModal({
     setUploading(true);
     setProgress(0);
     setError('');
+    setShowWarning(true);
 
     try {
       const displayName = showName ? uploaderName : 'Anonymous';
-      let filesToUpload = [...files];
-
+      const filesToUpload = [...files];
       const totalFiles = filesToUpload.length;
-      let duplicateWarnings: string[] = [];
+      const fileProgresses = new Array(totalFiles).fill(0);
+      const duplicateWarnings: string[] = [];
 
-      for (let i = 0; i < totalFiles; i++) {
-        const currentFile = filesToUpload[i];
-        const fileBaseProgress = Math.round((i / totalFiles) * 100);
-        const fileSlice = Math.round(100 / totalFiles);
-
-        setUploadStatus(`Uploading ${i + 1}/${totalFiles}: ${currentFile.name}`);
-
+      // Step 1: Upload all files concurrently to Google Drive
+      setUploadStatus(`Uploading ${totalFiles} file(s) in parallel...`);
+      const uploadPromises = filesToUpload.map(async (currentFile, index) => {
         // Step A: Create upload session
-        setProgress(fileBaseProgress + Math.round(fileSlice * 0.1));
         const session = await createUploadSession({
           fileName: currentFile.name,
           mimeType: currentFile.type,
@@ -224,44 +222,100 @@ export default function UploadModal({
           remarks,
         });
 
-        // Step B: Upload to Drive via server proxy with progress
-        const driveData = await new Promise<{ id: string; webViewLink: string; md5Checksum: string }>((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          xhr.open('PUT', '/api/upload/drive');
-          xhr.setRequestHeader('Content-Type', currentFile.type);
-          xhr.setRequestHeader('X-Upload-Url', session.driveUploadUrl);
+        // Step B: Upload file bytes in chunks to Google Drive via server proxy with progress tracking and automatic retry
+        const totalSize = currentFile.size;
+        const chunkSize = 5 * 1024 * 1024; // 5MB chunks (must be a multiple of 256KB)
+        let start = 0;
+        let driveData: { id: string; webViewLink: string; md5Checksum: string } | null = null;
 
-          xhr.upload.onprogress = (e) => {
-            if (e.lengthComputable) {
-              const pct = Math.round((e.loaded / e.total) * 100);
-              setProgress(fileBaseProgress + Math.round(fileSlice * (0.1 + pct * 0.007)));
+        while (start < totalSize) {
+          const end = Math.min(start + chunkSize, totalSize);
+          const chunk = currentFile.slice(start, end);
+          const isLast = end === totalSize;
+
+          let chunkResult = null;
+          let retries = 3;
+          let delay = 1000;
+
+          while (retries > 0) {
+            try {
+              chunkResult = await new Promise<any>((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('PUT', '/api/upload/drive');
+                xhr.setRequestHeader('Content-Type', currentFile.type);
+                xhr.setRequestHeader('X-Upload-Url', session.driveUploadUrl);
+                xhr.setRequestHeader('Content-Range', `bytes ${start}-${end - 1}/${totalSize}`);
+
+                xhr.upload.onprogress = (e) => {
+                  if (e.lengthComputable) {
+                    const chunkPct = e.loaded / e.total;
+                    const bytesUploaded = start + chunkPct * (end - start);
+                    const pct = Math.round((bytesUploaded / totalSize) * 100);
+
+                    fileProgresses[index] = pct;
+                    const overallPct = Math.round(fileProgresses.reduce((sum, p) => sum + p, 0) / totalFiles);
+                    setProgress(Math.min(95, overallPct));
+                  }
+                };
+
+                xhr.onload = () => {
+                  if (xhr.status === 200 || xhr.status === 201 || xhr.status === 308) {
+                    try {
+                      resolve(JSON.parse(xhr.responseText));
+                    } catch {
+                      reject(new Error('Invalid response from upload server'));
+                    }
+                  } else {
+                    try {
+                      const errData = JSON.parse(xhr.responseText);
+                      reject(new Error(errData.error || `Upload failed with status ${xhr.status}`));
+                    } catch {
+                      reject(new Error(`Upload failed with status ${xhr.status}`));
+                    }
+                  }
+                };
+
+                xhr.onerror = () => reject(new Error('Network error uploading chunk'));
+                xhr.onabort = () => reject(new Error('Upload was cancelled'));
+                xhr.send(chunk);
+              });
+              break; // Success, exit retry loop
+            } catch (err: any) {
+              retries--;
+              if (retries === 0) {
+                throw new Error(`Failed to upload chunk of "${currentFile.name}": ${err.message}`);
+              }
+              // Wait before retrying
+              await new Promise(r => setTimeout(r, delay));
+              delay *= 2; // exponential backoff
             }
-          };
+          }
 
-          xhr.onload = () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
-              try { resolve(JSON.parse(xhr.responseText)); }
-              catch { reject(new Error('Invalid response from upload server')); }
-            } else {
-              try {
-                const errData = JSON.parse(xhr.responseText);
-                reject(new Error(errData.error || `Failed to upload ${currentFile.name}`));
-              } catch { reject(new Error(`Failed to upload ${currentFile.name}`)); }
-            }
-          };
+          if (isLast) {
+            driveData = chunkResult;
+          }
+          start = end;
+        }
 
-          xhr.onerror = () => reject(new Error(`Network error uploading ${currentFile.name}`));
-          xhr.onabort = () => reject(new Error('Upload was cancelled'));
-          xhr.send(currentFile);
-        });
+        if (!driveData) {
+          throw new Error(`Failed to upload "${currentFile.name}" (no drive data returned)`);
+        }
 
-        // Step C: Confirm upload
-        setProgress(fileBaseProgress + Math.round(fileSlice * 0.85));
+        return { session, driveData, file: currentFile };
+      });
+
+      const uploadResults = await Promise.all(uploadPromises);
+
+      // Step 2: Confirm all uploads sequentially on the backend to avoid sheet conflicts/zip race conditions
+      for (let i = 0; i < uploadResults.length; i++) {
+        const { session, driveData, file } = uploadResults[i];
+        setUploadStatus(`Confirming upload ${i + 1}/${totalFiles}: ${file.name}`);
+
         const result = await confirmUpload({
           driveFileId: driveData.id || '',
           r2Key: '',
           canonicalFileName: session.canonicalFileName,
-          mimeType: currentFile.type,
+          mimeType: file.type,
           metadata: {
             ...session.metadata,
             driveWebViewLink: driveData.webViewLink || '',
@@ -272,11 +326,9 @@ export default function UploadModal({
 
         if (result.error === 'duplicate') {
           duplicateWarnings.push(
-            `"${currentFile.name}" is a duplicate of "${result.existingFile?.fileName}"`
+            `"${file.name}" is a duplicate of "${result.existingFile?.fileName}"`
           );
         }
-
-        setProgress(fileBaseProgress + fileSlice);
       }
 
       setProgress(100);
@@ -285,8 +337,10 @@ export default function UploadModal({
         setError(`Some files were duplicates: ${duplicateWarnings.join('; ')}. Other files uploaded successfully.`);
       }
       setSuccess(true);
+      setShowWarning(false);
     } catch (err: any) {
       setError(err.message || 'Upload failed');
+      setShowWarning(false);
     } finally {
       setUploading(false);
     }
@@ -313,6 +367,29 @@ export default function UploadModal({
             >
               {/* Close */}
               <button className="um-close" onClick={onClose}><X size={18} /></button>
+
+              {/* Mobile warning overlay */}
+              <AnimatePresence>
+                {showWarning && (
+                  <motion.div
+                    className="um-warning-overlay"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <div className="um-warning-card">
+                      <AlertTriangle size={28} style={{ color: '#daa520' }} />
+                      <h3 className="um-warning-title">Important Notice</h3>
+                      <p className="um-warning-desc">
+                        Please keep this screen/browser window active. Switching apps or locking your device may pause or interrupt the upload.
+                      </p>
+                      <button className="um-warning-btn" onClick={() => setShowWarning(false)}>
+                        Okay
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Header */}
               <div className="um-header">
@@ -392,131 +469,131 @@ export default function UploadModal({
                         transition={{ duration: 0.22, ease: 'easeInOut' }}
                         className="um-body"
                       >
-                      {/* File type selector */}
-                      <label className="um-label">File Type</label>
-                      <div className="um-type-grid">
-                        {FILE_CATEGORY_KEYS.map((key) => {
-                          const cat = CONFIG.FILE_CATEGORIES[key];
-                          return (
-                            <button
-                              key={key}
-                              className={`um-type-btn ${fileType === key ? 'selected' : ''}`}
-                              onClick={() => { setFileType(key); setFiles([]); }}
-                              style={fileType === key ? { borderColor: cat.colorHex, background: cat.colorHex + '15' } : {}}
-                            >
-                              <span>{cat.label}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {/* Exam type (qpaper only) */}
-                      {fileType === 'qpaper' && (
-                        <>
-                          <label className="um-label">Exam Type</label>
-                          <div className="um-exam-row">
-                            {EXAM_TYPES.map((et) => (
+                        {/* File type selector */}
+                        <label className="um-label">File Type</label>
+                        <div className="um-type-grid">
+                          {FILE_CATEGORY_KEYS.map((key) => {
+                            const cat = CONFIG.FILE_CATEGORIES[key];
+                            return (
                               <button
-                                key={et}
-                                className={`um-pill ${examType === et ? 'selected' : ''}`}
-                                onClick={() => setExamType(et)}
+                                key={key}
+                                className={`um-type-btn ${fileType === key ? 'selected' : ''}`}
+                                onClick={() => { setFileType(key); setFiles([]); }}
+                                style={fileType === key ? { borderColor: cat.colorHex, background: cat.colorHex + '15' } : {}}
                               >
-                                {et}
+                                <span>{cat.label}</span>
                               </button>
-                            ))}
-                          </div>
-                        </>
-                      )}
+                            );
+                          })}
+                        </div>
 
-                      {/* Year */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <label className="um-label">Year</label>
-                        {year && year.length === 4 && !isValidYear && (
-                          <span style={{ color: '#f87171', fontSize: '0.7rem', fontFamily: "'Outfit', sans-serif" }}>
-                            {parseInt(year, 10) > new Date().getFullYear() ? "Future year is not allowed" : "Invalid year"}
-                          </span>
+                        {/* Exam type (qpaper only) */}
+                        {fileType === 'qpaper' && (
+                          <>
+                            <label className="um-label">Exam Type</label>
+                            <div className="um-exam-row">
+                              {EXAM_TYPES.map((et) => (
+                                <button
+                                  key={et}
+                                  className={`um-pill ${examType === et ? 'selected' : ''}`}
+                                  onClick={() => setExamType(et)}
+                                >
+                                  {et}
+                                </button>
+                              ))}
+                            </div>
+                          </>
                         )}
-                      </div>
-                      <input
-                        type="text"
-                        className="um-input"
-                        value={year}
-                        onChange={(e) => setYear(e.target.value)}
-                        placeholder="e.g. 2024"
-                        maxLength={4}
-                      />
 
-                      {/* Semester */}
-                      <label className="um-label">Semester</label>
-                      <div className="um-sem-row">
-                        {SEMESTER_KEYS.map((s) => (
-                          <button
-                            key={s}
-                            className={`um-pill ${semester === s ? 'selected' : ''}`}
-                            onClick={() => { setSemester(s); setCourseCode(''); setProfessor(''); }}
-                          >
-                            {s === 'ADVANCE COURSES' ? 'ADV' : `Sem ${s}`}
-                          </button>
-                        ))}
-                      </div>
+                        {/* Year */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <label className="um-label">Year</label>
+                          {year && year.length === 4 && !isValidYear && (
+                            <span style={{ color: '#f87171', fontSize: '0.7rem', fontFamily: "'Outfit', sans-serif" }}>
+                              {parseInt(year, 10) > new Date().getFullYear() ? "Future year is not allowed" : "Invalid year"}
+                            </span>
+                          )}
+                        </div>
+                        <input
+                          type="text"
+                          className="um-input"
+                          value={year}
+                          onChange={(e) => setYear(e.target.value)}
+                          placeholder="e.g. 2024"
+                          maxLength={4}
+                        />
 
-                      {/* Course */}
-                      {semester && (
-                        <>
-                          <label className="um-label">Course</label>
-                          <select
-                            className="um-select"
-                            value={courseCode}
-                            onChange={(e) => { setCourseCode(e.target.value); setProfessor(''); }}
-                          >
-                            <option value="">Select course...</option>
-                            {courses.map((c) => (
-                              <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
-                            ))}
-                          </select>
-                        </>
-                      )}
+                        {/* Semester */}
+                        <label className="um-label">Semester</label>
+                        <div className="um-sem-row">
+                          {SEMESTER_KEYS.map((s) => (
+                            <button
+                              key={s}
+                              className={`um-pill ${semester === s ? 'selected' : ''}`}
+                              onClick={() => { setSemester(s); setCourseCode(''); setProfessor(''); }}
+                            >
+                              {s === 'ADVANCE COURSES' ? 'ADV' : `Sem ${s}`}
+                            </button>
+                          ))}
+                        </div>
 
-                      {/* Professors */}
-                      {selectedCourse && (
-                        <>
-                          <label className="um-label">Professor</label>
-                          <select
-                            className="um-select"
-                            value={professor}
-                            onChange={(e) => setProfessor(e.target.value)}
-                          >
-                            <option value="">Select professor...</option>
-                            {selectedCourse.professors.map((p) => (
-                              <option key={p} value={p}>{p}</option>
-                            ))}
-                          </select>
+                        {/* Course */}
+                        {semester && (
+                          <>
+                            <label className="um-label">Course</label>
+                            <select
+                              className="um-select"
+                              value={courseCode}
+                              onChange={(e) => { setCourseCode(e.target.value); setProfessor(''); }}
+                            >
+                              <option value="">Select course...</option>
+                              {courses.map((c) => (
+                                <option key={c.code} value={c.code}>{c.code} — {c.name}</option>
+                              ))}
+                            </select>
+                          </>
+                        )}
 
-                          <label className="um-label">Professor 2 (optional)</label>
-                          <select
-                            className="um-select"
-                            value={professor2}
-                            onChange={(e) => setProfessor2(e.target.value)}
-                          >
-                            <option value="">None</option>
-                            {selectedCourse.professors.map((p) => (
-                              <option key={p} value={p}>{p}</option>
-                            ))}
-                          </select>
+                        {/* Professors */}
+                        {selectedCourse && (
+                          <>
+                            <label className="um-label">Professor</label>
+                            <select
+                              className="um-select"
+                              value={professor}
+                              onChange={(e) => setProfessor(e.target.value)}
+                            >
+                              <option value="">Select professor...</option>
+                              {selectedCourse.professors.map((p) => (
+                                <option key={p} value={p}>{p}</option>
+                              ))}
+                            </select>
 
-                          <label className="um-label">Professor 3 (optional)</label>
-                          <select
-                            className="um-select"
-                            value={professor3}
-                            onChange={(e) => setProfessor3(e.target.value)}
-                          >
-                            <option value="">None</option>
-                            {selectedCourse.professors.map((p) => (
-                              <option key={p} value={p}>{p}</option>
-                            ))}
-                          </select>
-                        </>
-                      )}
+                            <label className="um-label">Professor 2 (optional)</label>
+                            <select
+                              className="um-select"
+                              value={professor2}
+                              onChange={(e) => setProfessor2(e.target.value)}
+                            >
+                              <option value="">None</option>
+                              {selectedCourse.professors.map((p) => (
+                                <option key={p} value={p}>{p}</option>
+                              ))}
+                            </select>
+
+                            <label className="um-label">Professor 3 (optional)</label>
+                            <select
+                              className="um-select"
+                              value={professor3}
+                              onChange={(e) => setProfessor3(e.target.value)}
+                            >
+                              <option value="">None</option>
+                              {selectedCourse.professors.map((p) => (
+                                <option key={p} value={p}>{p}</option>
+                              ))}
+                            </select>
+                          </>
+                        )}
                       </motion.div>
                     )}
 
@@ -532,68 +609,68 @@ export default function UploadModal({
                         transition={{ duration: 0.22, ease: 'easeInOut' }}
                         className="um-body"
                       >
-                      <div className="um-file-mode-hint">
-                        {isQpaper
-                          ? 'Question Paper — single file only'
-                          : `${CONFIG.FILE_CATEGORIES[fileType as keyof typeof CONFIG.FILE_CATEGORIES]?.label || 'Files'} — you can upload multiple files`
-                        }
-                      </div>
-
-                      {/* Dropzone */}
-                      <div
-                        className={`um-dropzone ${dragOver ? 'drag-over' : ''} ${files.length > 0 ? 'has-file' : ''}`}
-                        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                        onDragLeave={() => setDragOver(false)}
-                        onDrop={handleFileDrop}
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          className="um-file-input"
-                          accept={CONFIG.ALLOWED_FILE_TYPES.map(t => `.${t}`).join(',')}
-                          multiple={allowMultiple}
-                          onChange={handleFileChange}
-                        />
-                        <div className="um-drop-prompt">
-                          <Upload size={28} />
-                          <span>
-                            {files.length > 0
-                              ? (isQpaper ? 'Click to replace file' : 'Drop more files or click to browse')
-                              : 'Drop file here or click to browse'
-                            }
-                          </span>
-                          <span className="um-drop-hint">
-                            {CONFIG.ALLOWED_FILE_TYPES.join(', ')} · Max {CONFIG.MAX_FILE_SIZE_MB} MB
-                          </span>
+                        <div className="um-file-mode-hint">
+                          {isQpaper
+                            ? 'Question Paper — single file only'
+                            : `${CONFIG.FILE_CATEGORIES[fileType as keyof typeof CONFIG.FILE_CATEGORIES]?.label || 'Files'} — you can upload multiple files`
+                          }
                         </div>
-                      </div>
 
-                      {/* File list */}
-                      {files.length > 0 && (
-                        <div className="um-file-list">
-                          {files.map((f, idx) => (
-                            <div key={`${f.name}-${idx}`} className="um-file-item">
-                              <FileUp size={16} className="um-file-item-icon" />
-                              <div className="um-file-item-info">
-                                <span className="um-file-item-name">{f.name}</span>
-                                <span className="um-file-item-size">{(f.size / (1024 * 1024)).toFixed(1)} MB</span>
-                              </div>
-                              <button
-                                className="um-file-item-remove"
-                                onClick={() => removeFile(idx)}
-                                title="Remove file"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          ))}
-                          <div className="um-file-count-summary">
-                            {files.length} file{files.length !== 1 ? 's' : ''} selected ·{' '}
-                            {(files.reduce((sum, f) => sum + f.size, 0) / (1024 * 1024)).toFixed(1)} MB total
+                        {/* Dropzone */}
+                        <div
+                          className={`um-dropzone ${dragOver ? 'drag-over' : ''} ${files.length > 0 ? 'has-file' : ''}`}
+                          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                          onDragLeave={() => setDragOver(false)}
+                          onDrop={handleFileDrop}
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            className="um-file-input"
+                            accept={CONFIG.ALLOWED_FILE_TYPES.map(t => `.${t}`).join(',')}
+                            multiple={allowMultiple}
+                            onChange={handleFileChange}
+                          />
+                          <div className="um-drop-prompt">
+                            <Upload size={28} />
+                            <span>
+                              {files.length > 0
+                                ? (isQpaper ? 'Click to replace file' : 'Drop more files or click to browse')
+                                : 'Drop file here or click to browse'
+                              }
+                            </span>
+                            <span className="um-drop-hint">
+                              {CONFIG.ALLOWED_FILE_TYPES.join(', ')} · Max {CONFIG.MAX_FILE_SIZE_MB} MB
+                            </span>
                           </div>
                         </div>
-                      )}
+
+                        {/* File list */}
+                        {files.length > 0 && (
+                          <div className="um-file-list">
+                            {files.map((f, idx) => (
+                              <div key={`${f.name}-${idx}`} className="um-file-item">
+                                <FileUp size={16} className="um-file-item-icon" />
+                                <div className="um-file-item-info">
+                                  <span className="um-file-item-name">{f.name}</span>
+                                  <span className="um-file-item-size">{(f.size / (1024 * 1024)).toFixed(1)} MB</span>
+                                </div>
+                                <button
+                                  className="um-file-item-remove"
+                                  onClick={() => removeFile(idx)}
+                                  title="Remove file"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            ))}
+                            <div className="um-file-count-summary">
+                              {files.length} file{files.length !== 1 ? 's' : ''} selected ·{' '}
+                              {(files.reduce((sum, f) => sum + f.size, 0) / (1024 * 1024)).toFixed(1)} MB total
+                            </div>
+                          </div>
+                        )}
                       </motion.div>
                     )}
 
@@ -609,80 +686,80 @@ export default function UploadModal({
                         transition={{ duration: 0.22, ease: 'easeInOut' }}
                         className="um-body"
                       >
-                      <label className="um-label">Your Name</label>
-                      <input
-                        type="text"
-                        className="um-input"
-                        value={uploaderName}
-                        onChange={(e) => setUploaderName(e.target.value)}
-                        placeholder="Enter your name"
-                      />
-                      <div className="um-consent">
-                        <button
-                          className={`um-toggle ${showName ? 'on' : ''}`}
-                          onClick={() => setShowName(!showName)}
-                        >
-                          <span className="um-toggle-knob" />
-                        </button>
-                        <span className="um-consent-text">
-                          {showName ? 'Show my name' : 'Upload anonymously'}
-                        </span>
-                      </div>
-
-                      <label className="um-label">Remarks (optional)</label>
-                      <textarea
-                        className="um-textarea"
-                        value={remarks}
-                        onChange={(e) => setRemarks(e.target.value)}
-                        placeholder="Any notes about these files..."
-                        rows={2}
-                      />
-
-                      {/* Summary */}
-                      <div className="um-preview-section">
-                        <label className="um-label">Upload Summary</label>
-                        <div className="um-summary">
-                          <div className="um-summary-row">
-                            <span>Type</span>
-                            <span>{CONFIG.FILE_CATEGORIES[fileType as keyof typeof CONFIG.FILE_CATEGORIES]?.label || fileType}</span>
-                          </div>
-                          {isQpaper && examType && (
-                            <div className="um-summary-row">
-                              <span>Exam</span><span>{examType}</span>
-                            </div>
-                          )}
-                          <div className="um-summary-row">
-                            <span>Course</span><span>{courseCode} {selectedCourse?.name || ''}</span>
-                          </div>
-                          <div className="um-summary-row">
-                            <span>Semester</span><span>{semester}</span>
-                          </div>
-                          <div className="um-summary-row">
-                            <span>Professor</span><span>{professor}</span>
-                          </div>
-                          <div className="um-summary-row">
-                            <span>Year</span><span>{year}</span>
-                          </div>
-                          <div className="um-summary-row">
-                            <span>Files</span><span>{files.length} file{files.length !== 1 ? 's' : ''}</span>
-                          </div>
+                        <label className="um-label">Your Name</label>
+                        <input
+                          type="text"
+                          className="um-input"
+                          value={uploaderName}
+                          onChange={(e) => setUploaderName(e.target.value)}
+                          placeholder="Enter your name"
+                        />
+                        <div className="um-consent">
+                          <button
+                            className={`um-toggle ${showName ? 'on' : ''}`}
+                            onClick={() => setShowName(!showName)}
+                          >
+                            <span className="um-toggle-knob" />
+                          </button>
+                          <span className="um-consent-text">
+                            {showName ? 'Show my name' : 'Upload anonymously'}
+                          </span>
                         </div>
 
-                        {/* Generated filenames preview */}
-                        {canonicalFileNames.length > 0 && (
-                          <>
-                            <label className="um-label" style={{ marginTop: 12 }}>Generated Filename{files.length > 1 ? 's' : ''}</label>
-                            <div className="um-canonical-list">
-                              {canonicalFileNames.map((name, idx) => (
-                                <div key={idx} className="um-preview-box">{name}</div>
-                              ))}
+                        <label className="um-label">Remarks (optional)</label>
+                        <textarea
+                          className="um-textarea"
+                          value={remarks}
+                          onChange={(e) => setRemarks(e.target.value)}
+                          placeholder="Any notes about these files..."
+                          rows={2}
+                        />
+
+                        {/* Summary */}
+                        <div className="um-preview-section">
+                          <label className="um-label">Upload Summary</label>
+                          <div className="um-summary">
+                            <div className="um-summary-row">
+                              <span>Type</span>
+                              <span>{CONFIG.FILE_CATEGORIES[fileType as keyof typeof CONFIG.FILE_CATEGORIES]?.label || fileType}</span>
                             </div>
-                          </>
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                            {isQpaper && examType && (
+                              <div className="um-summary-row">
+                                <span>Exam</span><span>{examType}</span>
+                              </div>
+                            )}
+                            <div className="um-summary-row">
+                              <span>Course</span><span>{courseCode} {selectedCourse?.name || ''}</span>
+                            </div>
+                            <div className="um-summary-row">
+                              <span>Semester</span><span>{semester}</span>
+                            </div>
+                            <div className="um-summary-row">
+                              <span>Professor</span><span>{professor}</span>
+                            </div>
+                            <div className="um-summary-row">
+                              <span>Year</span><span>{year}</span>
+                            </div>
+                            <div className="um-summary-row">
+                              <span>Files</span><span>{files.length} file{files.length !== 1 ? 's' : ''}</span>
+                            </div>
+                          </div>
+
+                          {/* Generated filenames preview */}
+                          {canonicalFileNames.length > 0 && (
+                            <>
+                              <label className="um-label" style={{ marginTop: 12 }}>Generated Filename{files.length > 1 ? 's' : ''}</label>
+                              <div className="um-canonical-list">
+                                {canonicalFileNames.map((name, idx) => (
+                                  <div key={idx} className="um-preview-box">{name}</div>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
                   {/* Progress bar */}
                   {uploading && (
@@ -1241,6 +1318,68 @@ export default function UploadModal({
           transition: transform 0.15s;
         }
         .um-success-btn:hover { transform: translateY(-1px); }
+
+        /* --- Mobile Warning Overlay --- */
+        .um-warning-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(3, 10, 24, 0.98);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 24px;
+          z-index: 100;
+          border-radius: 20px;
+        }
+        .um-warning-card {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          gap: 16px;
+          max-width: 380px;
+          width: 100%;
+          padding: 24px;
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid rgba(218, 165, 32, 0.25);
+          border-radius: 16px;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        .um-warning-title {
+          font-family: 'Cinzel', serif;
+          font-size: 1.2rem;
+          font-weight: 700;
+          color: #daa520;
+          margin: 0;
+        }
+        .um-warning-desc {
+          font-family: 'Outfit', sans-serif;
+          font-size: 0.84rem;
+          color: rgba(255, 255, 255, 0.7);
+          line-height: 1.6;
+          margin: 0;
+        }
+        .um-warning-btn {
+          width: 100%;
+          font-family: 'Outfit', sans-serif;
+          font-weight: 700;
+          font-size: 0.8rem;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          padding: 10px 20px;
+          background: #daa520;
+          color: #030a18;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .um-warning-btn:hover {
+          background: #f1b835;
+          box-shadow: 0 0 15px rgba(218, 165, 32, 0.35);
+        }
       `}</style>
     </>
   );
