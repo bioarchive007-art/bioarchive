@@ -4,6 +4,7 @@ import { getAllFiles, deleteFileRecord, appendFileRecord } from './sheets';
 import { deleteFromDrive, uploadToDrive, makeFilePublic, resolveNestedFolder } from './drive';
 import { getAccessToken } from './google-auth';
 import JSZip from 'jszip';
+import { getRequestContext } from '@cloudflare/next-on-pages';
 
 /**
  * Rebuilds the combined ZIP archive for a specific course material category.
@@ -162,13 +163,12 @@ export function triggerBackgroundZipRebuild(params: {
   );
 
   try {
-    const { getRequestContext } = require('@cloudflare/next-on-pages');
     const cloudflareCtx = getRequestContext();
-    if (cloudflareCtx && cloudflareCtx.context && typeof cloudflareCtx.context.waitUntil === 'function') {
-      cloudflareCtx.context.waitUntil(rebuildPromise);
-      console.log('[background-zip-rebuild] Registered rebuildZipArchive in Cloudflare context.waitUntil');
+    if (cloudflareCtx && cloudflareCtx.ctx && typeof cloudflareCtx.ctx.waitUntil === 'function') {
+      cloudflareCtx.ctx.waitUntil(rebuildPromise);
+      console.log('[background-zip-rebuild] Registered rebuildZipArchive in Cloudflare ctx.waitUntil');
     } else {
-      console.log('[background-zip-rebuild] Cloudflare context.waitUntil not available, running as standard background promise');
+      console.log('[background-zip-rebuild] Cloudflare ctx.waitUntil not available, running as standard background promise');
     }
   } catch (e) {
     console.log('[background-zip-rebuild] Running rebuildZipArchive as standard background promise');
