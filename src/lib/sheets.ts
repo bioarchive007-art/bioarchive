@@ -176,8 +176,7 @@ export async function appendFileRecord(row: SheetRow, isDuplicate?: boolean): Pr
   const headerMap = await getSheetHeaderMap();
   const rowArray = sheetRowToArray(row, headerMap);
   
-  const lastCol = getColumnLetter(CONFIG.SHEET_HEADERS.length - 1);
-  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/Sheet1!A:${lastCol}:append?valueInputOption=RAW`, {
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/Sheet1!A:A:append?valueInputOption=RAW`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -525,7 +524,7 @@ export async function appendRequestRecord(req: FileRequest): Promise<void> {
     req.fulfilledFileId || '',
   ];
 
-  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/Requests!A:K:append?valueInputOption=RAW`, {
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/Requests!A:A:append?valueInputOption=RAW`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -640,7 +639,7 @@ export async function appendBookDownloadRecord(record: {
     record.userAgent,
   ];
 
-  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/BookDownloads!A:F:append?valueInputOption=RAW`, {
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/BookDownloads!A:A:append?valueInputOption=RAW`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
