@@ -121,13 +121,23 @@ export async function confirmUpload(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(params),
   });
+
+  if (!res.ok && res.status !== 409) {
+    const errText = await res.text().catch(() => 'Unknown error');
+    let errMsg = `Server returned status ${res.status}`;
+    try {
+      const errJson = JSON.parse(errText);
+      errMsg = errJson.error || errMsg;
+    } catch {
+      if (errText.includes('<title>')) {
+        const titleMatch = errText.match(/<title>([^<]+)<\/title>/);
+        if (titleMatch) errMsg = `Server Error: ${titleMatch[1]}`;
+      }
+    }
+    throw new Error(errMsg);
+  }
+
   const data = await res.json();
-  if (res.status === 409) {
-    return data; // duplicate
-  }
-  if (!res.ok) {
-    throw new Error(data.error || 'Failed to confirm upload');
-  }
   return data;
 }
 

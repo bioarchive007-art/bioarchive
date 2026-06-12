@@ -144,3 +144,34 @@ export async function rebuildZipArchive(params: {
     console.log(`[zip-utils] Successfully registered new ZIP archive: ${zipName}`);
   }
 }
+
+/**
+ * Triggers the rebuild of a course category ZIP archive in the background.
+ * It is non-blocking and integrates with Cloudflare context.waitUntil if available.
+ */
+export function triggerBackgroundZipRebuild(params: {
+  courseCode: string;
+  semester: string;
+  year: string;
+  fileType: string;
+  professor: string;
+  uploaderName?: string;
+}): void {
+  const rebuildPromise = rebuildZipArchive(params).catch((err) =>
+    console.error('[background-zip-rebuild] Failed to rebuild ZIP archive:', err)
+  );
+
+  try {
+    const { getRequestContext } = require('@cloudflare/next-on-pages');
+    const cloudflareCtx = getRequestContext();
+    if (cloudflareCtx && cloudflareCtx.context && typeof cloudflareCtx.context.waitUntil === 'function') {
+      cloudflareCtx.context.waitUntil(rebuildPromise);
+      console.log('[background-zip-rebuild] Registered rebuildZipArchive in Cloudflare context.waitUntil');
+    } else {
+      console.log('[background-zip-rebuild] Cloudflare context.waitUntil not available, running as standard background promise');
+    }
+  } catch (e) {
+    console.log('[background-zip-rebuild] Running rebuildZipArchive as standard background promise');
+  }
+}
+

@@ -3,7 +3,7 @@ export const runtime = 'edge';
 import { NextRequest, NextResponse } from 'next/server';
 import { deleteFromDrive } from '@/lib/drive';
 import { deleteFileRecord, getAllFiles } from '@/lib/sheets';
-import { rebuildZipArchive } from '@/lib/zip-utils';
+import { triggerBackgroundZipRebuild } from '@/lib/zip-utils';
 
 /**
  * POST /api/delete
@@ -57,15 +57,13 @@ export async function POST(request: NextRequest) {
 
     // Step 3: Rebuild zip archive dynamically on the backend after deleting
     if (recordToRezip && recordToRezip.fileType.toLowerCase() !== 'qpaper' && !recordToRezip.fileName.toLowerCase().endsWith('_all_files.zip')) {
-      await rebuildZipArchive({
+      triggerBackgroundZipRebuild({
         courseCode: recordToRezip.courseCode,
         semester: recordToRezip.semester,
         year: recordToRezip.year,
         fileType: recordToRezip.fileType,
         professor: recordToRezip.professor,
-      }).catch((err) =>
-        console.error('[api/delete] Failed to rebuild ZIP archive:', err)
-      );
+      });
     }
 
     // Step 4: Invalidate KV cache

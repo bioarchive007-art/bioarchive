@@ -6,7 +6,7 @@ import { SheetRow } from '@/types';
 import { makeFilePublic, copyToBackupFolder } from '@/lib/drive';
 import { checkDuplicate, appendFileRecord, initializeSheetHeaders, fulfillRequest } from '@/lib/sheets';
 import { notifyModsOfUpload } from '@/lib/notify';
-import { rebuildZipArchive } from '@/lib/zip-utils';
+import { triggerBackgroundZipRebuild } from '@/lib/zip-utils';
 
 /**
  * POST /api/upload/confirm
@@ -80,16 +80,14 @@ export async function POST(request: NextRequest) {
     // Step 3.2: Rebuild zip archive dynamically on the backend (skip for qpaper, zip files themselves, or if isLastFile is false)
     const shouldRebuildZip = isLastFile !== false;
     if (shouldRebuildZip && sheetRow.fileType.toLowerCase() !== 'qpaper' && !sheetRow.fileName.toLowerCase().endsWith('_all_files.zip')) {
-      await rebuildZipArchive({
+      triggerBackgroundZipRebuild({
         courseCode: sheetRow.courseCode,
         semester: sheetRow.semester,
         year: sheetRow.year,
         fileType: sheetRow.fileType,
         professor: sheetRow.professor,
         uploaderName: sheetRow.uploaderName,
-      }).catch((err) =>
-        console.error('[api/upload/confirm] Failed to rebuild ZIP archive:', err)
-      );
+      });
     }
 
     // Step 3.5: If uploaded for a request, fulfill it
