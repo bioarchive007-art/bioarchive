@@ -1,6 +1,7 @@
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import { Cinzel, Outfit, Plus_Jakarta_Sans, Tangerine } from 'next/font/google';
+import Script from 'next/script';
 
 const fontCinzel = Cinzel({
   subsets: ['latin'],
@@ -56,6 +57,20 @@ export default function RootLayout({
     >
       <head />
       <body>
+        {/* Google Analytics */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-CZS52D25M3"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-CZS52D25M3');
+          `}
+        </Script>
+
         {/* Ambient background */}
         <div className="orb-bg" aria-hidden="true" />
 
