@@ -87,6 +87,7 @@ export interface ConfirmUploadParams {
   canonicalFileName: string;
   fileBuffer?: string; // base64
   mimeType: string;
+  isLastFile?: boolean;
   metadata: {
     semester: string;
     year: string;

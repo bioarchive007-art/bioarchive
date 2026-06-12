@@ -262,3 +262,51 @@ export async function listFilesInFolder(folderId: string): Promise<Array<{ id: s
   const data = await res.json() as { files?: Array<{ id: string; name: string; webViewLink: string }> };
   return data.files || [];
 }
+
+/**
+ * Creates a new folder inside a parent folder on Google Drive.
+ * Returns the folder's ID.
+ */
+export async function createFolder(parentFolderId: string, folderName: string): Promise<string> {
+  const token = await getAccessToken();
+  const res = await fetch('https://www.googleapis.com/drive/v3/files?fields=id', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      name: folderName,
+      mimeType: 'application/vnd.google-apps.folder',
+      parents: [parentFolderId]
+    })
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to create folder "${folderName}" on Google Drive: ${res.statusText} - ${errorText}`);
+  }
+
+  const data = await res.json() as { id: string };
+  return data.id;
+}
+
+/**
+ * Resolves a nested subfolder path, creating folders along the way if they do not exist.
+ * Returns the final folder's ID.
+ */
+export async function resolveNestedFolder(
+  rootFolderId: string,
+  pathComponents: string[]
+): Promise<string> {
+  let currentFolderId = rootFolderId;
+  for (const component of pathComponents) {
+    if (!component) continue;
+    let folderId = await findSubfolderId(currentFolderId, component);
+    if (!folderId) {
+      folderId = await createFolder(currentFolderId, component);
+    }
+    currentFolderId = folderId;
+  }
+  return currentFolderId;
+}

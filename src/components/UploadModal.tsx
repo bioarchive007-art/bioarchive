@@ -311,11 +311,14 @@ export default function UploadModal({
         const { session, driveData, file } = uploadResults[i];
         setUploadStatus(`Confirming upload ${i + 1}/${totalFiles}: ${file.name}`);
 
+        const isLastFile = i === uploadResults.length - 1;
+
         const result = await confirmUpload({
           driveFileId: driveData.id || '',
           r2Key: '',
           canonicalFileName: session.canonicalFileName,
           mimeType: file.type,
+          isLastFile,
           metadata: {
             ...session.metadata,
             driveWebViewLink: driveData.webViewLink || '',

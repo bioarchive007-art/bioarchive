@@ -3,7 +3,7 @@ export const runtime = 'edge';
 import { NextRequest, NextResponse } from 'next/server';
 import { CONFIG } from '@/config';
 import { generateRenamedFilename } from '@/lib/file-renaming';
-import { createResumableUploadSession } from '@/lib/drive';
+import { createResumableUploadSession, resolveNestedFolder } from '@/lib/drive';
 import { checkDuplicateMetadata } from '@/lib/sheets';
 
 /**
@@ -99,12 +99,42 @@ export async function POST(request: NextRequest) {
       examType,
     });
 
-    // If duplicate, route to quarantine folder, otherwise normal folder
+    // If duplicate, route to quarantine folder, otherwise normal folder structure
     let folderId = CONFIG.DRIVE_FOLDER_ID;
     if (isDuplicateMatch) {
       const skipQuarantineTypes = new Set(['notes', 'assignment', 'lab']);
       if (!skipQuarantineTypes.has(fileType.toLowerCase())) {
         folderId = CONFIG.DRIVE_QUARANTINE_FOLDER_ID;
+      }
+    }
+
+    if (folderId === CONFIG.DRIVE_FOLDER_ID) {
+      try {
+        const isAdvance = semester.toUpperCase().includes('ADVANCE');
+        const courseCategory = isAdvance ? 'Advance Courses' : 'Core Courses';
+        
+        const pathComponents = [courseCategory];
+        if (!isAdvance) {
+          pathComponents.push(`Sem ${semester}`);
+        }
+        pathComponents.push(`${courseCode.trim()} ${courseName.trim()}`);
+        pathComponents.push('Course Materials');
+
+        const FILE_TYPE_FOLDERS: Record<string, string> = {
+          qpaper: 'Question Papers',
+          notes: 'Notes',
+          slides: 'Slides',
+          lab: 'Lab Material',
+          assignment: 'Assignments',
+          other: 'Other',
+        };
+        const folderName = FILE_TYPE_FOLDERS[fileType.toLowerCase()] || 'Other';
+        pathComponents.push(folderName);
+
+        // Resolve or create nested path in Google Drive
+        folderId = await resolveNestedFolder(CONFIG.DRIVE_FOLDER_ID, pathComponents);
+      } catch (err) {
+        console.error('Failed to resolve subfolder structure, falling back to root folder:', err);
       }
     }
 

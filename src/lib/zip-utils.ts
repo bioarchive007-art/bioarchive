@@ -1,7 +1,7 @@
 import { CONFIG } from '@/config';
 import { SheetRow } from '@/types';
 import { getAllFiles, deleteFileRecord, appendFileRecord } from './sheets';
-import { deleteFromDrive, uploadToDrive, makeFilePublic } from './drive';
+import { deleteFromDrive, uploadToDrive, makeFilePublic, resolveNestedFolder } from './drive';
 import { getAccessToken } from './google-auth';
 import JSZip from 'jszip';
 
@@ -74,12 +74,42 @@ export async function rebuildZipArchive(params: {
     const zipBuffer = await zip.generateAsync({ type: 'arraybuffer' });
     const zipName = `${courseCode}_${semester}_${year}_${fileType}_all_files.zip`;
     
+    // Resolve nested folder path for the ZIP archive
+    let folderId = CONFIG.DRIVE_FOLDER_ID;
+    try {
+      const isAdvance = semester.toUpperCase().includes('ADVANCE');
+      const courseCategory = isAdvance ? 'Advance Courses' : 'Core Courses';
+      
+      const pathComponents = [courseCategory];
+      if (!isAdvance) {
+        pathComponents.push(`Sem ${semester}`);
+      }
+      const courseName = individualFiles[0].courseName;
+      pathComponents.push(`${courseCode.trim()} ${courseName.trim()}`);
+      pathComponents.push('Course Materials');
+
+      const FILE_TYPE_FOLDERS: Record<string, string> = {
+        qpaper: 'Question Papers',
+        notes: 'Notes',
+        slides: 'Slides',
+        lab: 'Lab Material',
+        assignment: 'Assignments',
+        other: 'Other',
+      };
+      const folderName = FILE_TYPE_FOLDERS[fileType.toLowerCase()] || 'Other';
+      pathComponents.push(folderName);
+
+      folderId = await resolveNestedFolder(CONFIG.DRIVE_FOLDER_ID, pathComponents);
+    } catch (err) {
+      console.error('[zip-utils] Failed to resolve subfolder structure for ZIP, using root:', err);
+    }
+
     // Upload the new ZIP to Google Drive
     const uploadResult = await uploadToDrive({
       fileName: zipName,
       mimeType: 'application/zip',
       buffer: zipBuffer,
-      folderId: CONFIG.DRIVE_FOLDER_ID
+      folderId: folderId
     });
 
     // Share the new ZIP

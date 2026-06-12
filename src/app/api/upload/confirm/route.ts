@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
       driveFileId,
       canonicalFileName,
       metadata,
+      isLastFile,
     } = body;
 
     if (!driveFileId || !canonicalFileName || !metadata) {
@@ -76,8 +77,9 @@ export async function POST(request: NextRequest) {
     await initializeSheetHeaders();
     await appendFileRecord(sheetRow, isDuplicate);
 
-    // Step 3.2: Rebuild zip archive dynamically on the backend (skip for qpaper and zip files themselves)
-    if (sheetRow.fileType.toLowerCase() !== 'qpaper' && !sheetRow.fileName.toLowerCase().endsWith('_all_files.zip')) {
+    // Step 3.2: Rebuild zip archive dynamically on the backend (skip for qpaper, zip files themselves, or if isLastFile is false)
+    const shouldRebuildZip = isLastFile !== false;
+    if (shouldRebuildZip && sheetRow.fileType.toLowerCase() !== 'qpaper' && !sheetRow.fileName.toLowerCase().endsWith('_all_files.zip')) {
       await rebuildZipArchive({
         courseCode: sheetRow.courseCode,
         semester: sheetRow.semester,
