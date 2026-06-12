@@ -111,8 +111,15 @@ export async function POST(request: NextRequest) {
     if (folderId === CONFIG.DRIVE_FOLDER_ID) {
       try {
         const isAdvance = semester.toUpperCase().includes('ADVANCE');
-        const courseCategory = isAdvance ? 'Advance Courses' : 'Core Courses';
+        const courseCategory = isAdvance ? 'Adv Courses' : 'Core Courses';
         
+        // Ensure "Self Materials" folder exists at the root
+        try {
+          await resolveNestedFolder(CONFIG.DRIVE_FOLDER_ID, ['Self Materials']);
+        } catch (e) {
+          console.error('Failed to pre-create Self Materials folder:', e);
+        }
+
         const pathComponents = [courseCategory];
         if (!isAdvance) {
           pathComponents.push(`Sem ${semester}`);

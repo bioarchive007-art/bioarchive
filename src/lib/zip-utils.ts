@@ -78,7 +78,7 @@ export async function rebuildZipArchive(params: {
     let folderId = CONFIG.DRIVE_FOLDER_ID;
     try {
       const isAdvance = semester.toUpperCase().includes('ADVANCE');
-      const courseCategory = isAdvance ? 'Advance Courses' : 'Core Courses';
+      const courseCategory = isAdvance ? 'Adv Courses' : 'Core Courses';
       
       const pathComponents = [courseCategory];
       if (!isAdvance) {

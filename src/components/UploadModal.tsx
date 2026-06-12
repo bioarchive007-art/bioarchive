@@ -201,10 +201,11 @@ export default function UploadModal({
       const fileProgresses = new Array(totalFiles).fill(0);
       const duplicateWarnings: string[] = [];
 
-      // Step 1: Upload all files concurrently to Google Drive
-      setUploadStatus(`Uploading ${totalFiles} file(s) in parallel...`);
-      const uploadPromises = filesToUpload.map(async (currentFile, index) => {
-        // Step A: Create upload session
+      // Step A: Create upload sessions sequentially to avoid concurrent folder creation race conditions
+      setUploadStatus(`Preparing upload sessions...`);
+      const sessions: any[] = [];
+      for (let i = 0; i < filesToUpload.length; i++) {
+        const currentFile = filesToUpload[i];
         const session = await createUploadSession({
           fileName: currentFile.name,
           mimeType: currentFile.type,
@@ -221,8 +222,15 @@ export default function UploadModal({
           uploaderName: displayName,
           remarks,
         });
+        sessions.push(session);
+      }
 
-        // Step B: Upload file bytes in chunks to Google Drive via server proxy with progress tracking and automatic retry
+      // Step B: Upload all files concurrently to Google Drive
+      setUploadStatus(`Uploading ${totalFiles} file(s) in parallel...`);
+      const uploadPromises = filesToUpload.map(async (currentFile, index) => {
+        const session = sessions[index];
+
+        // Step C: Upload file bytes in chunks to Google Drive via server proxy with progress tracking and automatic retry
         const totalSize = currentFile.size;
         const chunkSize = 5 * 1024 * 1024; // 5MB chunks (must be a multiple of 256KB)
         let start = 0;
