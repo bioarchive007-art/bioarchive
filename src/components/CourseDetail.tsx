@@ -44,7 +44,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [expandedTypes, setExpandedTypes] = useState<Set<string>>(new Set(FILE_TYPE_ORDER));
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [sortStates, setSortStates] = useState<Record<string, { field: SortField; order: SortOrder }>>({});
 
   // Find the course from curriculum
@@ -60,7 +60,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
 
     Promise.all([
       fetchFilesByCourse(courseCode, activeSemester),
-      fetch(`/api/books?semester=${encodeURIComponent(activeSemester)}`).then(res => res.json()).catch(() => [])
+      fetch(`/api/books?semester=${encodeURIComponent(activeSemester)}&courseCode=${encodeURIComponent(courseCode)}`).then(res => res.json()).catch(() => [])
     ])
       .then(([filesData, booksData]) => {
         if (!cancelled) {
@@ -112,13 +112,8 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
     return result;
   }, [filesByType, sortStates]);
 
-  const toggleType = useCallback((type: string) => {
-    setExpandedTypes((prev) => {
-      const next = new Set(prev);
-      if (next.has(type)) next.delete(type);
-      else next.add(type);
-      return next;
-    });
+  const toggleSection = useCallback((section: string) => {
+    setExpandedSection((prev) => (prev === section ? null : section));
   }, []);
 
   const handleSort = useCallback((type: string, field: SortField) => {
@@ -325,54 +320,6 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
             </motion.div>
           )}
 
-          {/* Reference Books Section */}
-          {!loading && !error && course?.textbooks && course.textbooks.length > 0 && (
-            <motion.section
-              className="cd-type-section"
-              variants={{
-                hidden: { opacity: 0, y: 14 },
-                show: { opacity: 1, y: 0 }
-              }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-              style={{ marginBottom: '20px' }}
-            >
-              <div className="cd-books-header">
-                <span className="cd-books-accent" />
-                <BookOpen size={16} strokeWidth={1.5} style={{ marginRight: 4 }} />
-                <span className="cd-type-label">Recommended Reference Books</span>
-              </div>
-              <div className="cd-books-body">
-                {course.textbooks.map((book) => {
-                  const matchedFile = findMatchingBook(book);
-                  return (
-                    <div key={book} className="cd-book-row">
-                      <span className="cd-book-name">{book}</span>
-                      <div className="cd-book-actions">
-                        {matchedFile && (
-                          <a
-                            href={`/api/books/download?fileId=${matchedFile.id}&bookName=${encodeURIComponent(book)}&courseCode=${courseCode}&semester=${activeSemester}`}
-                            className="cd-book-btn openlib"
-                            style={{ background: 'rgba(16, 185, 129, 0.12)', borderColor: 'rgba(16, 185, 129, 0.25)', color: '#10B981' }}
-                          >
-                            Download PDF
-                          </a>
-                        )}
-                        <a
-                          href={`https://books.google.com/books?q=${encodeURIComponent(book)}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="cd-book-btn google"
-                        >
-                          Google Books
-                        </a>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </motion.section>
-          )}
-
           {/* File type sections */}
           {!loading && !error && hasAnyFiles && (
             <div className="cd-sections">
@@ -380,7 +327,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
                 const typeFiles = sortedFilesByType[type] || [];
                 if (typeFiles.length === 0) return null;
                 const config = FILE_TYPE_CONFIG[type];
-                const isExpanded = expandedTypes.has(type);
+                const isExpanded = expandedSection === type;
                 const sort = sortStates[type] || { field: 'year' as SortField, order: 'desc' as SortOrder };
 
                 return (
@@ -395,7 +342,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
                   >
                     <button
                       className="cd-type-header"
-                      onClick={() => toggleType(type)}
+                      onClick={() => toggleSection(type)}
                     >
                       <span
                         className="cd-type-accent"
@@ -439,6 +386,78 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
                 );
               })}
             </div>
+          )}
+
+          {/* Reference Books Section (Moved to Bottom, Styled as Collapsible) */}
+          {!loading && !error && books && books.length > 0 && (
+            <motion.section
+              className="cd-type-section"
+              variants={{
+                hidden: { opacity: 0, y: 14 },
+                show: { opacity: 1, y: 0 }
+              }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              style={{ marginTop: '10px' }}
+            >
+              <button
+                className="cd-type-header"
+                onClick={() => toggleSection('books')}
+              >
+                <span
+                  className="cd-type-accent"
+                  style={{ background: 'var(--gold)' }}
+                />
+                {/* <BookOpen size={16} strokeWidth={1.5} style={{ marginRight: 4 }} /> */}
+                <span className="cd-type-label">Reference Books</span>
+                <span className="cd-type-count">{books.length}</span>
+                <motion.span
+                  className="cd-type-chevron"
+                  animate={{ rotate: expandedSection === 'books' ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ChevronDown size={18} strokeWidth={1.5} />
+                </motion.span>
+              </button>
+
+              <AnimatePresence initial={false}>
+                {expandedSection === 'books' && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.25, ease: 'easeInOut' }}
+                    className="cd-type-body"
+                  >
+                    <div className="cd-books-body">
+                      {books.map((book) => {
+                        return (
+                          <div key={book.id} className="cd-book-row">
+                            <span className="cd-book-name">{book.name}</span>
+                            <div className="cd-book-actions">
+                              <a
+                                href={`/api/books/download?fileId=${book.id}&bookName=${encodeURIComponent(book.name)}&courseCode=${courseCode}&semester=${activeSemester}`}
+                                className="cd-book-btn openlib"
+                                style={{ background: 'rgba(16, 185, 129, 0.12)', borderColor: 'rgba(16, 185, 129, 0.25)', color: '#10B981' }}
+                              >
+                                Download PDF
+                              </a>
+                              <a
+                                href={`https://books.google.com/books?q=${encodeURIComponent(book.name)}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="cd-book-btn google"
+                              >
+                                Google Books
+                              </a>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.section>
           )}
         </motion.div>
       </div>

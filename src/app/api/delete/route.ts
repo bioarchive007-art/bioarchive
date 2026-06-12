@@ -3,6 +3,7 @@ export const runtime = 'edge';
 import { NextRequest, NextResponse } from 'next/server';
 import { deleteFromDrive } from '@/lib/drive';
 import { deleteFileRecord, getAllFiles } from '@/lib/sheets';
+import { rebuildZipArchive } from '@/lib/zip-utils';
 
 /**
  * POST /api/delete
@@ -35,12 +36,14 @@ export async function POST(request: NextRequest) {
     // Before deleting, grab the file record so we know which course cache to invalidate
     let courseCode = '';
     let semester = '';
+    let recordToRezip: any = null;
     try {
       const allFiles = await getAllFiles();
       const record = allFiles.find(f => f.fileId === fileId);
       if (record) {
         courseCode = record.courseCode;
         semester = record.semester;
+        recordToRezip = record;
       }
     } catch {
       // Non-critical — we'll still delete even if we can't read the metadata
@@ -51,6 +54,19 @@ export async function POST(request: NextRequest) {
 
     // Step 2: Delete record from Google Sheets
     await deleteFileRecord(fileId);
+
+    // Step 3: Rebuild zip archive dynamically on the backend after deleting
+    if (recordToRezip && recordToRezip.fileType.toLowerCase() !== 'qpaper' && !recordToRezip.fileName.toLowerCase().endsWith('_all_files.zip')) {
+      await rebuildZipArchive({
+        courseCode: recordToRezip.courseCode,
+        semester: recordToRezip.semester,
+        year: recordToRezip.year,
+        fileType: recordToRezip.fileType,
+        professor: recordToRezip.professor,
+      }).catch((err) =>
+        console.error('[api/delete] Failed to rebuild ZIP archive:', err)
+      );
+    }
 
     // Step 4: Invalidate KV cache
     const kv = (globalThis as any).BIOARCHIVE_CACHE;

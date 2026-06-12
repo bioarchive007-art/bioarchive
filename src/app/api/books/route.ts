@@ -2,17 +2,39 @@ export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { findSubfolderId, listFilesInFolder } from '@/lib/drive';
+import { getAccessToken } from '@/lib/google-auth';
+
+async function listSubfolders(parentFolderId: string): Promise<Array<{ id: string; name: string }>> {
+  const token = await getAccessToken();
+  const url = new URL('https://www.googleapis.com/drive/v3/files');
+  url.searchParams.append('q', `'${parentFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`);
+  url.searchParams.append('fields', 'files(id, name)');
+  url.searchParams.append('pageSize', '100');
+
+  const res = await fetch(url.toString(), {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Failed to list subfolders: ${res.statusText} - ${text}`);
+  }
+
+  const data = await res.json() as { files?: Array<{ id: string; name: string }> };
+  return data.files || [];
+}
 
 /**
  * GET /api/books
  *
- * Lists all textbook files in the Google Drive folder matching the given semester.
+ * Lists all textbook files in the Google Drive folder matching the given semester and courseCode.
  * Results are cached in Cloudflare KV for 5 minutes.
  */
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const semester = searchParams.get('semester') || '';
+    const courseCode = searchParams.get('courseCode') || '';
 
     if (!semester) {
       return NextResponse.json(
@@ -28,9 +50,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json([]);
     }
 
-    const cacheKey = `books:${semester}`;
+    const cacheKey = courseCode ? `books:${semester}:${courseCode}` : `books:${semester}`;
     const kv = (globalThis as any).BIOARCHIVE_CACHE;
-    
+
     // Check KV cache
     if (kv) {
       const cached = await kv.get(cacheKey, { type: 'json' });
@@ -41,16 +63,84 @@ export async function GET(request: NextRequest) {
 
     let targetFolderId = booksDriveFolderId;
 
-    // Search for a semester subfolder (e.g. "1", "2", "ADVANCE COURSES")
-    try {
-      const subfolderId = await findSubfolderId(booksDriveFolderId, semester);
-      if (subfolderId) {
-        targetFolderId = subfolderId;
-      } else {
-        console.info(`No subfolder found matching semester "${semester}". Falling back to parent folder.`);
+    if (courseCode) {
+      try {
+        // Step 1: Find Core Courses or Advance Courses
+        const rootFolders = await listSubfolders(booksDriveFolderId);
+        const isAdvance = semester.toUpperCase().includes('ADVANCE');
+        const searchTarget = isAdvance ? 'advance' : 'core course';
+
+        const nextFolder = rootFolders.find(f => f.name.toLowerCase().includes(searchTarget));
+
+        if (nextFolder) {
+          targetFolderId = nextFolder.id;
+
+          if (!isAdvance) {
+            // Step 2: Under Core Courses, find "Sem {semester}"
+            const semFolders = await listSubfolders(targetFolderId);
+            const semFolder = semFolders.find(f => {
+              const nameLower = f.name.toLowerCase().replace(/\s+/g, '');
+              const targetLower = semester.toLowerCase();
+              return nameLower.includes(`sem${targetLower}`) || nameLower === targetLower || nameLower.includes(targetLower);
+            });
+            if (semFolder) {
+              targetFolderId = semFolder.id;
+            } else {
+              console.warn(`Semester folder for "${semester}" not found in Core Courses. Fallback to Core Courses.`);
+            }
+          }
+
+          // Step 3: Find course folder under either Sem folder or Advance Courses
+          const courseFolders = await listSubfolders(targetFolderId);
+          const courseFolder = courseFolders.find(f =>
+            f.name.toLowerCase().includes(courseCode.toLowerCase())
+          );
+
+          if (courseFolder) {
+            targetFolderId = courseFolder.id;
+
+            // Step 4: Find "Course Materials" folder
+            const courseContent = await listSubfolders(targetFolderId);
+            const materialsFolder = courseContent.find(f =>
+              f.name.toLowerCase().includes('course material')
+            );
+
+            if (materialsFolder) {
+              targetFolderId = materialsFolder.id;
+            }
+
+            // Step 5: Find "Books" folder
+            const materialsContent = await listSubfolders(targetFolderId);
+            const booksFolder = materialsContent.find(f =>
+              f.name.toLowerCase().includes('book')
+            );
+
+            if (booksFolder) {
+              targetFolderId = booksFolder.id;
+            } else {
+              console.warn(`Books folder not found under ${materialsFolder ? 'Course Materials' : 'Course'}. Using current target folder.`);
+            }
+          } else {
+            console.warn(`Course folder for "${courseCode}" not found. Fallback to semester folder.`);
+          }
+        } else {
+          console.warn(`Folder matching "${searchTarget}" not found in Archive. Fallback to Archive.`);
+        }
+      } catch (err) {
+        console.error('Error during dynamic directory traversal:', err);
       }
-    } catch (err) {
-      console.error('Failed to search for semester subfolder:', err);
+    } else {
+      // Legacy fallback search for a semester subfolder (e.g. "1", "2", "ADVANCE COURSES")
+      try {
+        const subfolderId = await findSubfolderId(booksDriveFolderId, semester);
+        if (subfolderId) {
+          targetFolderId = subfolderId;
+        } else {
+          console.info(`No subfolder found matching semester "${semester}". Falling back to parent folder.`);
+        }
+      } catch (err) {
+        console.error('Failed to search for semester subfolder:', err);
+      }
     }
 
     // List files inside the determined folder
@@ -58,7 +148,7 @@ export async function GET(request: NextRequest) {
 
     // Save to KV cache
     if (kv && files && files.length > 0) {
-      await kv.put(cacheKey, JSON.stringify(files), { expirationTtl: 300 }); // Cache for 5 minutes
+      await kv.put(cacheKey, JSON.stringify(files), { expirationTtl: 60 }); // Cache for 5 days (432000 seconds)
     }
 
     return NextResponse.json(files);
@@ -70,3 +160,4 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+

@@ -195,21 +195,6 @@ export default function UploadModal({
       const displayName = showName ? uploaderName : 'Anonymous';
       let filesToUpload = [...files];
 
-      // If multiple files are uploaded, generate a zipped version and append it to the list
-      if (files.length > 1) {
-        setUploadStatus('Creating combined ZIP archive...');
-        setProgress(5);
-        const zip = new JSZip();
-        for (const file of files) {
-          zip.file(file.name, file);
-        }
-        const zipBlob = await zip.generateAsync({ type: 'blob' });
-        // The zip original name contains '_all_files' so the renamer adds '_ALL_FILES' suffix
-        const zipName = `${courseCode}_${semester}_${year}_${fileType}_all_files.zip`;
-        const zipFile = new File([zipBlob], zipName, { type: 'application/zip' });
-        filesToUpload.push(zipFile);
-      }
-
       const totalFiles = filesToUpload.length;
       let duplicateWarnings: string[] = [];
 
@@ -387,7 +372,7 @@ export default function UploadModal({
                   <p className="um-success-file">
                     {files.length === 1
                       ? canonicalFileNames[0]
-                      : `${files.length} files & combined ZIP package uploaded successfully`
+                      : `${files.length} files uploaded successfully`
                     }
                   </p>
                   <button className="um-success-btn" onClick={onClose}>Done</button>

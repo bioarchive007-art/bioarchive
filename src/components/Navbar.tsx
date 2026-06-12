@@ -89,7 +89,7 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
                   className="mobile-menu-link"
                   onClick={() => setIsOpen(false)}
                 >
-                  <BookOpen size={16} />
+                  {/* <BookOpen size={16} /> */}
                   <span>Curriculum</span>
                 </a>
                 <a
@@ -97,7 +97,7 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
                   className="mobile-menu-link"
                   onClick={() => setIsOpen(false)}
                 >
-                  <AlertCircle size={16} />
+                  {/* <AlertCircle size={16} /> */}
                   <span>Notices & Requests</span>
                 </a>
                 <a
@@ -105,7 +105,7 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
                   className="mobile-menu-link"
                   onClick={() => setIsOpen(false)}
                 >
-                  <Info size={16} />
+                  {/* <Info size={16} /> */}
                   <span>About & Contact</span>
                 </a>
                 <button

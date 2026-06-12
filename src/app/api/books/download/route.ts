@@ -2,12 +2,13 @@ export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { appendBookDownloadRecord } from '@/lib/sheets';
+import { getAccessToken } from '@/lib/google-auth';
 
 /**
  * GET /api/books/download
  *
  * Logs book access details (bookName, courseCode, semester, driveFileId, userAgent)
- * to a tab in Google Sheets, then redirects to the Google Drive preview link.
+ * to a tab in Google Sheets, then streams the file content directly from Google Drive.
  */
 export async function GET(request: NextRequest) {
   try {
@@ -40,9 +41,32 @@ export async function GET(request: NextRequest) {
       console.error('Failed to log book download to Google Sheet:', sheetErr);
     }
 
-    // Redirect user to the Google Drive file preview/view page
-    const redirectUrl = `https://drive.google.com/file/d/${fileId}/view?usp=drivesdk`;
-    return NextResponse.redirect(redirectUrl);
+    // Fetch the file directly from Google Drive using bioarchive007 access token
+    const token = await getAccessToken();
+    const driveRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!driveRes.ok) {
+      const errorText = await driveRes.text();
+      console.error(`[api/books/download] Google Drive download failed:`, errorText);
+      return NextResponse.json(
+        { error: 'Failed to download file from Google Drive' },
+        { status: driveRes.status }
+      );
+    }
+
+    // Set headers to force direct file download in the browser
+    const filename = bookName.endsWith('.pdf') ? bookName : `${bookName}.pdf`;
+    const headers = new Headers();
+    headers.set('Content-Type', driveRes.headers.get('content-type') || 'application/pdf');
+    headers.set('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+    headers.set('Cache-Control', 'public, max-age=3600');
+
+    return new Response(driveRes.body, {
+      status: 200,
+      headers
+    });
   } catch (err: any) {
     console.error('[api/books/download] GET Error:', err);
     return NextResponse.json(
@@ -51,3 +75,4 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
