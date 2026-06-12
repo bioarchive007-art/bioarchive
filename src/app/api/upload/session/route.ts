@@ -125,7 +125,6 @@ export async function POST(request: NextRequest) {
           pathComponents.push(`Sem ${semester}`);
         }
         pathComponents.push(`${courseCode.trim()} ${courseName.trim()}`);
-        pathComponents.push('Course Materials');
 
         const FILE_TYPE_FOLDERS: Record<string, string> = {
           qpaper: 'Question Papers',
@@ -137,6 +136,7 @@ export async function POST(request: NextRequest) {
         };
         const folderName = FILE_TYPE_FOLDERS[fileType.toLowerCase()] || 'Other';
         pathComponents.push(folderName);
+        pathComponents.push(professor.trim());
 
         // Resolve or create nested path in Google Drive
         folderId = await resolveNestedFolder(CONFIG.DRIVE_FOLDER_ID, pathComponents);

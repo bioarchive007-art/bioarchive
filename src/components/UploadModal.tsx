@@ -6,6 +6,7 @@ import {
   X, Upload, FileUp, ChevronRight, ChevronLeft, Check, AlertTriangle,
   Loader2, Sparkles, Trash2,
 } from 'lucide-react';
+
 import { CONFIG } from '@/config';
 import { CURRICULUM, Course } from '@/data/curriculum';
 import { generateRenamedFilename } from '@/lib/file-renaming';
@@ -13,7 +14,6 @@ import {
   createUploadSession,
   confirmUpload,
 } from '@/lib/api-client';
-import JSZip from 'jszip';
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -327,6 +327,7 @@ export default function UploadModal({
           canonicalFileName: session.canonicalFileName,
           mimeType: file.type,
           isLastFile,
+          batchFiles: isLastFile ? canonicalFileNames : undefined,
           metadata: {
             ...session.metadata,
             driveWebViewLink: driveData.webViewLink || '',

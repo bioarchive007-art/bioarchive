@@ -6,7 +6,6 @@ import { SheetRow } from '@/types';
 import { makeFilePublic, copyToBackupFolder } from '@/lib/drive';
 import { checkDuplicate, appendFileRecord, initializeSheetHeaders, fulfillRequest } from '@/lib/sheets';
 import { notifyModsOfUpload } from '@/lib/notify';
-import { triggerBackgroundZipRebuild } from '@/lib/zip-utils';
 
 /**
  * POST /api/upload/confirm
@@ -24,6 +23,7 @@ export async function POST(request: NextRequest) {
       canonicalFileName,
       metadata,
       isLastFile,
+      batchFiles,
     } = body;
 
     if (!driveFileId || !canonicalFileName || !metadata) {
@@ -77,18 +77,7 @@ export async function POST(request: NextRequest) {
     await initializeSheetHeaders();
     await appendFileRecord(sheetRow, isDuplicate);
 
-    // Step 3.2: Rebuild zip archive dynamically on the backend (skip for qpaper, zip files themselves, or if isLastFile is false)
-    const shouldRebuildZip = isLastFile !== false;
-    if (shouldRebuildZip && sheetRow.fileType.toLowerCase() !== 'qpaper' && !sheetRow.fileName.toLowerCase().endsWith('_all_files.zip')) {
-      triggerBackgroundZipRebuild({
-        courseCode: sheetRow.courseCode,
-        semester: sheetRow.semester,
-        year: sheetRow.year,
-        fileType: sheetRow.fileType,
-        professor: sheetRow.professor,
-        uploaderName: sheetRow.uploaderName,
-      });
-    }
+
 
     // Step 3.5: If uploaded for a request, fulfill it
     if (metadata.requestId) {
@@ -104,15 +93,21 @@ export async function POST(request: NextRequest) {
       await kv.delete(cacheKey).catch(() => { });
     }
 
-    // Step 5: Notify moderators (fire-and-forget)
-    notifyModsOfUpload({
-      fileName: canonicalFileName,
-      courseCode: sheetRow.courseCode,
-      courseName: sheetRow.courseName,
-      semester: sheetRow.semester,
-      uploaderName: sheetRow.uploaderName,
-      fileType: sheetRow.fileType,
-    }).catch(() => { });
+    // Step 5: Notify moderators (fire-and-forget, only on the last file in the batch)
+    if (isLastFile) {
+      const fileNamesList = Array.isArray(batchFiles) && batchFiles.length > 0
+        ? batchFiles
+        : [canonicalFileName];
+
+      notifyModsOfUpload({
+        fileNames: fileNamesList,
+        courseCode: sheetRow.courseCode,
+        courseName: sheetRow.courseName,
+        semester: sheetRow.semester,
+        uploaderName: sheetRow.uploaderName,
+        fileType: sheetRow.fileType,
+      }).catch(() => { });
+    }
 
     return NextResponse.json({ success: true, fileName: canonicalFileName });
   } catch (err: any) {

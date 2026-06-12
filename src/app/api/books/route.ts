@@ -100,26 +100,28 @@ export async function GET(request: NextRequest) {
           if (courseFolder) {
             targetFolderId = courseFolder.id;
 
-            // Step 4: Find "Course Materials" folder
+            // Find "Books" folder (either directly under the Course folder, or under a "Course Materials" subfolder)
             const courseContent = await listSubfolders(targetFolderId);
-            const materialsFolder = courseContent.find(f =>
-              f.name.toLowerCase().includes('course material')
-            );
-
-            if (materialsFolder) {
-              targetFolderId = materialsFolder.id;
-            }
-
-            // Step 5: Find "Books" folder
-            const materialsContent = await listSubfolders(targetFolderId);
-            const booksFolder = materialsContent.find(f =>
+            let booksFolder = courseContent.find(f =>
               f.name.toLowerCase().includes('book')
             );
+
+            if (!booksFolder) {
+              const materialsFolder = courseContent.find(f =>
+                f.name.toLowerCase().includes('course material')
+              );
+              if (materialsFolder) {
+                const materialsContent = await listSubfolders(materialsFolder.id);
+                booksFolder = materialsContent.find(f =>
+                  f.name.toLowerCase().includes('book')
+                );
+              }
+            }
 
             if (booksFolder) {
               targetFolderId = booksFolder.id;
             } else {
-              console.warn(`Books folder not found under ${materialsFolder ? 'Course Materials' : 'Course'}. Using current target folder.`);
+              console.warn(`Books folder not found. Using target folder: ${targetFolderId}`);
             }
           } else {
             console.warn(`Course folder for "${courseCode}" not found. Fallback to semester folder.`);

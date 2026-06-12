@@ -194,14 +194,16 @@ export default function SortableFileTable({
         }
         .sft-name {
           max-width: 260px;
+          min-width: 150px;
         }
         .sft-name-text {
           display: block;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
           color: #e0e0e0;
           font-family: 'Outfit', sans-serif;
+          white-space: normal;
+          overflow-wrap: break-word;
+          word-break: break-word;
+          line-height: 1.4;
         }
         .sft-prof, .sft-uploader {
           color: rgba(255,255,255,0.5);
