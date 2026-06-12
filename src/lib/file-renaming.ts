@@ -38,9 +38,10 @@ export function getShortProfessorName(profName: string): string {
   if (!profName) return '';
   // Remove common prefixes like Dr., Prof., etc. (case-insensitive)
   let clean = profName.replace(/^(Dr\.|Prof\.|Dr|Prof)\s+/i, '').trim();
-  // Get the first word (first name)
-  const parts = clean.split(/[\s._-]+/);
-  const lastName = parts[1] || '';
+  // Split on spaces, dots, hyphens, underscores and filter out empty strings
+  const parts = clean.split(/[\s._-]+/).filter(Boolean);
+  if (parts.length === 0) return 'Dr. Unknown';
+  const lastName = parts[parts.length - 1];
   return `Dr. ${lastName}`;
 }
 

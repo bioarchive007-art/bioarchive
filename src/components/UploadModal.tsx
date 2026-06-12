@@ -84,6 +84,7 @@ export default function UploadModal({
   const [error, setError] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
 
   const isQpaper = fileType === 'qpaper';
   const allowMultiple = !isQpaper && fileType !== '';
@@ -145,6 +146,31 @@ export default function UploadModal({
       }, 300);
     }
   }, [isOpen, initialCourseCode, initialSemester, initialFileType, initialYear, initialRequestId]);
+
+  // Prevent accidental page reloads/closes during upload
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (uploading) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [uploading]);
+
+  // Handle auto-minimize reset and auto-expand on complete/error
+  useEffect(() => {
+    if (isOpen) {
+      setIsMinimized(false);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (success || error) {
+      setIsMinimized(false);
+    }
+  }, [success, error]);
 
   const handleFileDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -232,7 +258,7 @@ export default function UploadModal({
 
         // Step C: Upload file bytes in chunks to Google Drive via server proxy with progress tracking and automatic retry
         const totalSize = currentFile.size;
-        const chunkSize = 5 * 1024 * 1024; // 5MB chunks (must be a multiple of 256KB)
+        const chunkSize = 50 * 1024 * 1024; // 50MB chunks (must be a multiple of 256KB)
         let start = 0;
         let driveData: { id: string; webViewLink: string; md5Checksum: string } | null = null;
 
@@ -361,13 +387,19 @@ export default function UploadModal({
   return (
     <>
       <AnimatePresence>
-        {isOpen && (
+        {isOpen && !isMinimized && (
           <motion.div
             className="um-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
+            onClick={() => {
+              if (uploading) {
+                setIsMinimized(true);
+              } else {
+                onClose();
+              }
+            }}
           >
             <motion.div
               className="um-panel"
@@ -378,7 +410,18 @@ export default function UploadModal({
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close */}
-              <button className="um-close" onClick={onClose}><X size={18} /></button>
+              <button
+                className="um-close"
+                onClick={() => {
+                  if (uploading) {
+                    setIsMinimized(true);
+                  } else {
+                    onClose();
+                  }
+                }}
+              >
+                <X size={18} />
+              </button>
 
               {/* Mobile warning overlay */}
               <AnimatePresence>
@@ -826,6 +869,19 @@ export default function UploadModal({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {isOpen && isMinimized && uploading && (
+        <div className="um-mini-progress" onClick={() => setIsMinimized(false)}>
+          <div className="um-mini-progress-bar" style={{ width: `${progress}%` }} />
+          <div className="um-mini-content">
+            <span className="um-mini-text">
+              <Loader2 size={14} className="um-spinner" style={{ animation: 'spin 1s linear infinite', marginRight: 8 }} />
+              {progress < 100 ? `Uploading (${progress}%)` : 'Processing...'}
+            </span>
+            <span className="um-mini-sub">{files.length} file(s)</span>
+          </div>
+        </div>
+      )}
 
       <style jsx global>{`
         .um-overlay {
@@ -1389,8 +1445,88 @@ export default function UploadModal({
           transition: all 0.2s;
         }
         .um-warning-btn:hover {
-          background: #f1b835;
+          background: #daa520;
           box-shadow: 0 0 15px rgba(218, 165, 32, 0.35);
+        }
+
+        /* --- Mini Progress Bar Styles --- */
+        .um-mini-progress {
+          position: fixed;
+          background: rgba(3, 10, 24, 0.96);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid rgba(2, 132, 199, 0.3);
+          border-radius: 12px;
+          cursor: pointer;
+          overflow: hidden;
+          z-index: 1000;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(2, 132, 199, 0.15);
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .um-mini-progress:hover {
+          transform: translateY(-2px);
+          border-color: rgba(2, 132, 199, 0.5);
+          box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(2, 132, 199, 0.25);
+        }
+        .um-mini-progress-bar {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          height: 4px;
+          background: linear-gradient(90deg, #0284c7, #00e5ff);
+          transition: width 0.3s ease;
+        }
+        .um-mini-content {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 14px 18px;
+          gap: 16px;
+        }
+        .um-mini-text {
+          font-family: 'Outfit', sans-serif;
+          font-size: 0.88rem;
+          font-weight: 600;
+          color: #f0f0f0;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .um-mini-sub {
+          font-family: 'Outfit', sans-serif;
+          font-size: 0.75rem;
+          color: rgba(255, 255, 255, 0.4);
+          background: rgba(255, 255, 255, 0.05);
+          padding: 2px 8px;
+          border-radius: 20px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Desktop placement */
+        @media (min-width: 601px) {
+          .um-mini-progress {
+            bottom: 24px;
+            right: 24px;
+            width: 300px;
+          }
+        }
+
+        /* Mobile placement */
+        @media (max-width: 600px) {
+          .um-mini-progress {
+            top: 0;
+            left: 0;
+            right: 0;
+            border-radius: 0;
+            border-width: 0 0 1px 0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+          }
+          .um-mini-progress:hover {
+            transform: none;
+          }
+          .um-mini-content {
+            padding: 12px 16px;
+          }
         }
       `}</style>
     </>

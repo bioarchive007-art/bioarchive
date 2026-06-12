@@ -35,7 +35,7 @@ export async function notifyModsOfUpload(metadata: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: process.env.SENDER_EMAIL || 'BioArchive <onboarding@resend.dev>',
+        from: process.env.SENDER_EMAIL || 'onboarding@resend.dev',
         to: recipients,
         subject: subject,
         html: `
