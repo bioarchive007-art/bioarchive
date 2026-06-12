@@ -241,12 +241,12 @@ export async function findSubfolderId(parentFolderId: string, folderName: string
 }
 
 /**
- * Lists all files inside a specific Google Drive folder.
+ * Lists all files inside a specific Google Drive folder (excluding subfolders).
  */
 export async function listFilesInFolder(folderId: string): Promise<Array<{ id: string; name: string; webViewLink: string }>> {
   const token = await getAccessToken();
   const url = new URL('https://www.googleapis.com/drive/v3/files');
-  url.searchParams.append('q', `'${folderId}' in parents and trashed = false`);
+  url.searchParams.append('q', `'${folderId}' in parents and mimeType != 'application/vnd.google-apps.folder' and trashed = false`);
   url.searchParams.append('fields', 'files(id, name, webViewLink)');
   url.searchParams.append('pageSize', '1000');
 
@@ -291,18 +291,46 @@ export async function createFolder(parentFolderId: string, folderName: string): 
   return data.id;
 }
 
+async function getSubfolders(parentFolderId: string): Promise<Array<{ id: string; name: string }>> {
+  const token = await getAccessToken();
+  const url = new URL('https://www.googleapis.com/drive/v3/files');
+  url.searchParams.append('q', `'${parentFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`);
+  url.searchParams.append('fields', 'files(id, name)');
+  url.searchParams.append('pageSize', '100');
+
+  const res = await fetch(url.toString(), {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Failed to list subfolders: ${res.statusText} - ${text}`);
+  }
+
+  const data = await res.json() as { files?: Array<{ id: string; name: string }> };
+  return data.files || [];
+}
+
 /**
  * Resolves a nested subfolder path, creating folders along the way if they do not exist.
+ * Employs case-insensitive and prefix-robust normalization to match existing folders.
  * Returns the final folder's ID.
  */
 export async function resolveNestedFolder(
   rootFolderId: string,
   pathComponents: string[]
 ): Promise<string> {
+  const normalize = (s: string) => s.toLowerCase().replace(/bio/g, 'b').replace(/[^a-z0-9]/g, '');
   let currentFolderId = rootFolderId;
+  
   for (const component of pathComponents) {
     if (!component) continue;
-    let folderId = await findSubfolderId(currentFolderId, component);
+    
+    const subfolders = await getSubfolders(currentFolderId);
+    const normalizedComp = normalize(component);
+    const match = subfolders.find(f => normalize(f.name) === normalizedComp);
+    
+    let folderId = match?.id || null;
     if (!folderId) {
       folderId = await createFolder(currentFolderId, component);
     }

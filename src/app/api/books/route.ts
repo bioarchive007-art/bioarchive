@@ -90,10 +90,11 @@ export async function GET(request: NextRequest) {
             }
           }
 
-          // Step 3: Find course folder under either Sem folder or Advance Courses
           const courseFolders = await listSubfolders(targetFolderId);
+          const normalize = (s: string) => s.toLowerCase().replace(/bio/g, 'b').replace(/[^a-z0-9]/g, '');
+          const normalizedCode = normalize(courseCode);
           const courseFolder = courseFolders.find(f =>
-            f.name.toLowerCase().includes(courseCode.toLowerCase())
+            normalize(f.name).includes(normalizedCode)
           );
 
           if (courseFolder) {
