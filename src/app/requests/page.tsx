@@ -2,21 +2,20 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Plus, Calendar, User, FileText, CheckCircle, Info, AlertTriangle, Upload, HelpCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, Calendar, User, FileText, CheckCircle, HelpCircle, Loader2, AlertTriangle, Upload } from 'lucide-react';
 import { CURRICULUM } from '@/data/curriculum';
 import { CONFIG } from '@/config';
-import { FileRequest, Notice } from '@/types';
+import { FileRequest } from '@/types';
 import UploadModal from '@/components/UploadModal';
 
-export default function BoardPage() {
-  const [notices, setNotices] = useState<Notice[]>([]);
+export default function RequestsPage() {
   const [requests, setRequests] = useState<FileRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Modals
   const [requestModalOpen, setRequestModalOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
-  
+
   // Prefill states for UploadModal
   const [prefill, setPrefill] = useState({
     courseCode: '',
@@ -43,25 +42,22 @@ export default function BoardPage() {
 
   const coursesForSem = formSem ? CURRICULUM[formSem] || [] : [];
 
-  const fetchData = async () => {
+  const fetchRequests = async () => {
     try {
       setLoading(true);
-      const [noticesRes, requestsRes] = await Promise.all([
-        fetch('/api/notices'),
-        fetch('/api/requests'),
-      ]);
-      
-      if (noticesRes.ok) setNotices(await noticesRes.json());
-      if (requestsRes.ok) setRequests(await requestsRes.json());
+      const res = await fetch('/api/requests');
+      if (res.ok) {
+        setRequests(await res.json());
+      }
     } catch (err) {
-      console.error('Failed to load board data:', err);
+      console.error('Failed to load requests:', err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchData();
+    fetchRequests();
   }, []);
 
   const handleOpenUploadForRequest = (req: FileRequest) => {
@@ -110,7 +106,7 @@ export default function BoardPage() {
         setFormRemarks('');
         setFormName('');
         // Refresh requests list
-        fetchData();
+        fetchRequests();
       } else {
         const err = await res.json();
         setFormError(err.error || 'Failed to submit request');
@@ -124,20 +120,20 @@ export default function BoardPage() {
 
   return (
     <>
-      <div className="board-wrapper">
+      <div className="requests-wrapper">
         {/* Sticky Header */}
-        <div className="board-header">
-          <div className="board-header-inner">
-            <a href="/" className="board-back">
+        <div className="requests-header">
+          <div className="requests-header-inner">
+            <a href="/" className="requests-back">
               <ArrowLeft size={18} />
               <span>Back</span>
             </a>
-            <div className="board-header-info">
+            <div className="requests-header-info">
               <a href="/" className="navbar-wordmark">
                 <span className="wordmark-bio">BIO</span>
                 <span className="wordmark-archive">Archive</span>
               </a>
-              <h1 className="board-title">Notice Board & Requests</h1>
+              <h1 className="requests-title">Material Requests</h1>
             </div>
             <button className="btn-gold" onClick={() => setRequestModalOpen(true)}>
               <Plus size={15} /> Make a Request
@@ -146,109 +142,76 @@ export default function BoardPage() {
         </div>
 
         {/* Content */}
-        <div className="board-content">
+        <div className="requests-content">
           {loading ? (
-            <div className="board-loading">
+            <div className="requests-loading">
               <Loader2 size={36} className="spinner" />
-              <span>Loading Notice Board & Requests...</span>
+              <span>Loading Requests Board...</span>
             </div>
           ) : (
-            <div className="board-grid">
-              {/* Notices Column */}
-              <div className="board-column">
-                <div className="column-title-wrap">
-                  <span className="title-accent info" />
-                  <h3>Notice Board</h3>
-                </div>
-                <div className="column-body notices-list">
-                  {notices.length === 0 ? (
-                    <div className="empty-card">
-                      <Info size={36} />
-                      <p>No active notices at this time.</p>
-                    </div>
-                  ) : (
-                    notices.map((notice) => (
-                      <div key={notice.id} className={`notice-card ${notice.type}`}>
-                        <div className="notice-card-header">
-                          <span className="notice-type-badge">
-                            {notice.type === 'warning' ? <AlertTriangle size={12} /> : <Info size={12} />}
-                            {notice.type.toUpperCase()}
-                          </span>
-                          <span className="notice-date">{notice.date}</span>
-                        </div>
-                        <h4 className="notice-card-title">{notice.title}</h4>
-                        <p className="notice-card-content">{notice.content}</p>
-                      </div>
-                    ))
-                  )}
-                </div>
+            <div className="requests-column">
+              <div className="column-title-wrap">
+                <span className="title-accent request" />
+                <h3>Need Files Board</h3>
               </div>
+              <div className="column-body requests-list">
+                {requests.length === 0 ? (
+                  <div className="empty-card">
+                    <HelpCircle size={36} />
+                    <p>No active material requests. Everything is up to date!</p>
+                  </div>
+                ) : (
+                  requests.map((req) => {
+                    const cat = CONFIG.FILE_CATEGORIES[req.fileType as keyof typeof CONFIG.FILE_CATEGORIES] || CONFIG.FILE_CATEGORIES.other;
+                    const isPending = req.status === 'pending';
 
-              {/* Requests Column */}
-              <div className="board-column">
-                <div className="column-title-wrap">
-                  <span className="title-accent request" />
-                  <h3>Need Files Board</h3>
-                </div>
-                <div className="column-body requests-list">
-                  {requests.length === 0 ? (
-                    <div className="empty-card">
-                      <HelpCircle size={36} />
-                      <p>No active material requests. Everything is up to date!</p>
-                    </div>
-                  ) : (
-                    requests.map((req) => {
-                      const cat = CONFIG.FILE_CATEGORIES[req.fileType as keyof typeof CONFIG.FILE_CATEGORIES] || CONFIG.FILE_CATEGORIES.other;
-                      const isPending = req.status === 'pending';
-                      
-                      return (
-                        <div key={req.requestId} className={`request-card ${req.status}`}>
-                          <div className="request-card-header">
-                            <span className="request-course-code">{req.courseCode}</span>
-                            <span className="request-date">
-                              <Calendar size={12} style={{ marginRight: 4 }} />
-                              {req.requestDate}
-                            </span>
-                          </div>
-                          <h4 className="request-course-name">{req.courseName}</h4>
-                          
-                          <div className="request-detail">
-                            <span className="req-label">Needed:</span>
-                            <span className="req-val-badge" style={{ background: cat.colorHex + '18', color: cat.colorHex }}>
-                              {cat.label} ({req.year})
-                            </span>
-                          </div>
-
-                          {req.remarks && (
-                            <p className="request-remarks">&ldquo;{req.remarks}&rdquo;</p>
-                          )}
-
-                          <div className="request-footer">
-                            <span className="request-by">
-                              <User size={12} style={{ marginRight: 4 }} />
-                              By {req.uploaderName}
-                            </span>
-                            
-                            {isPending ? (
-                              <button
-                                className="request-upload-btn"
-                                onClick={() => handleOpenUploadForRequest(req)}
-                              >
-                                <Upload size={12} />
-                                <span>I can upload this</span>
-                              </button>
-                            ) : (
-                              <span className="request-fulfilled-badge">
-                                <CheckCircle size={13} style={{ marginRight: 4 }} />
-                                Fulfilled
-                              </span>
-                            )}
-                          </div>
+                    return (
+                      <div key={req.requestId} className={`request-card ${req.status}`}>
+                        <div className="request-card-header">
+                          <span className="request-course-code">{req.courseCode}</span>
+                          <span className="request-date">
+                            <Calendar size={12} style={{ marginRight: 4, display: 'inline-block', verticalAlign: 'middle' }} />
+                            {req.requestDate}
+                          </span>
                         </div>
-                      );
-                    })
-                  )}
-                </div>
+                        <h4 className="request-course-name">{req.courseName}</h4>
+
+                        <div className="request-detail">
+                          <span className="req-label">Needed:</span>
+                          <span className="req-val-badge" style={{ background: cat.colorHex + '18', color: cat.colorHex }}>
+                            {cat.label} ({req.year})
+                          </span>
+                        </div>
+
+                        {req.remarks && (
+                          <p className="request-remarks">&ldquo;{req.remarks}&rdquo;</p>
+                        )}
+
+                        <div className="request-footer">
+                          <span className="request-by">
+                            <User size={12} style={{ marginRight: 4, display: 'inline-block', verticalAlign: 'middle' }} />
+                            By {req.uploaderName}
+                          </span>
+
+                          {isPending ? (
+                            <button
+                              className="request-upload-btn"
+                              onClick={() => handleOpenUploadForRequest(req)}
+                            >
+                              <Upload size={12} />
+                              <span>I can upload this</span>
+                            </button>
+                          ) : (
+                            <span className="request-fulfilled-badge">
+                              <CheckCircle size={13} style={{ marginRight: 4, display: 'inline-block', verticalAlign: 'middle' }} />
+                              Fulfilled
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
           )}
@@ -258,7 +221,7 @@ export default function BoardPage() {
       {/* Upload Modal (for fulfilling a request) */}
       <UploadModal
         isOpen={uploadOpen}
-        onClose={() => { setUploadOpen(false); fetchData(); }}
+        onClose={() => { setUploadOpen(false); fetchRequests(); }}
         initialCourseCode={prefill.courseCode}
         initialSemester={prefill.semester}
         initialFileType={prefill.fileType}
@@ -283,7 +246,7 @@ export default function BoardPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <button className="um-close" onClick={() => setRequestModalOpen(false)}><Plus style={{ transform: 'rotate(45deg)' }} size={18} /></button>
-              
+
               <div className="um-header">
                 <HelpCircle size={20} className="um-header-icon" />
                 <h2 className="um-title">Request Course Material</h2>
@@ -401,27 +364,27 @@ export default function BoardPage() {
       </AnimatePresence>
 
       <style jsx>{`
-        .board-wrapper {
+        .requests-wrapper {
           min-height: 100vh;
           display: flex;
           flex-direction: column;
         }
-        .board-header {
+        .requests-header {
           position: sticky;
           top: 0;
           z-index: 50;
           background: rgba(3, 10, 24, 0.97);
           border-bottom: 1px solid var(--glass-border);
         }
-        .board-header-inner {
-          max-width: 1100px;
+        .requests-header-inner {
+          max-width: 700px;
           margin: 0 auto;
           padding: 14px 24px;
           display: flex;
           align-items: center;
           gap: 16px;
         }
-        .board-back {
+        .requests-back {
           display: flex;
           align-items: center;
           gap: 5px;
@@ -433,15 +396,14 @@ export default function BoardPage() {
           transition: background 0.15s, color 0.15s;
           flex-shrink: 0;
         }
-        .board-back:hover { background: var(--glass-hover); color: var(--text); }
-        .board-header-info {
+        .requests-back:hover { background: var(--glass-hover); color: var(--text); }
+        .requests-header-info {
           flex: 1;
           display: flex;
           flex-direction: column;
           min-width: 0;
         }
-
-        .board-title {
+        .requests-title {
           font-family: 'Outfit', sans-serif;
           font-size: 1.15rem;
           font-weight: 600;
@@ -450,21 +412,21 @@ export default function BoardPage() {
           line-height: 1.1;
         }
         @media (max-width: 600px) {
-          .board-header-inner { padding: 12px 14px; gap: 8px; }
-          .board-back span { display: none; }
-          .board-title { font-size: 1rem; }
+          .requests-header-inner { padding: 12px 14px; gap: 8px; }
+          .requests-back span { display: none; }
+          .requests-title { font-size: 1rem; }
         }
-        .board-content {
+        .requests-content {
           flex: 1;
-          max-width: 1100px;
+          max-width: 700px;
           margin: 0 auto;
           width: 100%;
           padding: 24px 24px 40px;
         }
         @media (max-width: 600px) {
-          .board-content { padding: 16px 12px 32px; }
+          .requests-content { padding: 16px 12px 32px; }
         }
-        .board-loading {
+        .requests-loading {
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -482,19 +444,10 @@ export default function BoardPage() {
         @keyframes spin {
           to { transform: rotate(360deg); }
         }
-        .board-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 24px;
-          align-items: start;
-        }
-        @media (max-width: 820px) {
-          .board-grid { grid-template-columns: 1fr; gap: 28px; }
-        }
-        .board-column {
+        .requests-column {
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 20px;
         }
         .column-title-wrap {
           display: flex;
@@ -506,7 +459,6 @@ export default function BoardPage() {
           height: 18px;
           border-radius: 2px;
         }
-        .title-accent.info { background: var(--green-light); }
         .title-accent.request { background: var(--gold); }
         .column-title-wrap h3 {
           font-family: 'Outfit', sans-serif;
@@ -518,7 +470,7 @@ export default function BoardPage() {
         .column-body {
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: 14px;
         }
         .empty-card {
           display: flex;
@@ -535,75 +487,16 @@ export default function BoardPage() {
           font-family: 'Outfit', sans-serif;
           font-size: 0.84rem;
         }
-        /* --- Notices --- */
-        .notice-card {
-          background: var(--panel);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          border: 1px solid var(--glass-border);
-          border-radius: 12px;
-          padding: 16px;
-          transition: transform 0.4s var(--ease-out), border-color 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out);
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.03);
-        }
-        .notice-card:hover {
-          border-color: rgba(255, 255, 255, 0.15);
-          transform: translateY(-4px);
-          box-shadow: 0 12px 30px rgba(255, 255, 255, 0.03), 0 6px 18px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-        }
-        .notice-card.warning { border-left: 3px solid #ef4444; }
-        .notice-card.update { border-left: 3px solid var(--gold); }
-        .notice-card.info { border-left: 3px solid var(--green-light); }
-        .notice-card-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 8px;
-        }
-        .notice-type-badge {
-          font-family: 'Outfit', sans-serif;
-          font-size: 0.6rem;
-          font-weight: 700;
-          letter-spacing: 0.04em;
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          padding: 2px 6px;
-          border-radius: 4px;
-        }
-        .warning .notice-type-badge { background: rgba(239, 68, 68, 0.12); color: #f87171; }
-        .update .notice-type-badge { background: rgba(212, 168, 83, 0.12); color: var(--gold); }
-        .info .notice-type-badge { background: rgba(2, 132, 199, 0.15); color: var(--green-light); }
-        .notice-date {
-          font-family: 'Outfit', sans-serif;
-          font-size: 0.68rem;
-          color: var(--text-3);
-        }
-        .notice-card-title {
-          font-family: 'Outfit', sans-serif;
-          font-size: 0.9rem;
-          font-weight: 600;
-          color: #f0f0f0;
-          margin: 0 0 6px;
-        }
-        .notice-card-content {
-          font-family: 'Outfit', sans-serif;
-          font-size: 0.82rem;
-          color: var(--text-2);
-          line-height: 1.5;
-          margin: 0;
-        }
-        /* --- Requests --- */
         .request-card {
           background: var(--panel);
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
           border: 1px solid var(--glass-border);
           border-radius: 12px;
-          padding: 16px;
+          padding: 20px;
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 10px;
           position: relative;
           transition: transform 0.4s var(--ease-out), border-color 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out);
           box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.03);
@@ -658,7 +551,7 @@ export default function BoardPage() {
         .request-remarks {
           font-family: 'Outfit', sans-serif;
           font-style: italic;
-          font-size: 0.78rem;
+          font-size: 0.8rem;
           color: var(--text-2);
           margin: 4px 0;
           padding-left: 8px;
@@ -670,11 +563,11 @@ export default function BoardPage() {
           align-items: center;
           margin-top: 4px;
           border-top: 1px solid rgba(255, 255, 255, 0.03);
-          padding-top: 8px;
+          padding-top: 10px;
         }
         .request-by {
           font-family: 'Outfit', sans-serif;
-          font-size: 0.7rem;
+          font-size: 0.72rem;
           color: var(--text-3);
           display: flex;
           align-items: center;
@@ -683,13 +576,13 @@ export default function BoardPage() {
           display: inline-flex;
           align-items: center;
           gap: 4px;
-          padding: 4px 8px;
+          padding: 6px 12px;
           background: rgba(2, 132, 199, 0.12);
           border: 1px solid rgba(2, 132, 199, 0.25);
           border-radius: 6px;
           color: var(--green-light);
           font-family: 'Outfit', sans-serif;
-          font-size: 0.68rem;
+          font-size: 0.7rem;
           font-weight: 600;
           cursor: pointer;
           transition: all 0.15s;
@@ -701,7 +594,7 @@ export default function BoardPage() {
         }
         .request-fulfilled-badge {
           font-family: 'Outfit', sans-serif;
-          font-size: 0.68rem;
+          font-size: 0.7rem;
           color: rgba(2, 132, 199, 0.75);
           display: flex;
           align-items: center;

@@ -46,8 +46,11 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
             </motion.a>
             <div className="navbar-links">
               <a href="/" className="nav-link">Curriculum</a>
-              <a href="/board" className="nav-link">Notices & Requests</a>
-              <a href="/about" className="nav-link">About & Contact</a>
+              <a href="/features" className="nav-link">Features</a>
+              <a href="/notices" className="nav-link">Notices</a>
+              <a href="/requests" className="nav-link">Requests</a>
+              <a href="/about" className="nav-link">About</a>
+              <a href="/contact" className="nav-link">Contact</a>
             </div>
           </div>
 
@@ -89,24 +92,42 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
                   className="mobile-menu-link"
                   onClick={() => setIsOpen(false)}
                 >
-                  {/* <BookOpen size={16} /> */}
                   <span>Curriculum</span>
                 </a>
                 <a
-                  href="/board"
+                  href="/features"
                   className="mobile-menu-link"
                   onClick={() => setIsOpen(false)}
                 >
-                  {/* <AlertCircle size={16} /> */}
-                  <span>Notices & Requests</span>
+                  <span>Features</span>
+                </a>
+                <a
+                  href="/notices"
+                  className="mobile-menu-link"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <span>Notices</span>
+                </a>
+                <a
+                  href="/requests"
+                  className="mobile-menu-link"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <span>Requests</span>
                 </a>
                 <a
                   href="/about"
                   className="mobile-menu-link"
                   onClick={() => setIsOpen(false)}
                 >
-                  {/* <Info size={16} /> */}
-                  <span>About & Contact</span>
+                  <span>About</span>
+                </a>
+                <a
+                  href="/contact"
+                  className="mobile-menu-link"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <span>Contact</span>
                 </a>
                 <button
                   className="mobile-menu-upload-btn"
