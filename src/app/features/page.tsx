@@ -6,29 +6,29 @@ import { ArrowLeft, BookOpen, HelpCircle, HardDrive, Bell, Eye } from 'lucide-re
 export default function FeaturesPage() {
   const features = [
     {
-      icon: <BookOpen className="feat-icon" style={{ color: 'var(--green-light)' }} />,
+      // icon: <BookOpen className="feat-icon" style={{ color: 'var(--green-light)' }} />,
       title: 'Curriculum Archive',
-      description: 'Quickly browse NISER SBS course syllabus resources, past year papers, lab documents, and notes organized by semester.',
+      description: 'Quickly browse/search NISER SBS course syllabus resources, past year papers, lab documents, and notes organized by semester.',
     },
     {
-      icon: <HardDrive className="feat-icon" style={{ color: '#3b82f6' }} />,
+      // icon: <HardDrive className="feat-icon" style={{ color: '#3b82f6' }} />,
       title: 'Smart Uploads',
       description: 'Directly upload files up to 500MB. Uploaded materials are automatically organized, duplicate-checked, and named with co-teaching professors\' last names.',
     },
     {
-      icon: <Eye className="feat-icon" style={{ color: 'var(--gold)' }} />,
+      // icon: <Eye className="feat-icon" style={{ color: 'var(--gold)' }} />,
       title: 'Background Uploading',
-      description: 'Click anywhere outside the upload modal to minimize active file uploads into a small, floating progress bar. Navigate other pages without interrupting your transfers.',
+      description: 'Do not close the window/tab while uploading. This will abort the upload',
     },
     {
-      icon: <HelpCircle className="feat-icon" style={{ color: '#a855f7' }} />,
+      // icon: <HelpCircle className="feat-icon" style={{ color: '#a855f7' }} />,
       title: 'Request Materials',
       description: 'Can\'t find a specific slide deck or past year paper? Request it on the Requests board, or help peers by fulfilling their missing material requests.',
     },
     {
-      icon: <Bell className="feat-icon" style={{ color: '#f43f5e' }} />,
-      title: 'Notice Board',
-      description: 'Stay updated with active notifications, exam schedule alerts, and curriculum corrections announcements published directly by moderators.',
+      // icon: <Bell className="feat-icon" style={{ color: '#f43f5e' }} />,
+      // title: 'Notice Board',
+      // description: 'Stay updated with active notifications, exam schedule alerts, and curriculum corrections announcements published directly by moderators.',
     },
   ];
 
@@ -63,7 +63,7 @@ export default function FeaturesPage() {
             {features.map((feat, index) => (
               <div key={index} className="feature-card">
                 <div className="card-header">
-                  {feat.icon}
+                  {/* {feat.icon} */}
                   <h3>{feat.title}</h3>
                 </div>
                 <p>{feat.description}</p>
