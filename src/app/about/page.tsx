@@ -16,7 +16,7 @@ export default function AboutPage() {
             </a>
             <div className="about-header-info">
               <a href="/" className="navbar-wordmark">
-                <span className="wordmark-bio">BIO</span>
+                <span className="wordmark-bio">Bio</span>
                 <span className="wordmark-archive">Archive</span>
               </a>
               <h1 className="about-title">About</h1>
@@ -30,7 +30,7 @@ export default function AboutPage() {
             {/* Card 1: What is BioArchive */}
             <section className="info-card">
               <div className="info-card-header">
-                <Info size={18} className="info-icon" />
+                {/* <Info size={18} className="info-icon" /> */}
                 <h3>What is BioArchive?</h3>
               </div>
               <p>
@@ -44,7 +44,7 @@ export default function AboutPage() {
             {/* Card 2: Guidelines */}
             <section className="info-card">
               <div className="info-card-header">
-                <FileCheck size={18} className="info-icon check" />
+                {/* <FileCheck size={18} className="info-icon check" /> */}
                 <h3>Upload Guidelines</h3>
               </div>
               <p>To keep the archive clean and reliable, please adhere to these rules when sharing files:</p>
@@ -59,7 +59,7 @@ export default function AboutPage() {
             {/* Card 3: Notice & Disclaimer */}
             <section className="info-card disclaimer">
               <div className="info-card-header">
-                <ShieldAlert size={18} className="info-icon alert" />
+                {/* <ShieldAlert size={18} className="info-icon alert" /> */}
                 <h3>Academic Integrity</h3>
               </div>
               <p>

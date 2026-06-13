@@ -57,7 +57,7 @@ export default function ContactPage() {
             </a>
             <div className="contact-header-info">
               <a href="/" className="navbar-wordmark">
-                <span className="wordmark-bio">BIO</span>
+                <span className="wordmark-bio">Bio</span>
                 <span className="wordmark-archive">Archive</span>
               </a>
               <h1 className="contact-title">Contact Us</h1>

@@ -61,7 +61,7 @@ export default function FeaturesPage() {
             </a>
             <div className="features-header-info">
               <a href="/" className="navbar-wordmark">
-                <span className="wordmark-bio">BIO</span>
+                <span className="wordmark-bio">Bio</span>
                 <span className="wordmark-archive">Archive</span>
               </a>
               <h1 className="features-title">Features Overview</h1>
@@ -71,14 +71,14 @@ export default function FeaturesPage() {
 
         {/* Content */}
         <div className="features-content">
-          <header className="features-hero">
+          {/* <header className="features-hero">
             <h2>Get to know <span className="highlight">BioArchive</span></h2>
             <p>A community repository to access, share, and request School of Biological Sciences study resources.</p>
-          </header>
+          </header> */}
 
 
 
-          <div 
+          <div
             className="features-carousel"
             ref={containerRef}
             onClick={() => setIsPaused(p => !p)}

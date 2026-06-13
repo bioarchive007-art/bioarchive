@@ -39,7 +39,7 @@ export default function NoticesPage() {
             </a>
             <div className="notices-header-info">
               <a href="/" className="navbar-wordmark">
-                <span className="wordmark-bio">BIO</span>
+                <span className="wordmark-bio">Bio</span>
                 <span className="wordmark-archive">Archive</span>
               </a>
               <h1 className="notices-title">Notice Board</h1>

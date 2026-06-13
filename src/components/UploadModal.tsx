@@ -66,6 +66,9 @@ export default function UploadModal({
   const [professor, setProfessor] = useState('');
   const [professor2, setProfessor2] = useState('');
   const [professor3, setProfessor3] = useState('');
+  const [customProfessor, setCustomProfessor] = useState('');
+  const [customProfessor2, setCustomProfessor2] = useState('');
+  const [customProfessor3, setCustomProfessor3] = useState('');
   const [requestId, setRequestId] = useState('');
 
   // Step 1: Files
@@ -101,16 +104,18 @@ export default function UploadModal({
 
   const canonicalFileNames = useMemo(() => {
     if (!fileType || !courseCode || !selectedCourse || files.length === 0) return [];
+    const isOtherProf = (val: string) => (val || '').trim().toLowerCase() === 'other';
+    const prof = isOtherProf(professor) ? customProfessor : professor;
     return files.map((f) =>
       generateRenamedFilename(f.name, {
         courseCode,
-        professor,
+        professor: prof,
         fileType,
         year,
         examType: isQpaper ? examType : undefined,
       })
     );
-  }, [files, fileType, courseCode, selectedCourse, year, examType, isQpaper, professor]);
+  }, [files, fileType, courseCode, selectedCourse, year, examType, isQpaper, professor, customProfessor]);
 
   // Reset or prefill on close/open
   useEffect(() => {
@@ -133,6 +138,9 @@ export default function UploadModal({
         setProfessor('');
         setProfessor2('');
         setProfessor3('');
+        setCustomProfessor('');
+        setCustomProfessor2('');
+        setCustomProfessor3('');
         setRequestId('');
         setRemarks('');
         setUploaderName('');
@@ -207,8 +215,21 @@ export default function UploadModal({
     return /^\d{4}$/.test(year) && !isNaN(y) && y <= new Date().getFullYear();
   }, [year]);
 
+  const isOther = (val: string) => (val || '').trim().toLowerCase() === 'other';
+
+  const resolvedProfessor = isOther(professor) ? customProfessor.trim() : professor;
+  const resolvedProfessor2 = isOther(professor2) ? customProfessor2.trim() : professor2;
+  const resolvedProfessor3 = isOther(professor3) ? customProfessor3.trim() : professor3;
+
   const canProceedStep0 =
-    fileType && isValidYear && semester && courseCode && professor &&
+    fileType &&
+    isValidYear &&
+    semester &&
+    courseCode &&
+    resolvedProfessor &&
+    !isOther(resolvedProfessor) &&
+    (!professor2 || !isOther(professor2) || (resolvedProfessor2 && !isOther(resolvedProfessor2))) &&
+    (!professor3 || !isOther(professor3) || (resolvedProfessor3 && !isOther(resolvedProfessor3))) &&
     (fileType !== 'qpaper' || examType);
   const canProceedStep1 = files.length > 0;
   const canSubmit = canProceedStep0 && canProceedStep1;
@@ -242,9 +263,9 @@ export default function UploadModal({
           fileType,
           examType: isQpaper ? examType : '',
           year,
-          professor,
-          professor2,
-          professor3,
+          professor: resolvedProfessor,
+          professor2: resolvedProfessor2,
+          professor3: resolvedProfessor3,
           uploaderName: displayName,
           remarks,
         });
@@ -616,37 +637,94 @@ export default function UploadModal({
                             <select
                               className="um-select"
                               value={professor}
-                              onChange={(e) => setProfessor(e.target.value)}
+                              onChange={(e) => {
+                                setProfessor(e.target.value);
+                                setCustomProfessor('');
+                              }}
                             >
                               <option value="">Select professor...</option>
-                              {selectedCourse.professors.map((p) => (
-                                <option key={p} value={p}>{p}</option>
-                              ))}
+                              {selectedCourse.professors
+                                .filter((p) => p.trim().toLowerCase() !== 'other')
+                                .map((p) => (
+                                  <option key={p} value={p}>{p}</option>
+                                ))
+                              }
+                              <option value="Other">Other</option>
                             </select>
+
+                            {(professor || '').trim().toLowerCase() === 'other' && (
+                              <input
+                                type="text"
+                                className="um-input"
+                                value={customProfessor}
+                                onChange={(e) => setCustomProfessor(e.target.value)}
+                                placeholder="Enter professor's name"
+                                required
+                                style={{ marginTop: '-8px', marginBottom: '8px' }}
+                              />
+                            )}
 
                             <label className="um-label">Professor 2 (optional)</label>
                             <select
                               className="um-select"
                               value={professor2}
-                              onChange={(e) => setProfessor2(e.target.value)}
+                              onChange={(e) => {
+                                setProfessor2(e.target.value);
+                                setCustomProfessor2('');
+                              }}
                             >
                               <option value="">None</option>
-                              {selectedCourse.professors.map((p) => (
-                                <option key={p} value={p}>{p}</option>
-                              ))}
+                              {selectedCourse.professors
+                                .filter((p) => p.trim().toLowerCase() !== 'other')
+                                .map((p) => (
+                                  <option key={p} value={p}>{p}</option>
+                                ))
+                              }
+                              <option value="Other">Other</option>
                             </select>
+
+                            {(professor2 || '').trim().toLowerCase() === 'other' && (
+                              <input
+                                type="text"
+                                className="um-input"
+                                value={customProfessor2}
+                                onChange={(e) => setCustomProfessor2(e.target.value)}
+                                placeholder="Enter professor 2's name"
+                                required
+                                style={{ marginTop: '-8px', marginBottom: '8px' }}
+                              />
+                            )}
 
                             <label className="um-label">Professor 3 (optional)</label>
                             <select
                               className="um-select"
                               value={professor3}
-                              onChange={(e) => setProfessor3(e.target.value)}
+                              onChange={(e) => {
+                                setProfessor3(e.target.value);
+                                setCustomProfessor3('');
+                              }}
                             >
                               <option value="">None</option>
-                              {selectedCourse.professors.map((p) => (
-                                <option key={p} value={p}>{p}</option>
-                              ))}
+                              {selectedCourse.professors
+                                .filter((p) => p.trim().toLowerCase() !== 'other')
+                                .map((p) => (
+                                  <option key={p} value={p}>{p}</option>
+                                ))
+                              }
+                              <option value="Other">Other</option>
                             </select>
+
+                            {(professor3 || '').trim().toLowerCase() === 'other' && (
+                              <input
+                                type="text"
+                                className="um-input"
+                                value={customProfessor3}
+                                onChange={(e) => setCustomProfessor3(e.target.value)}
+                                placeholder="Enter professor 3's name"
+                                required
+                                style={{ marginTop: '-8px', marginBottom: '8px' }}
+                              />
+                            )}
                           </>
                         )}
                       </motion.div>
@@ -790,7 +868,7 @@ export default function UploadModal({
                               <span>Semester</span><span>{semester}</span>
                             </div>
                             <div className="um-summary-row">
-                              <span>Professor</span><span>{professor}</span>
+                              <span>Professor</span><span>{(professor || '').trim().toLowerCase() === 'other' ? customProfessor : professor}</span>
                             </div>
                             <div className="um-summary-row">
                               <span>Year</span><span>{year}</span>

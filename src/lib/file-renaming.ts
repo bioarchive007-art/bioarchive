@@ -36,6 +36,9 @@ function getFileExtension(fileName: string): string {
  */
 export function getShortProfessorName(profName: string): string {
   if (!profName) return '';
+  if (profName.trim().toLowerCase() === 'other') {
+    return 'Dr. Unknown';
+  }
   // Remove common prefixes like Dr., Prof., etc. (case-insensitive)
   let clean = profName.replace(/^(Dr\.|Prof\.|Dr|Prof)\s+/i, '').trim();
   // Split on spaces, dots, hyphens, underscores and filter out empty strings
