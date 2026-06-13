@@ -1,31 +1,53 @@
 'use client';
 
-import React from 'react';
-import { ArrowLeft, BookOpen, HelpCircle, HardDrive, Bell, Eye } from 'lucide-react';
+import React, { useRef, useState, useEffect } from 'react';
+import { ArrowLeft } from 'lucide-react';
 
 export default function FeaturesPage() {
   const features = [
     {
-      // icon: <BookOpen className="feat-icon" style={{ color: 'var(--green-light)' }} />,
       title: 'Curriculum Archive',
       description: 'Quickly browse/search NISER SBS course syllabus resources, past year papers, lab documents, and notes organized by semester.',
     },
     {
-      // icon: <HardDrive className="feat-icon" style={{ color: '#3b82f6' }} />,
       title: 'Smart Uploads',
       description: 'Directly upload files up to 500MB. Uploaded materials are automatically organized, duplicate-checked, and named with co-teaching professors\' last names.',
     },
     {
-      // icon: <Eye className="feat-icon" style={{ color: 'var(--gold)' }} />,
       title: 'Background Uploading',
       description: 'Do not close the window/tab while uploading. This will abort the upload',
     },
     {
-      // icon: <HelpCircle className="feat-icon" style={{ color: '#a855f7' }} />,
       title: 'Request Materials',
       description: 'Can\'t find a specific slide deck or past year paper? Request it on the Requests board, or help peers by fulfilling their missing material requests.',
     },
   ];
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    let animationId: number;
+
+    const scroll = () => {
+      if (!isPaused) {
+        container.scrollLeft += 0.8;
+        if (container.scrollLeft >= container.scrollWidth / 2) {
+          container.scrollLeft = 0;
+        }
+      }
+      animationId = requestAnimationFrame(scroll);
+    };
+
+    animationId = requestAnimationFrame(scroll);
+    return () => cancelAnimationFrame(animationId);
+  }, [isPaused]);
+
+  // Duplicate features list for seamless looping
+  const duplicatedFeatures = [...features, ...features];
 
   return (
     <>
@@ -54,16 +76,32 @@ export default function FeaturesPage() {
             <p>A community repository to access, share, and request School of Biological Sciences study resources.</p>
           </header>
 
-          <div className="features-grid">
-            {features.map((feat, index) => (
-              <div key={index} className="feature-card">
-                <div className="card-header">
-                  {/* {feat.icon} */}
-                  <h3>{feat.title}</h3>
+          <div className="scroll-status-wrap">
+            <button 
+              className={`scroll-status-btn ${isPaused ? 'paused' : 'active'}`} 
+              onClick={() => setIsPaused(p => !p)}
+            >
+              <span className="status-dot" />
+              <span>{isPaused ? 'Auto-scroll Paused' : 'Auto-scrolling (Tap cards to pause)'}</span>
+            </button>
+          </div>
+
+          <div 
+            className="features-carousel"
+            ref={containerRef}
+            onClick={() => setIsPaused(p => !p)}
+            onTouchStart={() => setIsPaused(p => !p)}
+          >
+            <div className="features-grid">
+              {duplicatedFeatures.map((feat, index) => (
+                <div key={index} className="feature-card">
+                  <div className="card-header">
+                    <h3>{feat.title}</h3>
+                  </div>
+                  <p>{feat.description}</p>
                 </div>
-                <p>{feat.description}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -155,12 +193,65 @@ export default function FeaturesPage() {
           margin: 0 auto;
           line-height: 1.5;
         }
+        .scroll-status-wrap {
+          display: flex;
+          justify-content: center;
+          margin-bottom: 24px;
+        }
+        .scroll-status-btn {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 6px 12px;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid var(--glass-border);
+          border-radius: 20px;
+          color: var(--text-2);
+          font-family: 'Outfit', sans-serif;
+          font-size: 0.72rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+        .scroll-status-btn:hover {
+          background: rgba(255, 255, 255, 0.06);
+          border-color: rgba(255, 255, 255, 0.15);
+        }
+        .status-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+        }
+        .scroll-status-btn.active .status-dot {
+          background: #10b981;
+          box-shadow: 0 0 8px #10b981;
+        }
+        .scroll-status-btn.paused .status-dot {
+          background: #f59e0b;
+          box-shadow: 0 0 8px #f59e0b;
+        }
+        .features-carousel {
+          width: 100%;
+          overflow-x: auto;
+          scrollbar-width: none;
+          cursor: grab;
+          padding: 10px 0;
+        }
+        .features-carousel:active {
+          cursor: grabbing;
+        }
+        .features-carousel::-webkit-scrollbar {
+          display: none;
+        }
         .features-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+          display: flex;
           gap: 20px;
+          width: max-content;
         }
         .feature-card {
+          flex: 0 0 280px;
           background: var(--panel);
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
