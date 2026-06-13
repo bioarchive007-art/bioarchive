@@ -25,11 +25,6 @@ export default function FeaturesPage() {
       title: 'Request Materials',
       description: 'Can\'t find a specific slide deck or past year paper? Request it on the Requests board, or help peers by fulfilling their missing material requests.',
     },
-    {
-      // icon: <Bell className="feat-icon" style={{ color: '#f43f5e' }} />,
-      // title: 'Notice Board',
-      // description: 'Stay updated with active notifications, exam schedule alerts, and curriculum corrections announcements published directly by moderators.',
-    },
   ];
 
   return (
