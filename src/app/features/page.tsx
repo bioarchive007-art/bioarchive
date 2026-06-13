@@ -76,15 +76,7 @@ export default function FeaturesPage() {
             <p>A community repository to access, share, and request School of Biological Sciences study resources.</p>
           </header>
 
-          <div className="scroll-status-wrap">
-            <button 
-              className={`scroll-status-btn ${isPaused ? 'paused' : 'active'}`} 
-              onClick={() => setIsPaused(p => !p)}
-            >
-              <span className="status-dot" />
-              <span>{isPaused ? 'Auto-scroll Paused' : 'Auto-scrolling (Tap cards to pause)'}</span>
-            </button>
-          </div>
+
 
           <div 
             className="features-carousel"
@@ -193,45 +185,7 @@ export default function FeaturesPage() {
           margin: 0 auto;
           line-height: 1.5;
         }
-        .scroll-status-wrap {
-          display: flex;
-          justify-content: center;
-          margin-bottom: 24px;
-        }
-        .scroll-status-btn {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 6px 12px;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid var(--glass-border);
-          border-radius: 20px;
-          color: var(--text-2);
-          font-family: 'Outfit', sans-serif;
-          font-size: 0.72rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-        }
-        .scroll-status-btn:hover {
-          background: rgba(255, 255, 255, 0.06);
-          border-color: rgba(255, 255, 255, 0.15);
-        }
-        .status-dot {
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-        }
-        .scroll-status-btn.active .status-dot {
-          background: #10b981;
-          box-shadow: 0 0 8px #10b981;
-        }
-        .scroll-status-btn.paused .status-dot {
-          background: #f59e0b;
-          box-shadow: 0 0 8px #f59e0b;
-        }
+
         .features-carousel {
           width: 100%;
           overflow-x: auto;
