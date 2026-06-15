@@ -990,6 +990,24 @@ export default function UploadModal({
           scrollbar-width: thin;
           scrollbar-color: rgba(2,132,199,0.15) transparent;
         }
+        .um-panel::-webkit-scrollbar {
+          width: 6px !important;
+          height: 6px !important;
+        }
+        .um-panel::-webkit-scrollbar-track {
+          background: transparent !important;
+          margin: 12px 0 !important;
+        }
+        .um-panel::-webkit-scrollbar-thumb {
+          background: rgba(2, 132, 199, 0.3) !important;
+          border-radius: 3px !important;
+        }
+        .um-panel::-webkit-scrollbar-thumb:hover {
+          background: rgba(2, 132, 199, 0.5) !important;
+        }
+        .um-panel::-webkit-scrollbar-corner {
+          background: transparent !important;
+        }
         .um-close {
           position: absolute;
           top: 16px;
