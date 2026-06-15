@@ -54,10 +54,15 @@
 .request-card,
 .notice-card,
 .file-card,
-.info-card,
-.um-panel {
+.info-card {
   position: relative !important;
   overflow: hidden !important;
+}
+
+.um-panel {
+  position: relative !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
 }
 
 /* Diagonal glossy glare reflection overlay */

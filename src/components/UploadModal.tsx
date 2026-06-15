@@ -978,8 +978,8 @@ export default function UploadModal({
           width: 100%;
           max-width: 560px;
           max-height: 90vh;
-          overflow-y: auto;
-          overflow-x: hidden;
+          overflow-y: auto !important;
+          overflow-x: hidden !important;
           background: var(--panel);
           backdrop-filter: var(--glass-blur);
           -webkit-backdrop-filter: var(--glass-blur);
