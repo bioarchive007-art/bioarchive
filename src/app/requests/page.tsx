@@ -373,7 +373,9 @@ export default function RequestsPage() {
           position: sticky;
           top: 0;
           z-index: 50;
-          background: rgba(3, 10, 24, 0.97);
+          background: rgba(3, 10, 24, 0.45);
+          backdrop-filter: var(--glass-blur);
+          -webkit-backdrop-filter: var(--glass-blur);
           border-bottom: 1px solid var(--glass-border);
         }
         .requests-header-inner {
@@ -479,9 +481,9 @@ export default function RequestsPage() {
           justify-content: center;
           gap: 12px;
           padding: 60px 20px;
-          background: rgba(255, 255, 255, 0.02);
+          background: var(--glass);
           border: 1px dashed var(--glass-border);
-          border-radius: 14px;
+          border-radius: 16px;
           text-align: center;
           color: var(--text-3);
           font-family: 'Outfit', sans-serif;
@@ -489,22 +491,22 @@ export default function RequestsPage() {
         }
         .request-card {
           background: var(--panel);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
+          backdrop-filter: var(--glass-blur);
+          -webkit-backdrop-filter: var(--glass-blur);
           border: 1px solid var(--glass-border);
-          border-radius: 12px;
+          border-radius: 16px;
           padding: 20px;
           display: flex;
           flex-direction: column;
           gap: 10px;
           position: relative;
           transition: transform 0.4s var(--ease-out), border-color 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out);
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+          box-shadow: var(--glass-shadow);
         }
         .request-card:hover {
           transform: translateY(-4px);
-          border-color: rgba(0, 229, 255, 0.2);
-          box-shadow: 0 12px 30px rgba(0, 229, 255, 0.04), 0 6px 18px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+          border-color: var(--glass-border-hover);
+          box-shadow: var(--glass-shadow-hover);
         }
         .request-card.fulfilled { opacity: 0.65; border-color: rgba(255, 255, 255, 0.03); }
         .request-card-header {

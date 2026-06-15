@@ -259,25 +259,12 @@ export default function GlobalSearch() {
           transition: transform 0.2s var(--ease-spring);
         }
         .search-input-wrapper.focused {
-          transform: scale(1.015);
-        }
-        .search-input-wrapper.focused::after {
-          content: '';
-          position: absolute;
-          inset: -1px;
-          border-radius: 12px;
-          background: linear-gradient(90deg, #ff007f, #00f0ff, #00ff66, #ffb700, #ff007f);
-          background-size: 300% 100%;
-          z-index: -1;
-          animation: moveRgbBorder 3s linear infinite;
+          transform: scale(1.01);
         }
         .search-input-wrapper.focused .search-input {
-          border-color: transparent;
-          background: #051022; /* Opaque background to hide inner overflow of gradient */
-        }
-        @keyframes moveRgbBorder {
-          0% { background-position: 0% 50%; }
-          100% { background-position: 300% 50%; }
+          border-color: var(--glass-border-hover);
+          background: rgba(255, 255, 255, 0.06);
+          box-shadow: var(--glass-shadow-hover);
         }
         .search-icon {
           position: absolute;
@@ -301,6 +288,9 @@ export default function GlobalSearch() {
           transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
           position: relative;
           z-index: 5;
+          backdrop-filter: var(--glass-blur);
+          -webkit-backdrop-filter: var(--glass-blur);
+          box-shadow: var(--glass-shadow);
         }
         .search-input::placeholder {
           color: var(--text-3);
@@ -349,14 +339,14 @@ export default function GlobalSearch() {
           top: calc(100% + 6px);
           left: 0;
           right: 0;
-          background: rgba(3, 10, 24, 0.96);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
+          background: var(--panel);
+          backdrop-filter: var(--glass-blur);
+          -webkit-backdrop-filter: var(--glass-blur);
           border: 1px solid var(--glass-border-hover);
-          border-radius: 14px;
+          border-radius: 16px;
           max-height: 480px;
           overflow-y: auto;
-          box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+          box-shadow: var(--glass-shadow-hover);
         }
         .search-no-results {
           padding: 20px;

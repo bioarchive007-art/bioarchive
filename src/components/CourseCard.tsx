@@ -52,22 +52,23 @@ export default function CourseCard({ course, semester }: CourseCardProps) {
           display: block;
           text-decoration: none;
           background: var(--panel);
-          backdrop-filter: blur(14px);
-          -webkit-backdrop-filter: blur(14px);
+          background-color: transparent;
+          backdrop-filter: var(--glass-blur);
+          -webkit-backdrop-filter: var(--glass-blur);
           border: 1px solid var(--glass-border);
-          border-radius: 14px;
+          border-radius: 16px;
           padding: 16px;
-          transition: transform 0.4s var(--ease-out), border-color 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out), background 0.3s;
+          transition: transform 0.4s var(--ease-out), border-color 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out), background-color 0.3s var(--ease-out);
           position: relative;
           overflow: hidden;
           transform-style: preserve-3d;
           perspective: 1000px;
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+          box-shadow: var(--glass-shadow);
         }
         .course-card:hover {
-          background: var(--glass-hover);
-          border-color: rgba(0, 229, 255, 0.25);
-          box-shadow: 0 16px 32px rgba(0, 229, 255, 0.06), 0 8px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+          background-color: rgba(255, 255, 255, 0.05);
+          border-color: var(--glass-border-hover);
+          box-shadow: var(--glass-shadow-hover);
           transform: translateY(-6px) rotateX(3deg) rotateY(-2deg) translateZ(8px);
         }
         .cc-top {
@@ -79,13 +80,13 @@ export default function CourseCard({ course, semester }: CourseCardProps) {
           width: 44px;
           height: 44px;
           border-radius: 10px;
-          background: rgba(0, 229, 255, 0.1);
+          background: rgba(255, 255, 255, 0.05);
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
           overflow: hidden;
-          border: 1px solid rgba(0, 229, 255, 0.15);
+          border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .cc-icon-img {
           width: 100%;
@@ -142,8 +143,8 @@ export default function CourseCard({ course, semester }: CourseCardProps) {
           bottom: 0;
           left: 16px;
           right: 16px;
-          height: 2px;
-          background: linear-gradient(90deg, var(--green-light), transparent);
+          height: 1.5px;
+          background: linear-gradient(90deg, rgba(255, 255, 255, 0.25), transparent);
           opacity: 0;
           transition: opacity 0.25s;
         }

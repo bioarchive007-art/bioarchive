@@ -19,6 +19,8 @@ const Hero3D = dynamic(() => import('@/components/Hero3D'), {
   ssr: false,
 });
 
+
+
 const ALL_SEMESTERS = [...CONFIG.NISER_SEMESTERS.map(String), 'ADVANCE COURSES'];
 
 export default function HomePage() {
@@ -60,6 +62,11 @@ export default function HomePage() {
     <>
       <Navbar onUploadClick={() => setUploadOpen(true)} />
 
+      {/* Dynamic Background DNA Helix for Homepage Only */}
+      <div className="global-3d-bg" aria-hidden="true">
+        <Hero3D />
+      </div>
+
       <div className="app-layout">
         <main className="main-content">
           {/* Hero */}
@@ -73,9 +80,6 @@ export default function HomePage() {
               <div className="hero-search-wrap hero-fade-in hero-fade-in-delay">
                 <GlobalSearch />
               </div>
-            </div>
-            <div className="hero-3d-wrap">
-              <Hero3D />
             </div>
 
             {/* Pulsing Scroll down indicator */}
@@ -128,12 +132,13 @@ export default function HomePage() {
       <style jsx>{`
         .hero {
           position: relative;
-          display: grid;
-          grid-template-columns: 1.2fr 1fr;
-          gap: 40px;
+          display: flex;
+          flex-direction: column;
           align-items: center;
-          padding: 40px 20px 100px;
-          max-width: 1200px;
+          justify-content: center;
+          text-align: center;
+          padding: 80px 20px 100px;
+          max-width: 800px;
           margin: 0 auto;
           width: 100%;
           min-height: calc(100vh - var(--nav-h));
@@ -180,8 +185,8 @@ export default function HomePage() {
           animation: scrollBounce 2s infinite;
         }
         .scroll-indicator:hover .scroll-arrow {
-          border-color: rgba(0, 229, 255, 0.35);
-          box-shadow: 0 0 10px rgba(0, 229, 255, 0.15);
+          border-color: rgba(255, 255, 255, 0.25);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
         }
         @keyframes scrollBounce {
           0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
@@ -192,8 +197,8 @@ export default function HomePage() {
           width: 100%;
           display: flex;
           flex-direction: column;
-          align-items: flex-start;
-          text-align: left;
+          align-items: center;
+          text-align: center;
         }
         .hero-heading {
           font-family: var(--font-cinzel), 'Cinzel', serif;
@@ -231,14 +236,7 @@ export default function HomePage() {
           width: 100%;
           max-width: 480px;
           display: flex;
-          justify-content: flex-start;
-        }
-        .hero-3d-wrap {
-          width: 100%;
-          height: 450px;
-          display: flex;
           justify-content: center;
-          align-items: center;
         }
         .hero-fade-in {
           animation: heroFadeIn 0.6s ease-out both;
@@ -283,18 +281,7 @@ export default function HomePage() {
           .hero-search-wrap {
             justify-content: center !important;
           }
-          .hero-3d-wrap {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: -1;
-            opacity: 0.15;
-            filter: blur(8px);
-            -webkit-filter: blur(8px);
-            pointer-events: none;
-          }
+
           .semesters-section { padding: 8px 12px 40px; }
         }
       `}</style>

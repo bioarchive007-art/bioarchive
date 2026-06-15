@@ -58,10 +58,10 @@ export default function Hero3D() {
       scene.add(dnaGroup);
 
       // DNA Geometry parameters
-      const numPoints = 36;
+      const numPoints = 130;
       const radius = 2.0;
-      const turns = 2.5;
-      const height = 7.5;
+      const turns = 8.0;
+      const height = 25.0;
       const angleOffset = 2.4;
 
       // Optimized segment counts: Spheres (8,8) instead of (16,16) saves 75% polygon overhead
@@ -174,7 +174,7 @@ export default function Hero3D() {
       }
 
       // Add dual-colored ambient particles background
-      const particleCount = 75;
+      const particleCount = 150;
       const particleGeometry = new THREE.BufferGeometry();
       const positions = new Float32Array(particleCount * 3);
       const colors = new Float32Array(particleCount * 3);
@@ -183,9 +183,9 @@ export default function Hero3D() {
       const colorEmerald = new THREE.Color(0x10b981);
 
       for (let i = 0; i < particleCount; i++) {
-        positions[i * 3] = (Math.random() - 0.5) * 15;
-        positions[i * 3 + 1] = (Math.random() - 0.5) * 10;
-        positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+        positions[i * 3] = (Math.random() - 0.5) * 20;
+        positions[i * 3 + 1] = (Math.random() - 0.5) * 30;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 15;
 
         const randomColor = Math.random() > 0.5 ? colorCyan : colorEmerald;
         colors[i * 3] = randomColor.r;

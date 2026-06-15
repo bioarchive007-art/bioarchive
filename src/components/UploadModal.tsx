@@ -971,7 +971,7 @@ export default function UploadModal({
           justify-content: center;
           z-index: 400;
           padding: 16px;
-          backdrop-filter: blur(4px);
+          backdrop-filter: blur(8px);
         }
         .um-panel {
           position: relative;
@@ -980,11 +980,13 @@ export default function UploadModal({
           max-height: 90vh;
           overflow-y: auto;
           overflow-x: hidden;
-          background: rgba(3, 10, 24, 0.96);
-          backdrop-filter: blur(24px);
-          border: 1px solid rgba(2, 132, 199, 0.25);
+          background: var(--panel);
+          backdrop-filter: var(--glass-blur);
+          -webkit-backdrop-filter: var(--glass-blur);
+          border: 1px solid var(--glass-border);
           border-radius: 20px;
           padding: 28px;
+          box-shadow: var(--glass-shadow-hover);
           scrollbar-width: thin;
           scrollbar-color: rgba(2,132,199,0.15) transparent;
         }
@@ -1488,10 +1490,10 @@ export default function UploadModal({
           max-width: 380px;
           width: 100%;
           padding: 24px;
-          background: rgba(255, 255, 255, 0.02);
-          border: 1px solid rgba(218, 165, 32, 0.25);
+          background: var(--glass);
+          border: 1px solid rgba(218, 165, 32, 0.4);
           border-radius: 16px;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+          box-shadow: var(--glass-shadow);
         }
         .um-warning-title {
           font-family: 'Cinzel', serif;
@@ -1530,15 +1532,15 @@ export default function UploadModal({
         /* --- Mini Progress Bar Styles --- */
         .um-mini-progress {
           position: fixed;
-          background: rgba(3, 10, 24, 0.96);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
-          border: 1px solid rgba(2, 132, 199, 0.3);
+          background: var(--panel);
+          backdrop-filter: var(--glass-blur);
+          -webkit-backdrop-filter: var(--glass-blur);
+          border: 1px solid rgba(2, 132, 199, 0.35);
           border-radius: 12px;
           cursor: pointer;
           overflow: hidden;
           z-index: 1000;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(2, 132, 199, 0.15);
+          box-shadow: var(--glass-shadow-hover);
           transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .um-mini-progress:hover {

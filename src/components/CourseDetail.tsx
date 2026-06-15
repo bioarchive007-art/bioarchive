@@ -173,12 +173,12 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
             align-items: center;
             justify-content: center;
             padding: 40px 48px;
-            background: rgba(255, 255, 255, 0.01);
+            background: var(--glass);
             border: 1px solid var(--glass-border);
             border-radius: 20px;
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            box-shadow: var(--glass-shadow);
             max-width: 380px;
             width: 100%;
             text-align: center;
@@ -210,12 +210,10 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
             border-radius: 50%;
           }
           .dot-1 {
-            background: var(--gold);
-            box-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
+            background: var(--text-2);
           }
           .dot-2 {
-            background: var(--green-light);
-            box-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+            background: rgba(255, 255, 255, 0.3);
           }
           .dna-rung-bar {
             width: 1px;
@@ -474,7 +472,9 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           position: sticky;
           top: 0;
           z-index: 50;
-          background: rgba(3, 10, 24, 0.97);
+          background: rgba(3, 10, 24, 0.45);
+          backdrop-filter: var(--glass-blur);
+          -webkit-backdrop-filter: var(--glass-blur);
           border-bottom: 1px solid var(--glass-border);
         }
         .cd-header-inner {
@@ -585,7 +585,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           gap: 10px;
         }
         .cd-type-section {
-          border-radius: 14px;
+          border-radius: 16px;
           overflow: hidden;
           border: 1px solid var(--glass-border);
         }
@@ -737,12 +737,12 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           align-items: center;
           justify-content: center;
           padding: 40px 48px;
-          background: rgba(255, 255, 255, 0.01);
+          background: var(--glass);
           border: 1px solid var(--glass-border);
           border-radius: 20px;
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+          backdrop-filter: var(--glass-blur);
+          -webkit-backdrop-filter: var(--glass-blur);
+          box-shadow: var(--glass-shadow);
           max-width: 380px;
           width: 100%;
           text-align: center;
@@ -774,12 +774,10 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           border-radius: 50%;
         }
         .dot-1 {
-          background: var(--gold);
-          box-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
+          background: var(--text-2);
         }
         .dot-2 {
-          background: var(--green-light);
-          box-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+          background: rgba(255, 255, 255, 0.3);
         }
         .dna-rung-bar {
           width: 1px;

@@ -274,10 +274,10 @@ export default function FileList({ courseCode, semester }: FileListProps) {
         }
         .fl-card {
           background: var(--panel);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
+          backdrop-filter: var(--glass-blur);
+          -webkit-backdrop-filter: var(--glass-blur);
           border: 1px solid var(--glass-border);
-          border-radius: 14px;
+          border-radius: 16px;
           padding: 16px;
           display: flex;
           flex-direction: column;
@@ -285,12 +285,12 @@ export default function FileList({ courseCode, semester }: FileListProps) {
           transition: transform 0.4s var(--ease-out), border-color 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out), background 0.3s;
           transform-style: preserve-3d;
           perspective: 1000px;
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+          box-shadow: var(--glass-shadow);
         }
         .fl-card:hover {
           background: var(--glass-hover);
-          border-color: rgba(0, 229, 255, 0.25);
-          box-shadow: 0 16px 32px rgba(0, 229, 255, 0.06), 0 8px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+          border-color: var(--glass-border-hover);
+          box-shadow: var(--glass-shadow-hover);
           transform: translateY(-5px) rotateX(2deg) rotateY(-1deg) translateZ(6px);
         }
         .fl-badge {

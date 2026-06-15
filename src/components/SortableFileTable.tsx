@@ -148,11 +148,11 @@ export default function SortableFileTable({
           width: 100%;
           overflow-x: auto;
           border: 1px solid var(--glass-border);
-          border-radius: 14px;
+          border-radius: 16px;
           background: var(--panel);
-          backdrop-filter: blur(10px);
-          -webkit-backdrop-filter: blur(10px);
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+          backdrop-filter: var(--glass-blur);
+          -webkit-backdrop-filter: var(--glass-blur);
+          box-shadow: var(--glass-shadow);
         }
         .sft-table {
           width: 100%;

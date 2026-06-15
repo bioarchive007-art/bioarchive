@@ -100,7 +100,9 @@ export default function NoticesPage() {
           position: sticky;
           top: 0;
           z-index: 50;
-          background: rgba(3, 10, 24, 0.97);
+          background: rgba(3, 10, 24, 0.45);
+          backdrop-filter: var(--glass-blur);
+          -webkit-backdrop-filter: var(--glass-blur);
           border-bottom: 1px solid var(--glass-border);
         }
         .notices-header-inner {
@@ -206,9 +208,9 @@ export default function NoticesPage() {
           justify-content: center;
           gap: 12px;
           padding: 60px 20px;
-          background: rgba(255, 255, 255, 0.02);
+          background: var(--glass);
           border: 1px dashed var(--glass-border);
-          border-radius: 14px;
+          border-radius: 16px;
           text-align: center;
           color: var(--text-3);
           font-family: 'Outfit', sans-serif;
@@ -216,18 +218,18 @@ export default function NoticesPage() {
         }
         .notice-card {
           background: var(--panel);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
+          backdrop-filter: var(--glass-blur);
+          -webkit-backdrop-filter: var(--glass-blur);
           border: 1px solid var(--glass-border);
-          border-radius: 12px;
+          border-radius: 16px;
           padding: 20px;
           transition: transform 0.4s var(--ease-out), border-color 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out);
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+          box-shadow: var(--glass-shadow);
         }
         .notice-card:hover {
-          border-color: rgba(255, 255, 255, 0.15);
+          border-color: var(--glass-border-hover);
           transform: translateY(-4px);
-          box-shadow: 0 12px 30px rgba(255, 255, 255, 0.03), 0 6px 18px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+          box-shadow: var(--glass-shadow-hover);
         }
         .notice-card.warning { border-left: 3px solid #ef4444; }
         .notice-card.update { border-left: 3px solid var(--gold); }

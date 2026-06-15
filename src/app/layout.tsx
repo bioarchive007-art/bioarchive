@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next';
 import { Cinzel, Outfit, Plus_Jakarta_Sans, Tangerine } from 'next/font/google';
 import Script from 'next/script';
 
+
 const fontCinzel = Cinzel({
   subsets: ['latin'],
   weight: ['600', '700', '900'],
@@ -72,7 +73,14 @@ export default function RootLayout({
         </Script>
 
         {/* Ambient background */}
-        <div className="orb-bg" aria-hidden="true" />
+        <div className="orb-bg" aria-hidden="true">
+          <div className="orb-1" />
+          <div className="orb-2" />
+          <div className="orb-3" />
+          <div className="orb-4" />
+        </div>
+
+
 
         {/* Loading screen */}
         <div className="loading-screen" id="loading-screen">

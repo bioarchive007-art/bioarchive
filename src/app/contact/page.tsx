@@ -176,9 +176,9 @@ export default function ContactPage() {
           position: sticky;
           top: 0;
           z-index: 50;
-          background: rgba(3, 10, 24, 0.88);
-          backdrop-filter: blur(18px);
-          -webkit-backdrop-filter: blur(18px);
+          background: rgba(3, 10, 24, 0.45);
+          backdrop-filter: var(--glass-blur);
+          -webkit-backdrop-filter: var(--glass-blur);
           border-bottom: 1px solid var(--glass-border);
         }
         .contact-header-inner {
@@ -233,18 +233,18 @@ export default function ContactPage() {
         }
         .contact-card {
           background: var(--panel);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
+          backdrop-filter: var(--glass-blur);
+          -webkit-backdrop-filter: var(--glass-blur);
           border: 1px solid var(--glass-border);
-          border-radius: 14px;
+          border-radius: 16px;
           padding: 24px;
           transition: transform 0.4s var(--ease-out), border-color 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out);
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+          box-shadow: var(--glass-shadow);
         }
         .contact-card:hover {
           transform: translateY(-4px);
-          border-color: rgba(0, 229, 255, 0.25);
-          box-shadow: 0 16px 32px rgba(0, 229, 255, 0.06), 0 8px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+          border-color: var(--glass-border-hover);
+          box-shadow: var(--glass-shadow-hover);
         }
         .contact-card-header {
           display: flex;
