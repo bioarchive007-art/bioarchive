@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Upload, BookOpen, AlertCircle, Info, LogOut } from 'lucide-react';
+import { Menu, X, Upload, BookOpen, AlertCircle, Info, LogOut, Lock } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from './AuthProvider';
 
@@ -27,6 +27,11 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { user, logout, triggerLogin, siteConfig } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
+
+  const isAdmin = !!(user && (
+    (siteConfig?.adminEmails || []).includes(user.email.toLowerCase().trim()) || 
+    user.email.toLowerCase().trim() === 'bioarchive007@gmail.com'
+  ));
 
   const handleUploadClick = () => {
     if (!user) {
@@ -155,6 +160,29 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
                       }}>
                         {user.email}
                       </div>
+                      {isAdmin && (
+                        <Link
+                          href="/admin"
+                          onClick={() => setShowDropdown(false)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            color: 'var(--green-light)',
+                            padding: '6px 8px',
+                            width: '100%',
+                            textAlign: 'left',
+                            fontSize: '0.76rem',
+                            borderRadius: '6px',
+                            fontFamily: "'Outfit', sans-serif",
+                            textDecoration: 'none',
+                            transition: 'background 0.2s',
+                          }}
+                        >
+                          <Lock size={12} />
+                          <span>Admin Panel</span>
+                        </Link>
+                      )}
                       <button
                         onClick={() => {
                           logout();
@@ -317,6 +345,19 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
                   </button>
                 )}
 
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    className="mobile-menu-link"
+                    onClick={() => setIsOpen(false)}
+                    style={{ color: 'var(--green-light)' }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Lock size={14} />
+                      <span>Admin Panel</span>
+                    </span>
+                  </Link>
+                )}
                 <Link
                   href="/"
                   className="mobile-menu-link"

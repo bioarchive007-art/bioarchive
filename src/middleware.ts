@@ -1,8 +1,65 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+/**
+ * Decodes the payload of a JWT client-side / edge-side without cryptographic verification.
+ */
+function decodeJWT(token: string): any | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    
+    // atob is available globally in Next.js edge/middleware environments
+    const decoded = atob(base64);
+    const jsonStr = decodeURIComponent(
+      decoded
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonStr);
+  } catch (err) {
+    return null;
+  }
+}
 
 export function middleware(request: NextRequest) {
+  const url = request.nextUrl;
+  const pathname = url.pathname;
+
+  // Protect Admin Routes
+  if (pathname === '/admin' || pathname.startsWith('/admin/') || pathname.startsWith('/api/admin')) {
+    const isApi = pathname.startsWith('/api/');
+    
+    const blockRequest = () => {
+      if (isApi) {
+        return NextResponse.json({ error: 'Not found' }, { status: 404 });
+      }
+      return NextResponse.rewrite(new URL('/404', request.url));
+    };
+
+    const token = request.cookies.get('bioarchive_token')?.value;
+    if (!token) {
+      return blockRequest();
+    }
+
+    const payload = decodeJWT(token);
+    if (!payload || !payload.email) {
+      return blockRequest();
+    }
+
+    const email = payload.email.toLowerCase().trim();
+    const envVal = process.env.ADMIN_EMAILS || process.env.NEXT_PUBLIC_ADMIN_EMAILS || process.env.MOD_EMAILS || '';
+    const adminEmails = envVal.split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
+
+    // Grant access to both configured admins and the master bioarchive007@gmail.com account
+    if (email !== 'bioarchive007@gmail.com' && !adminEmails.includes(email)) {
+      return blockRequest();
+    }
+  }
+
   // Handle preflight OPTIONS request
   if (request.method === 'OPTIONS') {
     return new NextResponse(null, {
@@ -26,5 +83,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: '/api/:path*',
+  matcher: ['/admin', '/admin/:path*', '/api/:path*'],
 };
