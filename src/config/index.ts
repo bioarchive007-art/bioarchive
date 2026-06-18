@@ -3,8 +3,10 @@ const DRIVE_QUARANTINE_FOLDER_ID = process.env.DRIVE_QUARANTINE_FOLDER_ID || pro
 const BACKUP_DRIVE_FOLDER_ID = process.env.BACKUP_DRIVE_FOLDER_ID || process.env.NEXT_PUBLIC_BACKUP_DRIVE_FOLDER_ID || '';
 const SHEET_ID = process.env.SHEET_ID || process.env.NEXT_PUBLIC_SHEET_ID || '';
 const R2_PUBLIC_BASE_URL = process.env.R2_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_URL || '';
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
 
 export const CONFIG = Object.freeze({
+  GOOGLE_CLIENT_ID,
   DRIVE_FOLDER_ID,
   DRIVE_QUARANTINE_FOLDER_ID,
   BACKUP_DRIVE_FOLDER_ID,
@@ -40,7 +42,8 @@ export const CONFIG = Object.freeze({
     'r2Url',
     'driveWebViewLink',
     'downloadCount',
-    'remarks'
+    'remarks',
+    'status'
   ] as const,
   MAX_FILE_SIZE_MB: 500,
 });

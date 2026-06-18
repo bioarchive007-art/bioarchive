@@ -1,17 +1,22 @@
 export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllFiles } from '@/lib/sheets';
+import { getAllFiles, getSiteConfig } from '@/lib/sheets';
 import { SheetRow } from '@/types';
 
 /**
  * GET /api/search?q=query
  *
- * Performs a search across all files in the Google Sheet.
- * Uses Cloudflare KV cache with a 5-minute TTL to store all files.
+ * Performs a search across all approved files.
+ * Uses Cloudflare KV cache for optimized search index lookup.
  */
 export async function GET(request: NextRequest) {
   try {
+    const siteConfig = await getSiteConfig().catch(() => ({ enableSearch: true }));
+    if (siteConfig.enableSearch === false) {
+      return NextResponse.json([]);
+    }
+
     const { searchParams } = new URL(request.url);
     const q = searchParams.get('q')?.trim().toLowerCase() || '';
 
@@ -19,7 +24,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json([]);
     }
 
-    const cacheKey = 'files:all';
+    const cacheKey = 'files:approved:all';
     let files: SheetRow[] = [];
 
     // Try Cloudflare KV cache first
@@ -31,19 +36,23 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Cache miss — fetch from Google Sheets
+    // Cache miss — fetch from Google Sheets and filter approved entries
     if (!files || files.length === 0) {
-      files = await getAllFiles();
+      const allFiles = await getAllFiles();
+      files = allFiles.filter(f => f.status === 'approved' || !f.status);
 
-      // Cache all files for 5 minutes
+      // Cache index for 1 day (or until invalidated on upload/moderation/deletion)
       if (kv && files && files.length > 0) {
-        await kv.put(cacheKey, JSON.stringify(files), { expirationTtl: 300 });
+        await kv.put(cacheKey, JSON.stringify(files), { expirationTtl: 86400 });
       }
     }
 
     // Perform query matching
     const searchTerms = q.split(/\s+/).filter(Boolean);
     const filtered = files.filter((file) => {
+      // Exclude files that are not approved (backup check)
+      if (file.status && file.status !== 'approved') return false;
+
       const fileName = (file.fileName || '').toLowerCase();
       const courseCode = (file.courseCode || '').toLowerCase();
       const courseName = (file.courseName || '').toLowerCase();

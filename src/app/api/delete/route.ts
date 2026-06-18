@@ -3,6 +3,7 @@ export const runtime = 'edge';
 import { NextRequest, NextResponse } from 'next/server';
 import { deleteFromDrive } from '@/lib/drive';
 import { deleteFileRecord, getAllFiles } from '@/lib/sheets';
+import { authorizeAdminRequest } from '@/lib/auth';
 
 /**
  * POST /api/delete
@@ -17,11 +18,11 @@ export async function POST(request: NextRequest) {
     const { fileId, driveFileId, adminToken } = body;
 
     // --- Auth check ---
-    const expectedToken = process.env.ADMIN_DELETE_TOKEN;
-    if (!expectedToken || adminToken !== expectedToken) {
+    const auth = await authorizeAdminRequest(request, adminToken);
+    if (!auth.authorized) {
       return NextResponse.json(
-        { error: 'Forbidden: invalid or missing admin token' },
-        { status: 403 }
+        { error: auth.error || 'Forbidden' },
+        { status: auth.status || 403 }
       );
     }
 

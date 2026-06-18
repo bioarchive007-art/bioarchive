@@ -10,6 +10,7 @@ import GlobalSearch from '@/components/GlobalSearch';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 import { ChevronDown } from 'lucide-react';
+import { useAuth } from '@/components/AuthProvider';
 
 const UploadModal = dynamic(() => import('@/components/UploadModal'), {
   ssr: false,
@@ -28,6 +29,7 @@ export default function HomePage() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [expandedSemester, setExpandedSemester] = useState('');
   const [activeCourse, setActiveCourse] = useState('');
+  const { siteConfig } = useAuth();
 
   const semRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -77,9 +79,11 @@ export default function HomePage() {
               </h1>
               {/* <p className="hero-description hero-fade-in hero-fade-in-delay">
               </p> */}
-              <div className="hero-search-wrap hero-fade-in hero-fade-in-delay">
-                <GlobalSearch />
-              </div>
+              {siteConfig?.enableSearch !== false && (
+                <div className="hero-search-wrap hero-fade-in hero-fade-in-delay">
+                  <GlobalSearch />
+                </div>
+              )}
             </div>
 
             {/* Pulsing Scroll down indicator */}

@@ -1,7 +1,7 @@
 export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllRequests, appendRequestRecord } from '@/lib/sheets';
+import { getAllRequests, appendRequestRecord, getSiteConfig } from '@/lib/sheets';
 import { FileRequest } from '@/types';
 
 /**
@@ -10,6 +10,11 @@ import { FileRequest } from '@/types';
  */
 export async function GET(request: NextRequest) {
   try {
+    const siteConfig = await getSiteConfig().catch(() => ({ enableFileRequests: true }));
+    if (siteConfig.enableFileRequests === false) {
+      return NextResponse.json([]);
+    }
+
     const cacheKey = 'requests:all';
     let requests: FileRequest[] = [];
 
@@ -42,6 +47,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const siteConfig = await getSiteConfig().catch(() => ({ enableFileRequests: true }));
+    if (siteConfig.enableFileRequests === false) {
+      return NextResponse.json({ error: 'Requests are currently disabled by the administrator.' }, { status: 403 });
+    }
+
     const body = await request.json();
     const {
       courseCode,

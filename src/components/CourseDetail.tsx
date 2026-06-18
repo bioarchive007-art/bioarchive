@@ -12,6 +12,7 @@ import { CURRICULUM } from '@/data/curriculum';
 import { fetchFilesByCourse } from '@/lib/api-client';
 import SortableFileTable from './SortableFileTable';
 import UploadModal from './UploadModal';
+import { useAuth } from './AuthProvider';
 
 interface CourseDetailProps {
   courseCode: string;
@@ -38,6 +39,7 @@ const FILE_TYPE_ORDER = ['qpaper', 'notes', 'slides', 'lab', 'assignment', 'othe
 export default function CourseDetail({ courseCode, semester }: CourseDetailProps) {
   const searchParams = useSearchParams();
   const activeSemester = semester || searchParams.get('semester') || '1';
+  const { siteConfig } = useAuth();
 
   const [files, setFiles] = useState<SheetRow[]>([]);
   const [books, setBooks] = useState<Array<{ id: string; name: string; webViewLink: string }>>([]);
@@ -116,11 +118,24 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
     setExpandedSection((prev) => (prev === section ? null : section));
   }, []);
 
+  useEffect(() => {
+    const cached = localStorage.getItem('bioarchive:sorts');
+    if (cached) {
+      try {
+        setSortStates(JSON.parse(cached));
+      } catch (e) {
+        console.error('Failed to parse cached sorts');
+      }
+    }
+  }, []);
+
   const handleSort = useCallback((type: string, field: SortField) => {
     setSortStates((prev) => {
       const current = prev[type] || { field: 'year', order: 'desc' };
-      const newOrder = current.field === field && current.order === 'desc' ? 'asc' : 'desc';
-      return { ...prev, [type]: { field, order: newOrder } };
+      const newOrder: SortOrder = current.field === field && current.order === 'desc' ? 'asc' : 'desc';
+      const newState = { ...prev, [type]: { field, order: newOrder } };
+      localStorage.setItem('bioarchive:sorts', JSON.stringify(newState));
+      return newState;
     });
   }, []);
 
@@ -387,7 +402,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           )}
 
           {/* Reference Books Section (Moved to Bottom, Styled as Collapsible) */}
-          {!loading && !error && books && books.length > 0 && (
+          {!loading && !error && books && books.length > 0 && siteConfig?.enableReferenceBooks !== false && (
             <motion.section
               className="cd-type-section"
               variants={{
@@ -432,13 +447,15 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
                           <div key={book.id} className="cd-book-row">
                             <span className="cd-book-name">{book.name}</span>
                             <div className="cd-book-actions">
-                              <a
-                                href={`/api/books/download?fileId=${book.id}&bookName=${encodeURIComponent(book.name)}&courseCode=${courseCode}&semester=${activeSemester}`}
-                                className="cd-book-btn openlib"
-                                style={{ background: 'rgba(16, 185, 129, 0.12)', borderColor: 'rgba(16, 185, 129, 0.25)', color: '#10B981' }}
-                              >
-                                Download PDF
-                              </a>
+                              {siteConfig?.enableDownloads !== false && (
+                                <a
+                                  href={`/api/books/download?fileId=${book.id}&bookName=${encodeURIComponent(book.name)}&courseCode=${courseCode}&semester=${activeSemester}`}
+                                  className="cd-book-btn openlib"
+                                  style={{ background: 'rgba(16, 185, 129, 0.12)', borderColor: 'rgba(16, 185, 129, 0.25)', color: '#10B981' }}
+                                >
+                                  Download PDF
+                                </a>
+                              )}
                               <a
                                 href={`https://books.google.com/books?q=${encodeURIComponent(book.name)}`}
                                 target="_blank"

@@ -19,6 +19,7 @@ export interface SheetRow {
   driveWebViewLink: string;
   downloadCount: number;
   remarks: string;
+  status: string; // 'pending_approval' | 'approved'
 }
 
 export interface FileRequest {

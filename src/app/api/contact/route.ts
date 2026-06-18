@@ -1,6 +1,7 @@
 export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getSiteConfig } from '@/lib/sheets';
 
 /**
  * POST /api/contact
@@ -9,6 +10,11 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function POST(request: NextRequest) {
   try {
+    const siteConfig = await getSiteConfig().catch(() => ({ enableContactForm: true }));
+    if (siteConfig.enableContactForm === false) {
+      return NextResponse.json({ error: 'Contact form is currently disabled by the administrator.' }, { status: 403 });
+    }
+
     const body = await request.json();
     const { name, email, subject, message } = body;
 

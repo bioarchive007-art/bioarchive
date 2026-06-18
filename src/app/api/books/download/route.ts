@@ -1,7 +1,7 @@
 export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { appendBookDownloadRecord } from '@/lib/sheets';
+import { appendBookDownloadRecord, getSiteConfig } from '@/lib/sheets';
 import { getAccessToken } from '@/lib/google-auth';
 
 /**
@@ -12,11 +12,17 @@ import { getAccessToken } from '@/lib/google-auth';
  */
 export async function GET(request: NextRequest) {
   try {
+    const siteConfig: Record<string, boolean> = await getSiteConfig().catch(() => ({ enableDownloads: true }));
+    if (siteConfig.enableDownloads === false) {
+      return NextResponse.json({ error: 'Downloads are currently disabled by the administrator.' }, { status: 403 });
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const fileId = searchParams.get('fileId') || '';
     const bookName = searchParams.get('bookName') || '';
     const courseCode = searchParams.get('courseCode') || '';
     const semester = searchParams.get('semester') || '';
+    const email = searchParams.get('email') || 'unknown@niser.ac.in';
 
     if (!fileId || !bookName) {
       return NextResponse.json(
@@ -27,7 +33,7 @@ export async function GET(request: NextRequest) {
 
     const userAgent = request.headers.get('user-agent') || 'Unknown';
 
-    // Log the download event to the sheet (Option B - without logging IP addresses)
+    // Log the download event to the sheet
     try {
       await appendBookDownloadRecord({
         bookName,
@@ -35,6 +41,7 @@ export async function GET(request: NextRequest) {
         semester,
         driveFileId: fileId,
         userAgent,
+        userEmail: email,
       });
     } catch (sheetErr) {
       // Non-blocking log failure - make sure user still gets their download even if logging has a glitch

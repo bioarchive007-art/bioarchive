@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Upload, BookOpen, AlertCircle, Info } from 'lucide-react';
+import { Menu, X, Upload, BookOpen, AlertCircle, Info, LogOut } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import { useAuth } from './AuthProvider';
 
 interface NavbarProps {
   onUploadClick: () => void;
@@ -11,8 +12,28 @@ interface NavbarProps {
   menuOpen?: boolean;
 }
 
+const getInitials = (name: string) => {
+  if (!name) return '?';
+  return name
+    .split(' ')
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+};
+
 export default function Navbar({ onUploadClick }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { user, logout, triggerLogin, siteConfig } = useAuth();
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const handleUploadClick = () => {
+    if (!user) {
+      triggerLogin(onUploadClick);
+    } else {
+      onUploadClick();
+    }
+  };
 
   return (
     <>
@@ -47,20 +68,150 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
             <div className="navbar-links">
               <a href="/" className="nav-link">Curriculum</a>
               <a href="/features" className="nav-link">Features</a>
-              <a href="/notices" className="nav-link">Notices</a>
-              <a href="/requests" className="nav-link">Requests</a>
+              {siteConfig?.enableNotices !== false && <a href="/notices" className="nav-link">Notices</a>}
+              {siteConfig?.enableFileRequests !== false && <a href="/requests" className="nav-link">Requests</a>}
               <a href="/about" className="nav-link">About</a>
-              <a href="/contact" className="nav-link">Contact</a>
+              {siteConfig?.enableContactForm !== false && <a href="/contact" className="nav-link">Contact</a>}
             </div>
           </div>
 
           {/* Right section */}
           <div className="navbar-right">
             <span className="navbar-label">NISER · SBS</span>
-            <button className="navbar-upload-btn" onClick={onUploadClick}>
-              <Upload size={16} />
-              <span>Upload</span>
-            </button>
+            
+            {user ? (
+              <div className="navbar-user-container" style={{ position: 'relative' }}>
+                <button
+                  className="navbar-user-btn"
+                  onClick={() => setShowDropdown(!showDropdown)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--text)',
+                    padding: '4px'
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '50%',
+                      border: '1px solid var(--glass-border-hover)',
+                      background: 'rgba(255,255,255,0.06)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      color: 'var(--green-light)',
+                      fontFamily: "'Outfit', sans-serif"
+                    }}
+                  >
+                    {getInitials(user.name)}
+                  </div>
+                  <span className="navbar-username" style={{ fontSize: '0.8rem', fontWeight: 600, fontFamily: "'Outfit', sans-serif" }}>
+                    {user.name.split(' ')[0]}
+                  </span>
+                </button>
+                <AnimatePresence>
+                  {showDropdown && (
+                    <motion.div
+                      className="navbar-user-dropdown"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      style={{
+                        position: 'absolute',
+                        top: '100%',
+                        right: 0,
+                        background: 'var(--bg2)',
+                        border: '1px solid var(--glass-border-hover)',
+                        borderRadius: '10px',
+                        padding: '8px',
+                        minWidth: '160px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '4px',
+                        boxShadow: 'var(--glass-shadow-hover)',
+                        zIndex: 200,
+                        marginTop: '8px'
+                      }}
+                    >
+                      <div className="dropdown-user-info" style={{
+                        padding: '4px 8px',
+                        fontSize: '0.72rem',
+                        color: 'var(--text-3)',
+                        borderBottom: '1px solid rgba(255,255,255,0.05)',
+                        paddingBottom: '8px',
+                        marginBottom: '4px',
+                        wordBreak: 'break-all',
+                        fontFamily: "'Outfit', sans-serif"
+                      }}>
+                        {user.email}
+                      </div>
+                      <button
+                        onClick={() => {
+                          logout();
+                          setShowDropdown(false);
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: '#f87171',
+                          padding: '6px 8px',
+                          width: '100%',
+                          textAlign: 'left',
+                          fontSize: '0.76rem',
+                          borderRadius: '6px',
+                          fontFamily: "'Outfit', sans-serif"
+                        }}
+                      >
+                        <LogOut size={12} />
+                        <span>Sign Out</span>
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <button
+                className="navbar-login-btn"
+                onClick={() => triggerLogin()}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid var(--glass-border)',
+                  borderRadius: '8px',
+                  padding: '6px 12px',
+                  color: 'var(--text-2)',
+                  fontFamily: "'Outfit', sans-serif",
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  marginRight: '8px'
+                }}
+              >
+                <span>Sign In</span>
+              </button>
+            )}
+
+            {siteConfig?.enableUploads !== false && (
+              <button className="navbar-upload-btn" onClick={handleUploadClick}>
+                <Upload size={16} />
+                <span>Upload</span>
+              </button>
+            )}
           </div>
         </div>
       </motion.nav>
@@ -87,6 +238,83 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
               className="mobile-menu-drawer"
             >
               <div className="mobile-menu-links">
+                {user ? (
+                  <div className="mobile-menu-user" style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
+                    padding: '12px 8px',
+                    borderBottom: '1px solid rgba(255,255,255,0.08)',
+                    marginBottom: '10px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          border: '1px solid var(--glass-border-hover)',
+                          background: 'rgba(255,255,255,0.06)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          color: 'var(--green-light)',
+                          fontFamily: "'Outfit', sans-serif"
+                        }}
+                      >
+                        {getInitials(user.name)}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)', fontFamily: "'Outfit', sans-serif" }}>{user.name}</span>
+                        <span style={{ fontSize: '0.68rem', color: 'var(--text-3)', fontFamily: "'Outfit', sans-serif" }}>{user.email}</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        logout();
+                        setIsOpen(false);
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        border: '1px solid rgba(239, 68, 68, 0.2)',
+                        borderRadius: '6px',
+                        padding: '6px 12px',
+                        color: '#f87171',
+                        fontSize: '0.74rem',
+                        fontWeight: 600,
+                        width: 'fit-content',
+                        fontFamily: "'Outfit', sans-serif",
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <LogOut size={12} />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className="mobile-menu-link"
+                    onClick={() => {
+                      setIsOpen(false);
+                      triggerLogin();
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      textAlign: 'left',
+                      width: '100%',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <span>Sign In</span>
+                  </button>
+                )}
+
                 <a
                   href="/"
                   className="mobile-menu-link"
@@ -101,20 +329,24 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
                 >
                   <span>Features</span>
                 </a>
-                <a
-                  href="/notices"
-                  className="mobile-menu-link"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <span>Notices</span>
-                </a>
-                <a
-                  href="/requests"
-                  className="mobile-menu-link"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <span>Requests</span>
-                </a>
+                {siteConfig?.enableNotices !== false && (
+                  <a
+                    href="/notices"
+                    className="mobile-menu-link"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <span>Notices</span>
+                  </a>
+                )}
+                {siteConfig?.enableFileRequests !== false && (
+                  <a
+                    href="/requests"
+                    className="mobile-menu-link"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <span>Requests</span>
+                  </a>
+                )}
                 <a
                   href="/about"
                   className="mobile-menu-link"
@@ -122,23 +354,27 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
                 >
                   <span>About</span>
                 </a>
-                <a
-                  href="/contact"
-                  className="mobile-menu-link"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <span>Contact</span>
-                </a>
-                <button
-                  className="mobile-menu-upload-btn"
-                  onClick={() => {
-                    setIsOpen(false);
-                    onUploadClick();
-                  }}
-                >
-                  <Upload size={16} />
-                  <span>Upload Material</span>
-                </button>
+                {siteConfig?.enableContactForm !== false && (
+                  <a
+                    href="/contact"
+                    className="mobile-menu-link"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <span>Contact</span>
+                  </a>
+                )}
+                {siteConfig?.enableUploads !== false && (
+                  <button
+                    className="mobile-menu-upload-btn"
+                    onClick={() => {
+                      setIsOpen(false);
+                      handleUploadClick();
+                    }}
+                  >
+                    <Upload size={16} />
+                    <span>Upload Material</span>
+                  </button>
+                )}
               </div>
             </motion.div>
           </>

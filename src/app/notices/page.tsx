@@ -4,10 +4,51 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar, Info, AlertTriangle, Loader2 } from 'lucide-react';
 import { Notice } from '@/types';
+import { useAuth } from '@/components/AuthProvider';
 
 export default function NoticesPage() {
   const [notices, setNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
+  const { siteConfig } = useAuth();
+
+  if (siteConfig?.enableNotices === false) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        padding: '40px 24px',
+        background: 'var(--bg)',
+        fontFamily: "'Outfit', sans-serif"
+      }}>
+        <div style={{
+          maxWidth: '440px',
+          padding: '40px 32px',
+          background: 'var(--panel)',
+          border: '1px solid var(--glass-border)',
+          borderRadius: '20px',
+          boxShadow: 'var(--glass-shadow-hover)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
+        }}>
+          <AlertTriangle size={48} style={{ color: 'var(--gold)', marginBottom: '20px' }} />
+          <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: '1.3rem', color: '#f0f0f0', marginBottom: '12px' }}>
+            Notice Board Offline
+          </h2>
+          <p style={{ fontSize: '0.86rem', color: 'var(--text-3)', lineHeight: '1.6', marginBottom: '24px' }}>
+            The notice board and announcements system is currently disabled by the site administrator. Please check back later.
+          </p>
+          <a href="/" className="btn-gold" style={{ display: 'inline-flex', justifyContent: 'center', width: '100%' }}>
+            Return to Home
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   const fetchNotices = async () => {
     try {

@@ -70,6 +70,7 @@ function rowToSheetRow(row: any[], headerMap: Record<string, number>): SheetRow 
     driveWebViewLink: getVal('driveWebViewLink'),
     downloadCount: Number(getVal('downloadCount', 0)) || 0,
     remarks: getVal('remarks'),
+    status: getVal('status', 'approved'),
   };
 }
 
@@ -146,12 +147,13 @@ export async function getAllFiles(): Promise<SheetRow[]> {
     .map(row => rowToSheetRow(row, headerMap));
 }
 
-export async function getFilesByCourse(courseCode: string, semester: string): Promise<SheetRow[]> {
+export async function getFilesByCourse(courseCode: string, semester: string, includePending = false): Promise<SheetRow[]> {
   const allFiles = await getAllFiles();
   return allFiles.filter(
     (file) =>
       file.courseCode.toLowerCase() === courseCode.toLowerCase() &&
-      file.semester.toString() === semester.toString()
+      file.semester.toString() === semester.toString() &&
+      (includePending || file.status === 'approved')
   );
 }
 
@@ -609,11 +611,12 @@ export async function appendBookDownloadRecord(record: {
   semester: string;
   driveFileId: string;
   userAgent: string;
+  userEmail: string;
 }): Promise<void> {
   const token = await getAccessToken();
   await createSheetTab('BookDownloads', token);
 
-  const headers = ['Timestamp', 'Book Name', 'Course Code', 'Semester', 'Drive File ID', 'User Agent'];
+  const headers = ['Timestamp', 'Book Name', 'Course Code', 'Semester', 'Drive File ID', 'User Agent', 'User Email'];
 
   // Check and initialize headers if empty
   const headerCheck = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/BookDownloads!1:1`, {
@@ -622,7 +625,7 @@ export async function appendBookDownloadRecord(record: {
   if (headerCheck.ok) {
     const data = await headerCheck.json() as any;
     if (!data.values || data.values.length === 0) {
-      await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/BookDownloads!A1:F1?valueInputOption=RAW`, {
+      await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/BookDownloads!A1:G1?valueInputOption=RAW`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ values: [headers] })
@@ -630,13 +633,22 @@ export async function appendBookDownloadRecord(record: {
     }
   }
 
+  const config = await getSiteConfig().catch(() => ({ collectTimestamps: true, collectEmails: true, collectUserAgents: true, enableDownloadLogging: true }));
+  if (config.enableDownloadLogging === false) {
+    return;
+  }
+  const timestamp = config.collectTimestamps ? new Date().toISOString() : 'Omitted';
+  const email = config.collectEmails ? record.userEmail : 'Anonymous';
+  const userAgent = config.collectUserAgents ? record.userAgent : 'Omitted';
+
   const rowArray = [
-    new Date().toISOString(),
+    timestamp,
     record.bookName,
     record.courseCode,
     record.semester,
     record.driveFileId,
-    record.userAgent,
+    userAgent,
+    email,
   ];
 
   const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/BookDownloads!A:A:append?valueInputOption=RAW`, {
@@ -655,4 +667,262 @@ export async function appendBookDownloadRecord(record: {
     throw new Error(`Failed to append book download record: ${res.statusText} - ${err}`);
   }
 }
+
+export async function appendFileDownloadRecord(record: {
+  fileName: string;
+  courseCode: string;
+  semester: string;
+  fileId: string;
+  uploaderName: string;
+  userEmail: string;
+  userAgent: string;
+}): Promise<void> {
+  const token = await getAccessToken();
+  await createSheetTab('FileDownloads', token);
+
+  const headers = ['Timestamp', 'File Name', 'Course Code', 'Semester', 'File ID', 'Uploader Name', 'User Email', 'User Agent'];
+
+  // Check and initialize headers if empty
+  const headerCheck = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/FileDownloads!1:1`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (headerCheck.ok) {
+    const data = await headerCheck.json() as any;
+    if (!data.values || data.values.length === 0) {
+      await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/FileDownloads!A1:H1?valueInputOption=RAW`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ values: [headers] })
+      });
+    }
+  }
+
+  const config = await getSiteConfig().catch(() => ({ collectTimestamps: true, collectEmails: true, collectUserAgents: true, enableDownloadLogging: true }));
+  if (config.enableDownloadLogging === false) {
+    return;
+  }
+  const timestamp = config.collectTimestamps ? new Date().toISOString() : 'Omitted';
+  const email = config.collectEmails ? record.userEmail : 'Anonymous';
+  const userAgent = config.collectUserAgents ? record.userAgent : 'Omitted';
+
+  const rowArray = [
+    timestamp,
+    record.fileName,
+    record.courseCode,
+    record.semester,
+    record.fileId,
+    record.uploaderName,
+    email,
+    userAgent,
+  ];
+
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/FileDownloads!A:A:append?valueInputOption=RAW`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      values: [rowArray]
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Failed to append file download record: ${res.statusText} - ${err}`);
+  }
+}
+
+export async function approveFileRecord(fileId: string): Promise<void> {
+  const token = await getAccessToken();
+  const headerMap = await getSheetHeaderMap();
+  
+  const lastCol = getColumnLetter(CONFIG.SHEET_HEADERS.length - 1);
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/Sheet1!A:${lastCol}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  
+  if (!res.ok) {
+    throw new Error(`Failed to fetch sheet values for approval: ${res.statusText}`);
+  }
+  
+  const data = await res.json() as { values?: any[][] };
+  const rows = data.values || [];
+  
+  const fileIdColIdx = headerMap['fileId'];
+  const statusColIdx = headerMap['status'];
+  
+  if (fileIdColIdx === undefined || statusColIdx === undefined) {
+    throw new Error("Missing fileId or status columns in the sheet registry");
+  }
+  
+  let sheetRowIndex = -1;
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][fileIdColIdx] === fileId) {
+      sheetRowIndex = i + 1;
+      break;
+    }
+  }
+  
+  if (sheetRowIndex === -1) {
+    throw new Error(`File record with fileId ${fileId} not found`);
+  }
+  
+  const colLetter = getColumnLetter(statusColIdx);
+  const cellRange = `Sheet1!${colLetter}${sheetRowIndex}`;
+  
+  const updateRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${cellRange}?valueInputOption=RAW`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      values: [['approved']]
+    })
+  });
+  
+  if (!updateRes.ok) {
+    const err = await updateRes.text();
+    throw new Error(`Failed to approve file record in sheets: ${updateRes.statusText} - ${err}`);
+  }
+}
+
+export async function appendLoginRecord(record: {
+  email: string;
+  name: string;
+  userAgent: string;
+}): Promise<void> {
+  const token = await getAccessToken();
+  await createSheetTab('LoginHistory', token);
+
+  const headers = ['Timestamp', 'Email', 'Name', 'User Agent'];
+
+  // Check and initialize headers if empty
+  const headerCheck = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/LoginHistory!1:1`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (headerCheck.ok) {
+    const data = await headerCheck.json() as any;
+    if (!data.values || data.values.length === 0) {
+      await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/LoginHistory!A1:D1?valueInputOption=RAW`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ values: [headers] })
+      });
+    }
+  }
+
+  const config = await getSiteConfig().catch(() => ({ collectTimestamps: true, collectEmails: true, collectUserAgents: true }));
+  const timestamp = config.collectTimestamps ? new Date().toISOString() : 'Omitted';
+  const email = config.collectEmails ? record.email : 'Anonymous';
+  const name = config.collectEmails ? record.name : 'Anonymous';
+  const userAgent = config.collectUserAgents ? record.userAgent : 'Omitted';
+
+  const rowArray = [
+    timestamp,
+    email,
+    name,
+    userAgent,
+  ];
+
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/LoginHistory!A:A:append?valueInputOption=RAW`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      values: [rowArray]
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Failed to append login record: ${res.statusText} - ${err}`);
+  }
+}
+
+export async function getSiteConfig(): Promise<Record<string, boolean>> {
+  const token = await getAccessToken();
+  await createSheetTab('SiteConfig', token);
+
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/SiteConfig!A2:B`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  const config: Record<string, boolean> = {
+    collectEmails: true,
+    collectUserAgents: true,
+    collectTimestamps: true,
+    renameFiles: true,
+    requireModeration: true,
+    restrictToInstitutionalEmail: true,
+    enableFilePreviews: true,
+    enableReferenceBooks: true,
+    enableUploads: true,
+    enableFileRequests: true,
+    enableNotices: true,
+    enableSearch: true,
+    enableDownloadLogging: true,
+    enableContactForm: true,
+    enableDownloads: true,
+  };
+
+  if (!res.ok) {
+    return config;
+  }
+
+  const data = await res.json() as { values?: any[][] };
+  const rows = data.values || [];
+
+  if (rows.length === 0) {
+    const headers = ['Feature', 'Enabled'];
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/SiteConfig!A1:B1?valueInputOption=RAW`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ values: [headers] })
+    });
+
+    const defaultRows = Object.entries(config).map(([k, v]) => [k, String(v)]);
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/SiteConfig!A2:B30?valueInputOption=RAW`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ values: defaultRows })
+    });
+
+    return config;
+  }
+
+  rows.forEach((row) => {
+    const key = row[0];
+    const val = row[1];
+    if (key && val !== undefined) {
+      config[key] = val === 'true' || val === true || String(val).toLowerCase() === 'true';
+    }
+  });
+
+  return config;
+}
+
+export async function updateSiteConfig(config: Record<string, boolean>): Promise<void> {
+  const token = await getAccessToken();
+  await createSheetTab('SiteConfig', token);
+
+  const rows = Object.entries(config).map(([k, v]) => [k, String(v)]);
+  const headers = ['Feature', 'Enabled'];
+
+  await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/SiteConfig!A1:B30?valueInputOption=RAW`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      values: [headers, ...rows]
+    })
+  });
+}
+
+
 

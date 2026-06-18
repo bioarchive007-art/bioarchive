@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { CONFIG } from '@/config';
 import { generateRenamedFilename } from '@/lib/file-renaming';
 import { createResumableUploadSession, resolveNestedFolder } from '@/lib/drive';
-import { checkDuplicateMetadata } from '@/lib/sheets';
+import { checkDuplicateMetadata, getSiteConfig } from '@/lib/sheets';
 
 /**
  * Allowed MIME types for upload validation.
@@ -81,13 +81,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 1: Generate canonical filename
-    const canonicalFileName = generateRenamedFilename(fileName, {
-      courseCode,
-      professor,
-      fileType,
-      year,
-      examType,
-    });
+    const siteConfig: Record<string, boolean> = await getSiteConfig().catch(() => ({ renameFiles: true, enableUploads: true, requireModeration: true }));
+    if (siteConfig.enableUploads === false) {
+      return NextResponse.json({ error: 'Uploads are currently disabled by the administrator.' }, { status: 403 });
+    }
+    const canonicalFileName = siteConfig.renameFiles
+      ? generateRenamedFilename(fileName, {
+          courseCode,
+          professor,
+          fileType,
+          year,
+          examType,
+        })
+      : fileName;
 
     // Check if the metadata fields indicate this file is a duplicate
     const isDuplicateMatch = await checkDuplicateMetadata({
@@ -99,26 +105,14 @@ export async function POST(request: NextRequest) {
       examType,
     });
 
-    // If duplicate, route to quarantine folder, otherwise normal folder structure
-    let folderId = CONFIG.DRIVE_FOLDER_ID;
-    if (isDuplicateMatch) {
-      const skipQuarantineTypes = new Set(['notes', 'assignment', 'lab']);
-      if (!skipQuarantineTypes.has(fileType.toLowerCase())) {
-        folderId = CONFIG.DRIVE_QUARANTINE_FOLDER_ID;
-      }
-    }
+    // Determine target upload folder based on requireModeration feature toggle
+    let folderId = CONFIG.DRIVE_QUARANTINE_FOLDER_ID;
+    const status = siteConfig.requireModeration ? 'pending_approval' : 'approved';
 
-    if (folderId === CONFIG.DRIVE_FOLDER_ID) {
+    if (!siteConfig.requireModeration) {
       try {
         const isAdvance = semester.toUpperCase().includes('ADVANCE');
         const courseCategory = isAdvance ? 'Adv Courses' : 'Core Courses';
-        
-        // Ensure "Self Materials" folder exists at the root
-        try {
-          await resolveNestedFolder(CONFIG.DRIVE_FOLDER_ID, ['Self Materials']);
-        } catch (e) {
-          console.error('Failed to pre-create Self Materials folder:', e);
-        }
 
         const pathComponents = [courseCategory];
         if (!isAdvance) {
@@ -138,10 +132,10 @@ export async function POST(request: NextRequest) {
         pathComponents.push(folderName);
         pathComponents.push(professor.trim());
 
-        // Resolve or create nested path in Google Drive
+        // Resolve or create nested path in Google Drive directly
         folderId = await resolveNestedFolder(CONFIG.DRIVE_FOLDER_ID, pathComponents);
       } catch (err) {
-        console.error('Failed to resolve subfolder structure, falling back to root folder:', err);
+        console.error('[api/upload/session] Failed to resolve subfolders for direct upload:', err);
       }
     }
 
@@ -176,6 +170,7 @@ export async function POST(request: NextRequest) {
         mimeType,
         fileSize,
         isDuplicate: !!isDuplicateMatch,
+        status,
       },
     });
   } catch (err: any) {

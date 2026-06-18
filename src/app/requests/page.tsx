@@ -7,10 +7,51 @@ import { CURRICULUM } from '@/data/curriculum';
 import { CONFIG } from '@/config';
 import { FileRequest } from '@/types';
 import UploadModal from '@/components/UploadModal';
+import { useAuth } from '@/components/AuthProvider';
 
 export default function RequestsPage() {
   const [requests, setRequests] = useState<FileRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const { siteConfig } = useAuth();
+
+  if (siteConfig?.enableFileRequests === false) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        padding: '40px 24px',
+        background: 'var(--bg)',
+        fontFamily: "'Outfit', sans-serif"
+      }}>
+        <div style={{
+          maxWidth: '440px',
+          padding: '40px 32px',
+          background: 'var(--panel)',
+          border: '1px solid var(--glass-border)',
+          borderRadius: '20px',
+          boxShadow: 'var(--glass-shadow-hover)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
+        }}>
+          <AlertTriangle size={48} style={{ color: 'var(--gold)', marginBottom: '20px' }} />
+          <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: '1.3rem', color: '#f0f0f0', marginBottom: '12px' }}>
+            Requests Board Offline
+          </h2>
+          <p style={{ fontSize: '0.86rem', color: 'var(--text-3)', lineHeight: '1.6', marginBottom: '24px' }}>
+            The materials request system is currently disabled by the site administrator. Please check back later.
+          </p>
+          <a href="/" className="btn-gold" style={{ display: 'inline-flex', justifyContent: 'center', width: '100%' }}>
+            Return to Home
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   // Modals
   const [requestModalOpen, setRequestModalOpen] = useState(false);
@@ -194,13 +235,19 @@ export default function RequestsPage() {
                           </span>
 
                           {isPending ? (
-                            <button
-                              className="request-upload-btn"
-                              onClick={() => handleOpenUploadForRequest(req)}
-                            >
-                              <Upload size={12} />
-                              <span>I can upload this</span>
-                            </button>
+                             siteConfig?.enableUploads !== false ? (
+                               <button
+                                 className="request-upload-btn"
+                                 onClick={() => handleOpenUploadForRequest(req)}
+                               >
+                                 <Upload size={12} />
+                                 <span>I can upload this</span>
+                               </button>
+                             ) : (
+                               <span className="request-fulfilled-badge" style={{ color: 'var(--text-3)' }}>
+                                 Pending
+                               </span>
+                             )
                           ) : (
                             <span className="request-fulfilled-badge">
                               <CheckCircle size={13} style={{ marginRight: 4, display: 'inline-block', verticalAlign: 'middle' }} />

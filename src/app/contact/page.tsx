@@ -3,10 +3,51 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Send, CheckCircle2, AlertCircle, Mail } from 'lucide-react';
+import { useAuth } from '@/components/AuthProvider';
 
 export default function ContactPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const { siteConfig } = useAuth();
+
+  if (siteConfig?.enableContactForm === false) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        padding: '40px 24px',
+        background: 'var(--bg)',
+        fontFamily: "'Outfit', sans-serif"
+      }}>
+        <div style={{
+          maxWidth: '440px',
+          padding: '40px 32px',
+          background: 'var(--panel)',
+          border: '1px solid var(--glass-border)',
+          borderRadius: '20px',
+          boxShadow: 'var(--glass-shadow-hover)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
+        }}>
+          <AlertCircle size={48} style={{ color: 'var(--gold)', marginBottom: '20px' }} />
+          <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: '1.3rem', color: '#f0f0f0', marginBottom: '12px' }}>
+            Contact Form Offline
+          </h2>
+          <p style={{ fontSize: '0.86rem', color: 'var(--text-3)', lineHeight: '1.6', marginBottom: '24px' }}>
+            The moderator contact form is currently disabled by the site administrator. Please check back later.
+          </p>
+          <a href="/" className="btn-gold" style={{ display: 'inline-flex', justifyContent: 'center', width: '100%' }}>
+            Return to Home
+          </a>
+        </div>
+      </div>
+    );
+  }
   const [subject, setSubject] = useState('Feedback');
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);

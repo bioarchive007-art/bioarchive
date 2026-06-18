@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { CONFIG } from '@/config';
 import { SheetRow } from '@/types';
 import { makeFilePublic, copyToBackupFolder } from '@/lib/drive';
-import { checkDuplicate, appendFileRecord, initializeSheetHeaders, fulfillRequest } from '@/lib/sheets';
+import { checkDuplicate, appendFileRecord, initializeSheetHeaders, fulfillRequest, getSiteConfig } from '@/lib/sheets';
 import { notifyModsOfUpload } from '@/lib/notify';
 
 /**
@@ -37,15 +37,21 @@ export async function POST(request: NextRequest) {
     const r2Key = '';
     const md5Hash = metadata.md5Hash || '';
 
-    // Step 1.5: Share the file so anyone/domain can view/download
-    await makeFilePublic(driveFileId);
-
-    // Step 1.6: Copy to backup folder if configured and file is not a duplicate
+    // Step 1.5: If moderation is disabled, share and backup immediately
+    const siteConfig: Record<string, boolean> = await getSiteConfig().catch(() => ({ requireModeration: true, enableUploads: true }));
+    if (siteConfig.enableUploads === false) {
+      return NextResponse.json({ error: 'Uploads are currently disabled by the administrator.' }, { status: 403 });
+    }
     const isDuplicate = metadata.isDuplicate === true;
-    if (!isDuplicate && CONFIG.BACKUP_DRIVE_FOLDER_ID) {
-      await copyToBackupFolder(driveFileId, CONFIG.BACKUP_DRIVE_FOLDER_ID).catch((err) =>
-        console.error('[api/upload/confirm] Failed to copy file to backup folder:', err)
-      );
+    const status = metadata.status || (siteConfig.requireModeration ? 'pending_approval' : 'approved');
+
+    if (!siteConfig.requireModeration) {
+      await makeFilePublic(driveFileId).catch(() => {});
+      if (CONFIG.BACKUP_DRIVE_FOLDER_ID) {
+        await copyToBackupFolder(driveFileId, CONFIG.BACKUP_DRIVE_FOLDER_ID).catch((err) =>
+          console.error('[api/upload/confirm] Failed to copy to backup folder:', err)
+        );
+      }
     }
 
     // Step 2: Build SheetRow
@@ -71,6 +77,7 @@ export async function POST(request: NextRequest) {
       driveWebViewLink: metadata.driveWebViewLink || '',
       downloadCount: 0,
       remarks: metadata.remarks || '',
+      status,
     };
 
     // Step 3: Ensure sheet headers are up to date, then append record

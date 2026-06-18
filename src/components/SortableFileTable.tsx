@@ -1,11 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Eye, Download, ArrowUp, ArrowDown } from 'lucide-react';
 import { SheetRow } from '@/types';
 import { CONFIG } from '@/config';
 import { incrementFileDownloads } from '@/lib/api-client';
+import { useAuth } from './AuthProvider';
+import FilePreviewModal from './FilePreviewModal';
 
 type SortField = 'fileName' | 'professor' | 'uploaderName' | 'year' | 'examType' | 'downloadCount';
 type SortOrder = 'asc' | 'desc';
@@ -29,16 +31,28 @@ export default function SortableFileTable({
   onSort,
   accentColor,
 }: SortableFileTableProps) {
-  const handleDownload = (file: SheetRow) => {
-    incrementFileDownloads(file.fileId);
+  const { user, triggerLogin, siteConfig } = useAuth();
+  const [previewFile, setPreviewFile] = useState<SheetRow | null>(null);
+
+  const triggerDownloadAction = (file: SheetRow) => {
+    incrementFileDownloads(file.fileId, user?.email);
     const downloadUrl = `https://drive.google.com/uc?export=download&id=${file.driveFileId}`;
     window.open(downloadUrl, '_blank');
   };
 
+  const handleDownload = (file: SheetRow) => {
+    if (!user) {
+      triggerLogin(() => triggerDownloadAction(file));
+    } else {
+      triggerDownloadAction(file);
+    }
+  };
+
   const handlePreview = (file: SheetRow) => {
-    if (file.driveWebViewLink) {
-      const url = file.driveWebViewLink.replace(/\/view.*$/, '/preview');
-      window.open(url, '_blank');
+    if (!user) {
+      triggerLogin(() => setPreviewFile(file));
+    } else {
+      setPreviewFile(file);
     }
   };
 
@@ -116,7 +130,7 @@ export default function SortableFileTable({
               <td className="sft-td sft-dl-count">{file.downloadCount}</td>
               <td className="sft-td">
                 <div className="sft-actions">
-                  {file.driveWebViewLink && (
+                  {file.driveWebViewLink && siteConfig?.enableFilePreviews !== false && (
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
@@ -127,21 +141,30 @@ export default function SortableFileTable({
                       <Eye size={14} />
                     </motion.button>
                   )}
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="sft-action-btn sft-dl-btn"
-                    onClick={() => handleDownload(file)}
-                    title="Download"
-                  >
-                    <Download size={14} />
-                  </motion.button>
+                  {siteConfig?.enableDownloads !== false && (
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="sft-action-btn sft-dl-btn"
+                      onClick={() => handleDownload(file)}
+                      title="Download"
+                    >
+                      <Download size={14} />
+                    </motion.button>
+                  )}
                 </div>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      <FilePreviewModal
+        file={previewFile}
+        isOpen={!!previewFile}
+        onClose={() => setPreviewFile(null)}
+        onDownload={handleDownload}
+      />
 
       <style jsx>{`
         .sft-wrapper {

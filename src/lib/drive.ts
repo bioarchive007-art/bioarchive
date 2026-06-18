@@ -338,3 +338,43 @@ export async function resolveNestedFolder(
   }
   return currentFolderId;
 }
+
+/**
+ * Moves a file on Google Drive to a new destination folder.
+ */
+export async function moveDriveFile(driveFileId: string, destFolderId: string): Promise<void> {
+  const token = await getAccessToken();
+  const getRes = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${driveFileId}?fields=parents`,
+    {
+      headers: { Authorization: `Bearer ${token}` }
+    }
+  );
+
+  if (!getRes.ok) {
+    const errorText = await getRes.text();
+    throw new Error(`Failed to get file metadata from Google Drive: ${getRes.statusText} - ${errorText}`);
+  }
+
+  const fileData = (await getRes.json()) as { parents?: string[] };
+  const currentParents = fileData.parents?.join(',') || '';
+
+  // Update parents using PATCH
+  const patchUrl = new URL(`https://www.googleapis.com/drive/v3/files/${driveFileId}`);
+  patchUrl.searchParams.append('addParents', destFolderId);
+  if (currentParents) {
+    patchUrl.searchParams.append('removeParents', currentParents);
+  }
+
+  const patchRes = await fetch(patchUrl.toString(), {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!patchRes.ok) {
+    const errorText = await patchRes.text();
+    throw new Error(`Failed to move file on Google Drive: ${patchRes.statusText} - ${errorText}`);
+  }
+}

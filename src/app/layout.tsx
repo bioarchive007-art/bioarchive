@@ -2,7 +2,8 @@ import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import { Cinzel, Outfit, Plus_Jakarta_Sans, Tangerine } from 'next/font/google';
 import Script from 'next/script';
-
+import AuthProvider from '@/components/AuthProvider';
+import LayoutLoginModalWrapper from '@/components/LayoutLoginModalWrapper';
 
 const fontCinzel = Cinzel({
   subsets: ['latin'],
@@ -58,60 +59,68 @@ export default function RootLayout({
     >
       <head />
       <body>
-        {/* Google Analytics */}
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-CZS52D25M3"
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-CZS52D25M3');
-          `}
-        </Script>
+        <AuthProvider>
+          {/* Google Identity Services */}
+          <Script
+            src="https://accounts.google.com/gsi/client"
+            strategy="afterInteractive"
+          />
 
-        {/* Ambient background */}
-        <div className="orb-bg" aria-hidden="true">
-          <div className="orb-1" />
-          <div className="orb-2" />
-          <div className="orb-3" />
-          <div className="orb-4" />
-        </div>
+          {/* Google Analytics */}
+          <Script
+            src="https://www.googletagmanager.com/gtag/js?id=G-CZS52D25M3"
+            strategy="afterInteractive"
+          />
+          <Script id="google-analytics" strategy="afterInteractive">
+            {`
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-CZS52D25M3');
+            `}
+          </Script>
 
+          {/* Ambient background */}
+          <div className="orb-bg" aria-hidden="true">
+            <div className="orb-1" />
+            <div className="orb-2" />
+            <div className="orb-3" />
+            <div className="orb-4" />
+          </div>
 
-
-        {/* Loading screen */}
-        <div className="loading-screen" id="loading-screen">
-          <div className="book-container">
-            <div className="book-wrap">
-              <div className="book-cover left" />
-              <div className="book-spine-3d" />
-              <div className="book-cover right" />
-              <div className="page-stack left" />
-              <div className="page-stack right" />
-              <div className="flipping-pages">
-                <div className="flipping-page" />
-                <div className="flipping-page" />
-                <div className="flipping-page" />
+          {/* Loading screen */}
+          <div className="loading-screen" id="loading-screen">
+            <div className="book-container">
+              <div className="book-wrap">
+                <div className="book-cover left" />
+                <div className="book-spine-3d" />
+                <div className="book-cover right" />
+                <div className="page-stack left" />
+                <div className="page-stack right" />
+                <div className="flipping-pages">
+                  <div className="flipping-page" />
+                  <div className="flipping-page" />
+                  <div className="flipping-page" />
+                </div>
+                <div className="book-ribbon" />
               </div>
-              <div className="book-ribbon" />
             </div>
+            <div className="loader-wordmark">
+              <span>Bio</span><span className="loader-archive">Archive</span>
+            </div>
+            <span className="loader-tag">NISER · Biological Sciences</span>
           </div>
-          <div className="loader-wordmark">
-            <span>Bio</span><span className="loader-archive">Archive</span>
-          </div>
-          <span className="loader-tag">NISER · Biological Sciences</span>
-        </div>
 
-        {/* Page content */}
-        <div className="page-content" id="page-content">
-          {children}
-          <footer className="site-footer">
-            BioArchive © {year} · Managed by BIO-Archive.
-          </footer>
-        </div>
+          {/* Page content */}
+          <div className="page-content" id="page-content">
+            {children}
+            <footer className="site-footer">
+              BioArchive © {year} · Managed by BIO-Archive.
+            </footer>
+          </div>
+
+          <LayoutLoginModalWrapper />
+        </AuthProvider>
 
         {/* Inline script: hide loading screen, reveal page */}
         <script

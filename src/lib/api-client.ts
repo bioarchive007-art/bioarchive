@@ -18,11 +18,11 @@ export async function fetchFilesByCourse(
   return res.json();
 }
 
-export async function incrementFileDownloads(fileId: string): Promise<void> {
+export async function incrementFileDownloads(fileId: string, email?: string): Promise<void> {
   fetch('/api/download', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ fileId }),
+    body: JSON.stringify({ fileId, email }),
   }).catch(() => {
     // fire-and-forget
   });

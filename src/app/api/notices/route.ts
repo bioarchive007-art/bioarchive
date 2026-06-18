@@ -1,7 +1,7 @@
 export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllNotices } from '@/lib/sheets';
+import { getAllNotices, getSiteConfig } from '@/lib/sheets';
 import { Notice } from '@/types';
 
 /**
@@ -11,6 +11,11 @@ import { Notice } from '@/types';
  */
 export async function GET(request: NextRequest) {
   try {
+    const siteConfig = await getSiteConfig().catch(() => ({ enableNotices: true }));
+    if (siteConfig.enableNotices === false) {
+      return NextResponse.json([]);
+    }
+
     const cacheKey = 'notices:all';
     let notices: Notice[] = [];
 
