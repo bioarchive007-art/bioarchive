@@ -1,0 +1,63 @@
+name = "bioarchive"
+pages_build_output_dir = ".vercel/output/static"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# wrangler.example.toml
+#
+# This is the TEMPLATE file. The real wrangler.toml only has SITE_NAME.
+# All other values below must be added as Environment Variables in the
+# Cloudflare Dashboard → Pages → bioarchive → Settings → Environment Variables
+#
+# HOW TO USE THIS FILE:
+# 1. Copy this file to wrangler.toml (it is gitignored if you prefer local use)
+# 2. Replace every <PLACEHOLDER> with your real value
+# 3. OR — better — set all values directly in Cloudflare Dashboard
+#
+# ⚠️  NEVER commit real secrets to this file or to wrangler.toml in git.
+# ─────────────────────────────────────────────────────────────────────────────
+
+[[kv_namespaces]]
+binding = "BIOARCHIVE_CACHE"
+id = "<YOUR_KV_NAMESPACE_ID>"   # Get from Cloudflare Dashboard → KV
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Variables — set all of these in Cloudflare Dashboard, NOT here in git.
+# This section is for documentation purposes only.
+# ─────────────────────────────────────────────────────────────────────────────
+[vars]
+
+# ── Non-sensitive (safe to be in code) ──────────────────────────────────────
+SITE_NAME = "BioArchive"
+
+# ── Google Drive Folder IDs ──────────────────────────────────────────────────
+# Get these from the Google Drive URL when you open the folder
+# (it's the long string after /folders/ in the URL)
+DRIVE_FOLDER_ID = "<MAIN_DRIVE_FOLDER_ID>"
+DRIVE_QUARANTINE_FOLDER_ID = "<QUARANTINE_FOLDER_ID>"
+BACKUP_DRIVE_FOLDER_ID = "<BACKUP_FOLDER_ID>"
+BOOKS_DRIVE_FOLDER_ID = "<BOOKS_FOLDER_ID>"
+
+# ── Google Sheets ID ─────────────────────────────────────────────────────────
+# Get this from the Google Sheets URL (the long string after /d/ and before /edit)
+SHEET_ID = "<YOUR_GOOGLE_SHEET_ID>"
+
+# ── Google OAuth (Public Client ID — safe to expose) ────────────────────────
+# Get from Google Cloud Console → APIs & Services → Credentials
+NEXT_PUBLIC_GOOGLE_CLIENT_ID = "<YOUR_GOOGLE_OAUTH_CLIENT_ID>.apps.googleusercontent.com"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ⚠️  SECRETS — Set these in Cloudflare Dashboard ONLY. Never put real
+#     values here. These are listed only so you know what to configure.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# GOOGLE_CLIENT_ID        = "<same as NEXT_PUBLIC_GOOGLE_CLIENT_ID>"
+# GOOGLE_CLIENT_SECRET    = "<from Google Cloud Console → Credentials>"
+# GOOGLE_REFRESH_TOKEN    = "<generated via OAuth Playground — see WEBSITE_GUIDE.md §28>"
+# RESEND_API_KEY          = "<from https://resend.com → API Keys>"
+# SENDER_EMAIL            = "<the From address for notification emails>"
+# MOD_EMAILS              = "<comma-separated moderator emails>"
+# ADMIN_EMAILS            = "<comma-separated admin emails>"
+# NEXT_PUBLIC_ADMIN_EMAILS = "<same as ADMIN_EMAILS>"
+# ADMIN_DELETE_TOKEN      = "<your strong secret admin password>"
