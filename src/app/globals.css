@@ -873,6 +873,11 @@ img { max-width: 100%; display: block; }
     display: none;
   }
 }
+@media (max-width: 820px) {
+  .navbar-login-btn {
+    display: none !important;
+  }
+}
 .navbar-upload-btn {
   display: flex;
   align-items: center;
