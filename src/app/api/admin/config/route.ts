@@ -6,14 +6,10 @@ import { verifyGoogleToken } from '@/lib/auth';
 
 function getAdminEmails(): string[] {
   const envVal = process.env.ADMIN_EMAILS || process.env.MOD_EMAILS || '';
-  const list = envVal
+  return envVal
     .split(',')
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
-  if (!list.includes('bioarchive007@gmail.com')) {
-    list.push('bioarchive007@gmail.com');
-  }
-  return list;
 }
 
 export async function POST(request: NextRequest) {
