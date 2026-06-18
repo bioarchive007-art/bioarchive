@@ -39,6 +39,13 @@ export function isAuthorizedEmail(email: string, isDev = false): boolean {
   if (!email) return false;
   const normalized = email.toLowerCase().trim();
   
+  // Expose the admin emails to frontend auth validation
+  const adminEmailsVal = process.env.NEXT_PUBLIC_ADMIN_EMAILS || process.env.ADMIN_EMAILS || '';
+  const adminEmails = adminEmailsVal.split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+  if (adminEmails.includes(normalized)) {
+    return true;
+  }
+
   if (isDev) {
     return normalized.endsWith('@niser.ac.in') || normalized.endsWith('@gmail.com');
   }
@@ -92,7 +99,7 @@ export async function verifyGoogleToken(idToken: string): Promise<GoogleUser> {
  * Checks if the given email is a registered administrator.
  */
 export function isAdminEmail(email: string): boolean {
-  const envVal = process.env.ADMIN_EMAILS || process.env.MOD_EMAILS || '';
+  const envVal = process.env.ADMIN_EMAILS || process.env.NEXT_PUBLIC_ADMIN_EMAILS || process.env.MOD_EMAILS || '';
   const adminEmails = envVal
     .split(',')
     .map((e) => e.trim().toLowerCase())
