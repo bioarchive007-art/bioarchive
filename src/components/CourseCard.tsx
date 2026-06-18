@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
+import Link from 'next/link';
 import { Course } from '@/data/curriculum';
 
 interface CourseCardProps {
@@ -15,12 +16,12 @@ export default function CourseCard({ course, semester }: CourseCardProps) {
   const initials = course.code.replace(/[^A-Z0-9]/g, '').slice(0, 2);
 
   return (
-    <motion.a
-      href={`/course/${encodeURIComponent(course.code)}?semester=${semester}`}
-      className="course-card"
-      whileHover={{ y: -4 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-    >
+    <Link href={`/course/${encodeURIComponent(course.code)}?semester=${semester}`} passHref legacyBehavior>
+      <motion.a
+        className="course-card"
+        whileHover={{ y: -4 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+      >
       <div className="cc-top">
         <div className="cc-icon-wrap">
           {!imgError ? (
@@ -153,5 +154,6 @@ export default function CourseCard({ course, semester }: CourseCardProps) {
         }
       `}</style>
     </motion.a>
+    </Link>
   );
 }

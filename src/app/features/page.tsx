@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useState, useEffect } from 'react';
+import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
 export default function FeaturesPage() {
@@ -55,15 +56,15 @@ export default function FeaturesPage() {
         {/* Sticky Header */}
         <div className="features-header">
           <div className="features-header-inner">
-            <a href="/" className="features-back">
+            <Link href="/" className="features-back">
               <ArrowLeft size={18} />
               <span>Back</span>
-            </a>
+            </Link>
             <div className="features-header-info">
-              <a href="/" className="navbar-wordmark">
+              <Link href="/" className="navbar-wordmark">
                 <span className="wordmark-bio">Bio</span>
                 <span className="wordmark-archive">Archive</span>
-              </a>
+              </Link>
               <h1 className="features-title">Features Overview</h1>
             </div>
           </div>

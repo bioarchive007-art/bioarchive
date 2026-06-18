@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, ArrowLeft, Check, Trash2, X, RefreshCw, AlertTriangle, FileText, Calendar, User, BookOpen, Settings2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
@@ -279,7 +280,7 @@ export default function AdminPage() {
             justifyContent: 'space-between',
             gap: '16px'
           }}>
-            <a href="/" className="admin-back" style={{
+            <Link href="/" className="admin-back" style={{
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
@@ -292,7 +293,7 @@ export default function AdminPage() {
             }}>
               <ArrowLeft size={16} />
               <span>Back to Site</span>
-            </a>
+            </Link>
             <h1 className="admin-title" style={{
               fontFamily: "'Cinzel', serif",
               fontSize: '1.2rem',

@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { deleteFromDrive } from '@/lib/drive';
 import { deleteFileRecord, getAllFiles } from '@/lib/sheets';
 import { authorizeAdminRequest } from '@/lib/auth';
+import { apiCache } from '@/lib/api-cache';
 
 /**
  * POST /api/delete
@@ -57,24 +58,11 @@ export async function POST(request: NextRequest) {
 
 
 
-    // Step 4: Invalidate KV cache
-    const kv = (globalThis as any).BIOARCHIVE_CACHE;
-    if (kv) {
-      if (courseCode && semester) {
-        await kv.delete(`files:${courseCode}:${semester}`).catch(() => {});
-      }
-      // Also attempt a broader invalidation via KV list (best-effort)
-      try {
-        const list = await kv.list({ prefix: 'files:' });
-        if (list?.keys) {
-          await Promise.allSettled(
-            list.keys.map((k: { name: string }) => kv.delete(k.name))
-          );
-        }
-      } catch {
-        // KV list may not be supported or may fail — non-critical
-      }
+    // Step 4: Invalidate caches
+    if (courseCode && semester) {
+      await apiCache.delete(`files:${courseCode}:${semester}`).catch(() => {});
     }
+    await apiCache.clearPattern('files:').catch(() => {});
 
     return NextResponse.json({ success: true });
   } catch (err: any) {

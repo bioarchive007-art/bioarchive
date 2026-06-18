@@ -3,6 +3,7 @@ export const runtime = 'edge';
 import { NextRequest, NextResponse } from 'next/server';
 import { findSubfolderId, listFilesInFolder } from '@/lib/drive';
 import { getAccessToken } from '@/lib/google-auth';
+import { apiCache } from '@/lib/api-cache';
 
 async function listSubfolders(parentFolderId: string): Promise<Array<{ id: string; name: string }>> {
   const token = await getAccessToken();
@@ -51,14 +52,11 @@ export async function GET(request: NextRequest) {
     }
 
     const cacheKey = courseCode ? `books:${semester}:${courseCode}` : `books:${semester}`;
-    const kv = (globalThis as any).BIOARCHIVE_CACHE;
 
-    // Check KV cache
-    if (kv) {
-      const cached = await kv.get(cacheKey, { type: 'json' });
-      if (cached) {
-        return NextResponse.json(cached);
-      }
+    // Check cache
+    const cached = await apiCache.get(cacheKey);
+    if (cached) {
+      return NextResponse.json(cached);
     }
 
     let targetFolderId = booksDriveFolderId;
@@ -149,9 +147,9 @@ export async function GET(request: NextRequest) {
     // List files inside the determined folder
     const files = await listFilesInFolder(targetFolderId);
 
-    // Save to KV cache
-    if (kv && files && files.length > 0) {
-      await kv.put(cacheKey, JSON.stringify(files), { expirationTtl: 60 }); // Cache for 5 days (432000 seconds)
+    // Save to cache (5 days = 432000 seconds)
+    if (files && files.length > 0) {
+      await apiCache.set(cacheKey, files, 432000);
     }
 
     return NextResponse.json(files);

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Send, CheckCircle2, AlertCircle, Mail } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
@@ -41,9 +42,9 @@ export default function ContactPage() {
           <p style={{ fontSize: '0.86rem', color: 'var(--text-3)', lineHeight: '1.6', marginBottom: '24px' }}>
             The moderator contact form is currently disabled by the site administrator. Please check back later.
           </p>
-          <a href="/" className="btn-gold" style={{ display: 'inline-flex', justifyContent: 'center', width: '100%' }}>
+          <Link href="/" className="btn-gold" style={{ display: 'inline-flex', justifyContent: 'center', width: '100%' }}>
             Return to Home
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -92,15 +93,15 @@ export default function ContactPage() {
         {/* Sticky Header */}
         <div className="contact-header">
           <div className="contact-header-inner">
-            <a href="/" className="contact-back">
+            <Link href="/" className="contact-back">
               <ArrowLeft size={18} />
               <span>Back</span>
-            </a>
+            </Link>
             <div className="contact-header-info">
-              <a href="/" className="navbar-wordmark">
+              <Link href="/" className="navbar-wordmark">
                 <span className="wordmark-bio">Bio</span>
                 <span className="wordmark-archive">Archive</span>
-              </a>
+              </Link>
               <h1 className="contact-title">Contact Us</h1>
             </div>
           </div>

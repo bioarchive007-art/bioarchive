@@ -5,6 +5,7 @@ import { CONFIG } from '@/config';
 import { makeFilePublic, copyToBackupFolder, resolveNestedFolder, moveDriveFile } from '@/lib/drive';
 import { getAllFiles, approveFileRecord } from '@/lib/sheets';
 import { authorizeAdminRequest } from '@/lib/auth';
+import { apiCache } from '@/lib/api-cache';
 
 /**
  * POST /api/admin/approve
@@ -99,17 +100,11 @@ export async function POST(request: NextRequest) {
     // 6. Update database status to 'approved'
     await approveFileRecord(fileId);
 
-    // 7. Invalidate Cloudflare KV caches
-    const kv = (globalThis as any).BIOARCHIVE_CACHE;
-    if (kv) {
-      // Invalidate course view cache
-      const cacheKey = `files:${courseCode}:${semester}`;
-      await kv.delete(cacheKey).catch(() => {});
-      
-      // Invalidate search index cache
-      await kv.delete('files:all').catch(() => {});
-      await kv.delete('files:approved:all').catch(() => {});
-    }
+    // 7. Invalidate caches
+    const cacheKey = `files:${courseCode}:${semester}`;
+    await apiCache.delete(cacheKey).catch(() => {});
+    await apiCache.delete('files:all').catch(() => {});
+    await apiCache.delete('files:approved:all').catch(() => {});
 
     return NextResponse.json({ success: true, fileName: fileRecord.fileName });
   } catch (err: any) {

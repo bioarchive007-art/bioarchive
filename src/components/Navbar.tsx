@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Upload, BookOpen, AlertCircle, Info, LogOut } from 'lucide-react';
 import { usePathname } from 'next/navigation';
@@ -53,25 +54,26 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
             >
               {isOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
-            <motion.a
-              href="/"
-              className="navbar-wordmark"
-              style={{
-                opacity: 1,
-                y: 0,
-                scale: 1,
-              }}
-            >
-              <span className="wordmark-bio">Bio</span>
-              <span className="wordmark-archive">Archive</span>
-            </motion.a>
+            <Link href="/" passHref legacyBehavior>
+              <motion.a
+                className="navbar-wordmark"
+                style={{
+                  opacity: 1,
+                  y: 0,
+                  scale: 1,
+                }}
+              >
+                <span className="wordmark-bio">Bio</span>
+                <span className="wordmark-archive">Archive</span>
+              </motion.a>
+            </Link>
             <div className="navbar-links">
-              <a href="/" className="nav-link">Curriculum</a>
-              <a href="/features" className="nav-link">Features</a>
-              {siteConfig?.enableNotices !== false && <a href="/notices" className="nav-link">Notices</a>}
-              {siteConfig?.enableFileRequests !== false && <a href="/requests" className="nav-link">Requests</a>}
-              <a href="/about" className="nav-link">About</a>
-              {siteConfig?.enableContactForm !== false && <a href="/contact" className="nav-link">Contact</a>}
+              <Link href="/" className="nav-link">Curriculum</Link>
+              <Link href="/features" className="nav-link">Features</Link>
+              {siteConfig?.enableNotices !== false && <Link href="/notices" className="nav-link">Notices</Link>}
+              {siteConfig?.enableFileRequests !== false && <Link href="/requests" className="nav-link">Requests</Link>}
+              <Link href="/about" className="nav-link">About</Link>
+              {siteConfig?.enableContactForm !== false && <Link href="/contact" className="nav-link">Contact</Link>}
             </div>
           </div>
 
@@ -315,53 +317,53 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
                   </button>
                 )}
 
-                <a
+                <Link
                   href="/"
                   className="mobile-menu-link"
                   onClick={() => setIsOpen(false)}
                 >
                   <span>Curriculum</span>
-                </a>
-                <a
+                </Link>
+                <Link
                   href="/features"
                   className="mobile-menu-link"
                   onClick={() => setIsOpen(false)}
                 >
                   <span>Features</span>
-                </a>
+                </Link>
                 {siteConfig?.enableNotices !== false && (
-                  <a
+                  <Link
                     href="/notices"
                     className="mobile-menu-link"
                     onClick={() => setIsOpen(false)}
                   >
                     <span>Notices</span>
-                  </a>
+                  </Link>
                 )}
                 {siteConfig?.enableFileRequests !== false && (
-                  <a
+                  <Link
                     href="/requests"
                     className="mobile-menu-link"
                     onClick={() => setIsOpen(false)}
                   >
                     <span>Requests</span>
-                  </a>
+                  </Link>
                 )}
-                <a
+                <Link
                   href="/about"
                   className="mobile-menu-link"
                   onClick={() => setIsOpen(false)}
                 >
                   <span>About</span>
-                </a>
+                </Link>
                 {siteConfig?.enableContactForm !== false && (
-                  <a
+                  <Link
                     href="/contact"
                     className="mobile-menu-link"
                     onClick={() => setIsOpen(false)}
                   >
                     <span>Contact</span>
-                  </a>
+                  </Link>
                 )}
                 {siteConfig?.enableUploads !== false && (
                   <button

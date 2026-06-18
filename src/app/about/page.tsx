@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { ArrowLeft, Info, FileCheck, ShieldAlert } from 'lucide-react';
 
 export default function AboutPage() {
@@ -10,15 +11,15 @@ export default function AboutPage() {
         {/* Sticky Header */}
         <div className="about-header">
           <div className="about-header-inner">
-            <a href="/" className="about-back">
+            <Link href="/" className="about-back">
               <ArrowLeft size={18} />
               <span>Back</span>
-            </a>
+            </Link>
             <div className="about-header-info">
-              <a href="/" className="navbar-wordmark">
+              <Link href="/" className="navbar-wordmark">
                 <span className="wordmark-bio">Bio</span>
                 <span className="wordmark-archive">Archive</span>
-              </a>
+              </Link>
               <h1 className="about-title">About</h1>
             </div>
           </div>

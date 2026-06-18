@@ -6,6 +6,7 @@ import { SheetRow } from '@/types';
 import { makeFilePublic, copyToBackupFolder } from '@/lib/drive';
 import { checkDuplicate, appendFileRecord, initializeSheetHeaders, fulfillRequest, getSiteConfig } from '@/lib/sheets';
 import { notifyModsOfUpload } from '@/lib/notify';
+import { apiCache } from '@/lib/api-cache';
 
 /**
  * POST /api/upload/confirm
@@ -93,12 +94,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Step 4: Invalidate KV cache for this course
-    const kv = (globalThis as any).BIOARCHIVE_CACHE;
-    if (kv) {
-      const cacheKey = `files:${sheetRow.courseCode}:${sheetRow.semester}`;
-      await kv.delete(cacheKey).catch(() => { });
-    }
+    // Step 4: Invalidate cache for this course
+    const cacheKey = `files:${sheetRow.courseCode}:${sheetRow.semester}`;
+    await apiCache.delete(cacheKey).catch(() => { });
 
     // Step 5: Notify moderators (fire-and-forget, only on the last file in the batch)
     if (isLastFile) {

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -269,10 +270,10 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
         {/* Sticky Header */}
         <div className="cd-header">
           <div className="cd-header-inner">
-            <a href="/" className="cd-back">
+            <Link href="/" className="cd-back">
               <ArrowLeft size={18} strokeWidth={1.5} />
               <span>Back</span>
-            </a>
+            </Link>
             <div className="cd-header-info">
               <span className="cd-code">{courseCode}</span>
               <h1 className="cd-title">{course?.name || courseCode}</h1>

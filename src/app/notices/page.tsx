@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar, Info, AlertTriangle, Loader2 } from 'lucide-react';
 import { Notice } from '@/types';
@@ -42,9 +43,9 @@ export default function NoticesPage() {
           <p style={{ fontSize: '0.86rem', color: 'var(--text-3)', lineHeight: '1.6', marginBottom: '24px' }}>
             The notice board and announcements system is currently disabled by the site administrator. Please check back later.
           </p>
-          <a href="/" className="btn-gold" style={{ display: 'inline-flex', justifyContent: 'center', width: '100%' }}>
+          <Link href="/" className="btn-gold" style={{ display: 'inline-flex', justifyContent: 'center', width: '100%' }}>
             Return to Home
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -74,15 +75,15 @@ export default function NoticesPage() {
         {/* Sticky Header */}
         <div className="notices-header">
           <div className="notices-header-inner">
-            <a href="/" className="notices-back">
+            <Link href="/" className="notices-back">
               <ArrowLeft size={18} />
               <span>Back</span>
-            </a>
+            </Link>
             <div className="notices-header-info">
-              <a href="/" className="navbar-wordmark">
+              <Link href="/" className="navbar-wordmark">
                 <span className="wordmark-bio">Bio</span>
                 <span className="wordmark-archive">Archive</span>
-              </a>
+              </Link>
               <h1 className="notices-title">Notice Board</h1>
             </div>
           </div>

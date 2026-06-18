@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, BookOpen, FileText, Download, Eye, Loader2, X } from 'lucide-react';
 import { CURRICULUM, Course } from '@/data/curriculum';
@@ -149,24 +150,24 @@ export default function GlobalSearch() {
                     <h4 className="search-section-title">Courses</h4>
                     <div className="search-courses-list">
                       {matchedCourses.map(({ course, semester }, idx) => (
-                        <motion.a
-                          key={course.code}
-                          href={`/course/${encodeURIComponent(course.code)}?semester=${semester}`}
-                          className="search-course-item"
-                          onClick={() => setIsOpen(false)}
-                          initial={{ opacity: 0, x: -8 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: idx * 0.03, duration: 0.2 }}
-                        >
-                          <div className="sci-badge">
-                            {semester === 'ADVANCE COURSES' ? 'ADV' : `S${semester}`}
-                          </div>
-                          <div className="sci-info">
-                            <span className="sci-code">{course.code}</span>
-                            <span className="sci-name">{course.name}</span>
-                          </div>
-                          <BookOpen size={14} className="sci-icon" />
-                        </motion.a>
+                        <Link key={course.code} href={`/course/${encodeURIComponent(course.code)}?semester=${semester}`} passHref legacyBehavior>
+                          <motion.a
+                            className="search-course-item"
+                            onClick={() => setIsOpen(false)}
+                            initial={{ opacity: 0, x: -8 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: idx * 0.03, duration: 0.2 }}
+                          >
+                            <div className="sci-badge">
+                              {semester === 'ADVANCE COURSES' ? 'ADV' : `S${semester}`}
+                            </div>
+                            <div className="sci-info">
+                              <span className="sci-code">{course.code}</span>
+                              <span className="sci-name">{course.name}</span>
+                            </div>
+                            <BookOpen size={14} className="sci-icon" />
+                          </motion.a>
+                        </Link>
                       ))}
                     </div>
                   </div>
