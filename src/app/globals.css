@@ -1032,5 +1032,85 @@ select option {
   color: #f8fafc !important;
 }
 
+/* ================================================================
+   Modal Overlay & Panel Global Styles
+   ================================================================ */
+.um-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(0,0,0,0.7) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 900 !important;
+  padding: 16px !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+.um-panel {
+  position: relative !important;
+  width: 100% !important;
+  max-width: 560px !important;
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  background: var(--panel) !important;
+  backdrop-filter: var(--glass-blur) !important;
+  -webkit-backdrop-filter: var(--glass-blur) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 20px !important;
+  padding: 28px !important;
+  box-shadow: var(--glass-shadow-hover) !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(2,132,199,0.15) transparent !important;
+}
+.um-close {
+  position: absolute !important;
+  top: 16px !important;
+  right: 16px !important;
+  background: rgba(255,255,255,0.05) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 8px !important;
+  color: rgba(255,255,255,0.5) !important;
+  cursor: pointer !important;
+  padding: 6px !important;
+  transition: all 0.15s !important;
+  z-index: 5 !important;
+}
+.um-close:hover {
+  background: rgba(255,0,0,0.15) !important;
+  color: #fff !important;
+}
+.um-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin-bottom: 18px !important;
+}
+.um-header-icon {
+  color: #daa520 !important;
+}
+.um-title {
+  font-family: 'Cinzel', serif !important;
+  font-size: 1.35rem !important;
+  font-weight: 700 !important;
+  color: #f0f0f0 !important;
+  margin: 0 !important;
+}
+.um-error {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 10px 14px !important;
+  background: rgba(239, 68, 68, 0.1) !important;
+  border: 1px solid rgba(239, 68, 68, 0.2) !important;
+  border-radius: 8px !important;
+  color: #f87171 !important;
+  font-family: 'Outfit', sans-serif !important;
+  font-size: 0.8rem !important;
+  margin-bottom: 16px !important;
+  text-align: left !important;
+}
+
 
 
