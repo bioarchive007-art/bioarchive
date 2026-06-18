@@ -45,6 +45,8 @@ const AuthContext = createContext<AuthContextType>({
     enableDownloadLogging: true,
     enableContactForm: true,
     enableDownloads: true,
+    requireNiserToUpload: true,
+    requireNiserToDownload: true,
   },
 });
 
@@ -72,6 +74,8 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     enableDownloadLogging: true,
     enableContactForm: true,
     enableDownloads: true,
+    requireNiserToUpload: true,
+    requireNiserToDownload: true,
   });
 
   // Load public config on mount
@@ -94,7 +98,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       try {
         const u = JSON.parse(cachedUser);
         const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const isAllowed = !siteConfig.restrictToInstitutionalEmail || isAuthorizedEmail(u.email, isDev);
+        const isAllowed = !siteConfig.restrictToInstitutionalEmail || isAuthorizedEmail(u.email, isDev, siteConfig.adminEmails);
         if (u && u.email && isAllowed) {
           setUser(u);
           if (cachedToken) {
@@ -109,7 +113,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       const decoded = decodeGoogleCredential(cachedToken);
       if (decoded) {
         const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const isAllowed = !siteConfig.restrictToInstitutionalEmail || isAuthorizedEmail(decoded.email, isDev);
+        const isAllowed = !siteConfig.restrictToInstitutionalEmail || isAuthorizedEmail(decoded.email, isDev, siteConfig.adminEmails);
         if (isAllowed) {
           setUser(decoded);
           setIdToken(cachedToken);
@@ -150,7 +154,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     if (!decoded) return;
 
     const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const isAllowed = !siteConfig.restrictToInstitutionalEmail || isAuthorizedEmail(decoded.email, isDev);
+    const isAllowed = !siteConfig.restrictToInstitutionalEmail || isAuthorizedEmail(decoded.email, isDev, siteConfig.adminEmails);
     if (!isAllowed) {
       alert(`Access Restricted: Only @niser.ac.in accounts are permitted. Your email "${decoded.email}" is not authorized.`);
       return;

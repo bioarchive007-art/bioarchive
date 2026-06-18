@@ -37,6 +37,8 @@ export default function AdminPage() {
     enableDownloadLogging: true,
     enableContactForm: true,
     enableDownloads: true,
+    requireNiserToUpload: true,
+    requireNiserToDownload: true,
   });
 
   const { user, idToken, triggerLogin } = useAuth();
@@ -201,7 +203,9 @@ export default function AdminPage() {
       { key: 'renameFiles' as const, label: 'Rename Uploaded Files', desc: 'Format file names into canonical abbreviations (e.g., COURSE_PROF_notes_2026). If disabled, retains raw filenames.' },
       { key: 'requireModeration' as const, label: 'Require Moderator Approval', desc: 'New uploads go to the moderation queue first. If disabled, files bypass quarantine and are approved instantly.' },
       { key: 'restrictToInstitutionalEmail' as const, label: 'Restrict to @niser.ac.in', desc: 'Only users with institutional @niser.ac.in email domains can log in. If disabled, domain restrictions are relaxed.' },
-      { key: 'enableDownloadLogging' as const, label: 'Log Detailed Download Entries', desc: 'Record details of user download requests to the Sheets logs. If disabled, skips logging download details but increments count.' }
+      { key: 'enableDownloadLogging' as const, label: 'Log Detailed Download Entries', desc: 'Record details of user download requests to the Sheets logs. If disabled, skips logging download details but increments count.' },
+      { key: 'requireNiserToUpload' as const, label: 'Require @niser.ac.in to Upload', desc: 'Enforce that only users with an institutional @niser.ac.in email can upload study materials.' },
+      { key: 'requireNiserToDownload' as const, label: 'Require @niser.ac.in to Download', desc: 'Enforce that only users with an institutional @niser.ac.in email can download study materials and textbooks.' }
     ],
     features: [
       { key: 'enableFilePreviews' as const, label: 'Enable In-App Previews', desc: 'Enable full-screen centered PDF and slides previewing. If disabled, hide preview buttons.' },

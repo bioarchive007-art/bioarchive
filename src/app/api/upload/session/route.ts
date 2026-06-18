@@ -5,6 +5,7 @@ import { CONFIG } from '@/config';
 import { generateRenamedFilename } from '@/lib/file-renaming';
 import { createResumableUploadSession, resolveNestedFolder } from '@/lib/drive';
 import { checkDuplicateMetadata, getSiteConfig } from '@/lib/sheets';
+import { verifyGoogleToken, isAdminEmail } from '@/lib/auth';
 
 /**
  * Allowed MIME types for upload validation.
@@ -84,6 +85,26 @@ export async function POST(request: NextRequest) {
     const siteConfig: Record<string, boolean> = await getSiteConfig().catch(() => ({ renameFiles: true, enableUploads: true, requireModeration: true }));
     if (siteConfig.enableUploads === false) {
       return NextResponse.json({ error: 'Uploads are currently disabled by the administrator.' }, { status: 403 });
+    }
+
+    // Check requireNiserToUpload
+    if (siteConfig.requireNiserToUpload) {
+      const authHeader = request.headers.get('Authorization') || '';
+      const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+      if (!token) {
+        return NextResponse.json({ error: 'Unauthorized: Missing credentials' }, { status: 401 });
+      }
+      try {
+        const googleUser = await verifyGoogleToken(token);
+        const isNiser = googleUser.email.toLowerCase().endsWith('@niser.ac.in');
+        const isAdmin = isAdminEmail(googleUser.email);
+
+        if (!isNiser && !isAdmin) {
+          return NextResponse.json({ error: 'Forbidden: Only @niser.ac.in accounts are permitted to upload.' }, { status: 403 });
+        }
+      } catch (err: any) {
+        return NextResponse.json({ error: `Authentication failed: ${err.message}` }, { status: 401 });
+      }
     }
     const canonicalFileName = siteConfig.renameFiles
       ? generateRenamedFilename(fileName, {

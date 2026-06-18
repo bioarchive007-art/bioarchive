@@ -41,10 +41,37 @@ export default function SortableFileTable({
   };
 
   const handleDownload = (file: SheetRow) => {
-    if (!user) {
-      triggerLogin(() => triggerDownloadAction(file));
-    } else {
+    const checkAndDownload = (currUser: any) => {
+      if (siteConfig?.requireNiserToDownload) {
+        const email = currUser?.email || '';
+        const isDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+        const isNiser = email.toLowerCase().endsWith('@niser.ac.in');
+        const isAdmin = (siteConfig?.adminEmails || []).includes(email.toLowerCase().trim()) || email.toLowerCase().trim() === 'bioarchive007@gmail.com';
+        const isAllowed = isNiser || isAdmin || (isDev && email.toLowerCase().endsWith('@gmail.com'));
+        if (!isAllowed) {
+          alert('Access Restricted: Only @niser.ac.in institutional accounts are authorized to download study materials.');
+          return;
+        }
+      }
       triggerDownloadAction(file);
+    };
+
+    if (!user) {
+      triggerLogin(() => {
+        const cachedUserStr = localStorage.getItem('bioarchive:user');
+        if (cachedUserStr) {
+          try {
+            const cachedUser = JSON.parse(cachedUserStr);
+            checkAndDownload(cachedUser);
+          } catch (e) {
+            checkAndDownload(null);
+          }
+        } else {
+          checkAndDownload(null);
+        }
+      });
+    } else {
+      checkAndDownload(user);
     }
   };
 

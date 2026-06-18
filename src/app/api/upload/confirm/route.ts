@@ -7,6 +7,7 @@ import { makeFilePublic, copyToBackupFolder } from '@/lib/drive';
 import { checkDuplicate, appendFileRecord, initializeSheetHeaders, fulfillRequest, getSiteConfig } from '@/lib/sheets';
 import { notifyModsOfUpload } from '@/lib/notify';
 import { apiCache } from '@/lib/api-cache';
+import { verifyGoogleToken, isAdminEmail } from '@/lib/auth';
 
 /**
  * POST /api/upload/confirm
@@ -42,6 +43,26 @@ export async function POST(request: NextRequest) {
     const siteConfig: Record<string, boolean> = await getSiteConfig().catch(() => ({ requireModeration: true, enableUploads: true }));
     if (siteConfig.enableUploads === false) {
       return NextResponse.json({ error: 'Uploads are currently disabled by the administrator.' }, { status: 403 });
+    }
+
+    // Check requireNiserToUpload
+    if (siteConfig.requireNiserToUpload) {
+      const authHeader = request.headers.get('Authorization') || '';
+      const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+      if (!token) {
+        return NextResponse.json({ error: 'Unauthorized: Missing credentials' }, { status: 401 });
+      }
+      try {
+        const googleUser = await verifyGoogleToken(token);
+        const isNiser = googleUser.email.toLowerCase().endsWith('@niser.ac.in');
+        const isAdmin = isAdminEmail(googleUser.email);
+
+        if (!isNiser && !isAdmin) {
+          return NextResponse.json({ error: 'Forbidden: Only @niser.ac.in accounts are permitted to upload.' }, { status: 403 });
+        }
+      } catch (err: any) {
+        return NextResponse.json({ error: `Authentication failed: ${err.message}` }, { status: 401 });
+      }
     }
     const isDuplicate = metadata.isDuplicate === true;
     const status = metadata.status || (siteConfig.requireModeration ? 'pending_approval' : 'approved');

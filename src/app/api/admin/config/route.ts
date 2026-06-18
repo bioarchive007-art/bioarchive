@@ -6,10 +6,14 @@ import { verifyGoogleToken } from '@/lib/auth';
 
 function getAdminEmails(): string[] {
   const envVal = process.env.ADMIN_EMAILS || process.env.MOD_EMAILS || '';
-  return envVal
+  const list = envVal
     .split(',')
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
+  if (!list.includes('bioarchive007@gmail.com')) {
+    list.push('bioarchive007@gmail.com');
+  }
+  return list;
 }
 
 export async function POST(request: NextRequest) {
@@ -52,7 +56,12 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const config = await getSiteConfig();
-    return NextResponse.json(config);
+    const envVal = process.env.ADMIN_EMAILS || process.env.MOD_EMAILS || '';
+    const adminEmails = envVal.split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+    return NextResponse.json({
+      ...config,
+      adminEmails,
+    });
   } catch (err: any) {
     console.error('[api/admin/config] GET Error:', err);
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });

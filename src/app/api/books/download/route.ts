@@ -3,6 +3,7 @@ export const runtime = 'edge';
 import { NextRequest, NextResponse } from 'next/server';
 import { appendBookDownloadRecord, getSiteConfig } from '@/lib/sheets';
 import { getAccessToken } from '@/lib/google-auth';
+import { verifyGoogleToken, isAdminEmail } from '@/lib/auth';
 
 /**
  * GET /api/books/download
@@ -22,7 +23,46 @@ export async function GET(request: NextRequest) {
     const bookName = searchParams.get('bookName') || '';
     const courseCode = searchParams.get('courseCode') || '';
     const semester = searchParams.get('semester') || '';
-    const email = searchParams.get('email') || 'unknown@niser.ac.in';
+    
+    let email = 'unknown@niser.ac.in';
+
+    // Verify user if requireNiserToDownload is active
+    if (siteConfig.requireNiserToDownload) {
+      const tokenParam = searchParams.get('token') || '';
+      if (!tokenParam) {
+        return NextResponse.json({ error: 'Unauthorized: Missing credentials token' }, { status: 401 });
+      }
+      try {
+        const googleUser = await verifyGoogleToken(tokenParam);
+        email = googleUser.email;
+        const isNiser = email.toLowerCase().endsWith('@niser.ac.in');
+        const isAdmin = isAdminEmail(email);
+        const isDev = process.env.NODE_ENV === 'development';
+        const isAllowed = isNiser || isAdmin || (isDev && email.toLowerCase().endsWith('@gmail.com'));
+
+        if (!isAllowed) {
+          return NextResponse.json({ error: 'Forbidden: Only @niser.ac.in accounts are permitted to download reference books.' }, { status: 403 });
+        }
+      } catch (err: any) {
+        return NextResponse.json({ error: `Authentication failed: ${err.message}` }, { status: 401 });
+      }
+    } else {
+      // Parse token if present for log tracking, otherwise fallback to query email or default
+      const tokenParam = searchParams.get('token') || '';
+      if (tokenParam) {
+        try {
+          const googleUser = await verifyGoogleToken(tokenParam);
+          email = googleUser.email;
+        } catch {
+          // ignore
+        }
+      } else {
+        const emailParam = searchParams.get('email');
+        if (emailParam) {
+          email = emailParam;
+        }
+      }
+    }
 
     if (!fileId || !bookName) {
       return NextResponse.json(

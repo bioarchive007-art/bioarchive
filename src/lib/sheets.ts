@@ -867,6 +867,8 @@ export async function getSiteConfig(): Promise<Record<string, boolean>> {
     enableDownloadLogging: true,
     enableContactForm: true,
     enableDownloads: true,
+    requireNiserToUpload: true,
+    requireNiserToDownload: true,
   };
 
   if (!res.ok) {

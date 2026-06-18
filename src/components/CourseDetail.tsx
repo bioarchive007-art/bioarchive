@@ -40,7 +40,7 @@ const FILE_TYPE_ORDER = ['qpaper', 'notes', 'slides', 'lab', 'assignment', 'othe
 export default function CourseDetail({ courseCode, semester }: CourseDetailProps) {
   const searchParams = useSearchParams();
   const activeSemester = semester || searchParams.get('semester') || '1';
-  const { siteConfig } = useAuth();
+  const { user, idToken, triggerLogin, siteConfig } = useAuth();
 
   const [files, setFiles] = useState<SheetRow[]>([]);
   const [books, setBooks] = useState<Array<{ id: string; name: string; webViewLink: string }>>([]);
@@ -139,6 +139,46 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
       return newState;
     });
   }, []);
+
+  const handleBookDownload = (bookId: string, bookName: string) => {
+    const triggerBookDownloadAction = (currUser: any, currToken: string | null) => {
+      const token = currToken || (typeof window !== 'undefined' ? localStorage.getItem('bioarchive:idToken') : null);
+      if (siteConfig?.requireNiserToDownload) {
+        const email = currUser?.email || '';
+        const isDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+        const isNiser = email.toLowerCase().endsWith('@niser.ac.in');
+        const isAdmin = (siteConfig?.adminEmails || []).includes(email.toLowerCase().trim()) || email.toLowerCase().trim() === 'bioarchive007@gmail.com';
+        const isAllowed = isNiser || isAdmin || (isDev && email.toLowerCase().endsWith('@gmail.com'));
+        if (!isAllowed) {
+          alert('Access Restricted: Only @niser.ac.in institutional accounts are authorized to download reference books.');
+          return;
+        }
+      }
+      
+      const tokenQuery = token ? `&token=${encodeURIComponent(token)}` : '';
+      const downloadUrl = `/api/books/download?fileId=${bookId}&bookName=${encodeURIComponent(bookName)}&courseCode=${courseCode}&semester=${activeSemester}${tokenQuery}`;
+      window.open(downloadUrl, '_blank');
+    };
+
+    if (!user) {
+      triggerLogin(() => {
+        const cachedUserStr = localStorage.getItem('bioarchive:user');
+        const cachedToken = localStorage.getItem('bioarchive:idToken');
+        if (cachedUserStr) {
+          try {
+            const cachedUser = JSON.parse(cachedUserStr);
+            triggerBookDownloadAction(cachedUser, cachedToken);
+          } catch (e) {
+            triggerBookDownloadAction(null, null);
+          }
+        } else {
+          triggerBookDownloadAction(null, null);
+        }
+      });
+    } else {
+      triggerBookDownloadAction(user, idToken);
+    }
+  };
 
   // Fuzzy match textbook name in curriculum to a filename in Google Drive
   const findMatchingBook = useCallback((textbookName: string) => {
@@ -449,13 +489,13 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
                             <span className="cd-book-name">{book.name}</span>
                             <div className="cd-book-actions">
                               {siteConfig?.enableDownloads !== false && (
-                                <a
-                                  href={`/api/books/download?fileId=${book.id}&bookName=${encodeURIComponent(book.name)}&courseCode=${courseCode}&semester=${activeSemester}`}
+                                <button
+                                  onClick={() => handleBookDownload(book.id, book.name)}
                                   className="cd-book-btn openlib"
-                                  style={{ background: 'rgba(16, 185, 129, 0.12)', borderColor: 'rgba(16, 185, 129, 0.25)', color: '#10B981' }}
+                                  style={{ background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.25)', color: '#10B981', cursor: 'pointer' }}
                                 >
                                   Download PDF
-                                </a>
+                                </button>
                               )}
                               <a
                                 href={`https://books.google.com/books?q=${encodeURIComponent(book.name)}`}

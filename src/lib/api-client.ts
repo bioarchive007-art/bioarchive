@@ -66,12 +66,23 @@ export interface UploadSessionResult {
   };
 }
 
+function getHeaders(): Record<string, string> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('bioarchive:idToken');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+  }
+  return headers;
+}
+
 export async function createUploadSession(
   params: UploadSessionParams
 ): Promise<UploadSessionResult> {
   const res = await fetch('/api/upload/session', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getHeaders(),
     body: JSON.stringify(params),
   });
   if (!res.ok) {
@@ -119,7 +130,7 @@ export async function confirmUpload(
 ): Promise<ConfirmUploadResult> {
   const res = await fetch('/api/upload/confirm', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getHeaders(),
     body: JSON.stringify(params),
   });
 

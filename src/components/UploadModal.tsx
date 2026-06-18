@@ -14,6 +14,7 @@ import {
   createUploadSession,
   confirmUpload,
 } from '@/lib/api-client';
+import { useAuth } from './AuthProvider';
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -53,6 +54,7 @@ export default function UploadModal({
   initialYear = '',
   initialRequestId = '',
 }: UploadModalProps) {
+  const { user, siteConfig } = useAuth();
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -120,6 +122,18 @@ export default function UploadModal({
   // Reset or prefill on close/open
   useEffect(() => {
     if (isOpen) {
+      if (user) {
+        setUploaderName(user.name);
+      }
+      if (siteConfig?.requireNiserToUpload && user) {
+        const isNiser = user.email.toLowerCase().endsWith('@niser.ac.in');
+        const isAdmin = (siteConfig?.adminEmails || []).includes(user.email.toLowerCase().trim());
+        if (!isNiser && !isAdmin) {
+          alert(`Access Restricted: Only @niser.ac.in institutional accounts are authorized to upload study materials.`);
+          onClose();
+          return;
+        }
+      }
       if (initialCourseCode) setCourseCode(initialCourseCode);
       if (initialSemester) setSemester(initialSemester);
       if (initialFileType) setFileType(initialFileType);
