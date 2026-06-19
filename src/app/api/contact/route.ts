@@ -2,6 +2,17 @@ export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSiteConfig } from '@/lib/sheets';
+import { rateLimit } from '@/lib/rate-limit';
+
+/** Escapes special HTML characters to prevent XSS in email bodies. */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 /**
  * POST /api/contact
@@ -10,6 +21,12 @@ import { getSiteConfig } from '@/lib/sheets';
  */
 export async function POST(request: NextRequest) {
   try {
+    // Rate-limit: 3 contact form submissions per IP per 10 minutes
+    const rl = await rateLimit(request, 'contact', 3, 600);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: rl.error }, { status: 429 });
+    }
+
     const siteConfig = await getSiteConfig().catch(() => ({ enableContactForm: true }));
     if (siteConfig.enableContactForm === false) {
       return NextResponse.json({ error: 'Contact form is currently disabled by the administrator.' }, { status: 403 });
@@ -45,6 +62,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Escape all user inputs before embedding in HTML to prevent XSS
+    const safeName = escapeHtml(name);
+    const safeEmail = escapeHtml(email);
+    const safeSubject = escapeHtml(subject);
+    const safeMessage = escapeHtml(message);
+
     // Call Resend API to send message
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -55,14 +78,14 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         from: process.env.SENDER_EMAIL || 'BioArchive Contact Form <onboarding@resend.dev>',
         to: recipients,
-        reply_to: `${name} <${email}>`,
-        subject: `[BioArchive Contact] ${subject}`,
+        reply_to: `${safeName} <${safeEmail}>`,
+        subject: `[BioArchive Contact] ${safeSubject}`,
         html: `
           <h2>New Contact Form Message</h2>
-          <p><strong>From:</strong> ${name} (&lt;${email}&gt;)</p>
-          <p><strong>Subject:</strong> ${subject}</p>
+          <p><strong>From:</strong> ${safeName} (&lt;${safeEmail}&gt;)</p>
+          <p><strong>Subject:</strong> ${safeSubject}</p>
           <hr style="border:0;border-top:1px solid #ccc;margin:20px 0;" />
-          <p style="white-space:pre-wrap;line-height:1.6;font-family:sans-serif;">${message}</p>
+          <p style="white-space:pre-wrap;line-height:1.6;font-family:sans-serif;">${safeMessage}</p>
         `,
       }),
     });

@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server';
 
 /**
  * Decodes the payload of a JWT client-side / edge-side without cryptographic verification.
+ * Also checks the `exp` claim — returns null for expired tokens.
  */
 function decodeJWT(token: string): any | null {
   try {
@@ -19,7 +20,14 @@ function decodeJWT(token: string): any | null {
         .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
         .join('')
     );
-    return JSON.parse(jsonStr);
+    const payload = JSON.parse(jsonStr);
+
+    // Reject expired tokens — Google ID tokens expire after 1 hour
+    if (payload.exp && Math.floor(Date.now() / 1000) > payload.exp) {
+      return null;
+    }
+
+    return payload;
   } catch (err) {
     return null;
   }

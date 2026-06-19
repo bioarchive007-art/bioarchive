@@ -168,7 +168,11 @@ body {
 }
 
 a { color: inherit; text-decoration: none; }
-button { font-family: inherit; }
+button {
+  font-family: inherit;
+  /* Suppress Edge/Chromium's blue scroll-focus highlight on all buttons globally */
+  -webkit-tap-highlight-color: transparent;
+}
 img { max-width: 100%; display: block; }
 
 /* ================================================================
@@ -505,6 +509,20 @@ img { max-width: 100%; display: block; }
   border-color: var(--glass-border-hover);
   transform: translateY(-3px) scale(1.002);
   box-shadow: var(--glass-shadow-hover);
+}
+/* Suppress Edge/Chromium scroll-focus blue highlight */
+.sem-trigger:focus,
+.sem-trigger:focus-within,
+.sem-trigger:active,
+.sem-trigger:focus-visible {
+  outline: none;
+  background: var(--glass) !important;
+  border-color: var(--glass-border) !important;
+  box-shadow: var(--glass-shadow) !important;
+  -webkit-tap-highlight-color: transparent;
+}
+.sem-trigger:focus-visible:not(:hover) {
+  border-color: rgba(255, 255, 255, 0.2) !important;
 }
 .sem-badge {
   font-family: 'Outfit', sans-serif;

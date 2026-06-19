@@ -99,11 +99,23 @@ export default function SemesterBlock({
           transform: translateY(-3px) scale(1.002);
           box-shadow: var(--glass-shadow-hover);
         }
+        /* Suppress Edge/Chromium's auto-blue scroll-focus highlight.
+           Edge triggers :focus on buttons that scroll into view, causing an
+           unwanted blue background. We explicitly reset all focus visuals and
+           only restore a subtle ring for keyboard navigation via :focus-visible. */
         .sem-block-header:focus,
+        .sem-block-header:focus-within,
         .sem-block-header:active,
         .sem-block-header:focus-visible {
           outline: none !important;
-          box-shadow: var(--glass-shadow);
+          background-color: transparent !important;
+          border-color: var(--glass-border) !important;
+          box-shadow: var(--glass-shadow) !important;
+          -webkit-tap-highlight-color: transparent;
+        }
+        /* Only show a subtle accessibility ring when using keyboard Tab — not scroll */
+        .sem-block-header:focus-visible:not(:hover) {
+          border-color: rgba(255, 255, 255, 0.2) !important;
         }
         .sem-block-badge {
           font-family: 'Outfit', sans-serif;

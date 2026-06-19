@@ -18,11 +18,14 @@ export async function fetchFilesByCourse(
   return res.json();
 }
 
-export async function incrementFileDownloads(fileId: string, email?: string): Promise<void> {
+export async function incrementFileDownloads(fileId: string): Promise<void> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('bioarchive:idToken') : null;
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
   fetch('/api/download', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ fileId, email }),
+    headers,
+    body: JSON.stringify({ fileId }),
   }).catch(() => {
     // fire-and-forget
   });

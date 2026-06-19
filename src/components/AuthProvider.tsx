@@ -58,6 +58,11 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   const [showLogin, setShowLogin] = useState(false);
   const [loginSuccessCallback, setLoginSuccessCallback] = useState<(() => void) | null>(null);
   const [isMounted, setIsMounted] = useState(false);
+  // configLoaded tracks whether the real server config has been fetched.
+  // Session restoration is gated on this flag to prevent a race condition
+  // where a non-NISER user's cached session is accepted before the actual
+  // restrictToInstitutionalEmail value arrives from the server.
+  const [configLoaded, setConfigLoaded] = useState(false);
   const [siteConfig, setSiteConfig] = useState<any>({
     collectEmails: true,
     collectUserAgents: true,
@@ -78,57 +83,97 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     requireNiserToDownload: true,
   });
 
-  // Load public config on mount
+  // Load public config on mount — mark configLoaded once we have the real value.
   useEffect(() => {
     fetch('/api/admin/config')
       .then((res) => {
         if (res.ok) return res.json();
         throw new Error();
       })
-      .then((data) => setSiteConfig(data))
-      .catch(() => {});
+      .then((data) => {
+        setSiteConfig(data);
+        setConfigLoaded(true);
+      })
+      .catch(() => {
+        // If fetch fails, unblock session restore with default config.
+        setConfigLoaded(true);
+      });
   }, []);
 
-  // Initialize from localStorage on mount
+  // Session restore — only runs after the real config has been fetched.
+  // This prevents accepting a cached non-NISER session when the restriction
+  // was just enabled and the config hasn't loaded yet.
   useEffect(() => {
+    if (!configLoaded) return;
+
     setIsMounted(true);
     const cachedUser = localStorage.getItem('bioarchive:user');
     const cachedToken = localStorage.getItem('bioarchive:idToken');
+
+    const clearSession = () => {
+      setUser(null);
+      setIdToken(null);
+      localStorage.removeItem('bioarchive:idToken');
+      localStorage.removeItem('bioarchive:user');
+      document.cookie = 'bioarchive_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    };
+
     if (cachedUser) {
       try {
         const u = JSON.parse(cachedUser);
         const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const isAllowed = !siteConfig.restrictToInstitutionalEmail || isAuthorizedEmail(u.email, isDev, siteConfig.adminEmails);
+        const isAllowed = !siteConfig.restrictToInstitutionalEmail || isAuthorizedEmail(u.email, isDev);
         if (u && u.email && isAllowed) {
           setUser(u);
           if (cachedToken) {
             setIdToken(cachedToken);
             document.cookie = `bioarchive_token=${cachedToken}; path=/; max-age=31536000; SameSite=Lax; Secure`;
           }
+        } else {
+          // Config changed — user no longer meets the domain requirement.
+          clearSession();
         }
       } catch (e) {
         console.error('Failed to parse cached user:', e);
+        clearSession();
       }
     } else if (cachedToken) {
       const decoded = decodeGoogleCredential(cachedToken);
       if (decoded) {
         const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const isAllowed = !siteConfig.restrictToInstitutionalEmail || isAuthorizedEmail(decoded.email, isDev, siteConfig.adminEmails);
+        const isAllowed = !siteConfig.restrictToInstitutionalEmail || isAuthorizedEmail(decoded.email, isDev);
         if (isAllowed) {
           setUser(decoded);
           setIdToken(cachedToken);
           localStorage.setItem('bioarchive:user', JSON.stringify(decoded));
           document.cookie = `bioarchive_token=${cachedToken}; path=/; max-age=31536000; SameSite=Lax; Secure`;
         } else {
-          localStorage.removeItem('bioarchive:idToken');
-          document.cookie = 'bioarchive_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+          clearSession();
         }
       } else {
-        localStorage.removeItem('bioarchive:idToken');
-        document.cookie = 'bioarchive_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        clearSession();
       }
     }
-  }, [siteConfig]);
+  // Re-run whenever config is freshly loaded OR when siteConfig changes (admin toggled a setting).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [configLoaded, siteConfig]);
+
+  // Re-validate the ACTIVE user whenever siteConfig changes (e.g. admin toggles
+  // restrictToInstitutionalEmail at runtime). Immediately logs out anyone who
+  // no longer meets the new requirement without requiring a page refresh.
+  useEffect(() => {
+    if (!configLoaded || !user) return;
+    const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const isAllowed = !siteConfig.restrictToInstitutionalEmail || isAuthorizedEmail(user.email, isDev);
+    if (!isAllowed) {
+      setUser(null);
+      setIdToken(null);
+      localStorage.removeItem('bioarchive:idToken');
+      localStorage.removeItem('bioarchive:user');
+      document.cookie = 'bioarchive_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [siteConfig, configLoaded]);
 
   const logout = () => {
     setUser(null);
@@ -154,7 +199,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     if (!decoded) return;
 
     const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const isAllowed = !siteConfig.restrictToInstitutionalEmail || isAuthorizedEmail(decoded.email, isDev, siteConfig.adminEmails);
+    const isAllowed = !siteConfig.restrictToInstitutionalEmail || isAuthorizedEmail(decoded.email, isDev);
     if (!isAllowed) {
       alert(`Access Restricted: Only @niser.ac.in accounts are permitted. Your email "${decoded.email}" is not authorized.`);
       return;
@@ -168,10 +213,14 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     setShowLogin(false);
 
     // Call Login history logging API (fire-and-forget)
+    // Send the credential as Bearer so the server verifies identity, not the body
     fetch('/api/auth/login-log', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: decoded.email, name: decoded.name }),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${credential}`,
+      },
+      body: JSON.stringify({}),
     }).catch((err) => console.error('[AuthProvider] Failed to log login:', err));
 
     // If there was a callback pending, execute it

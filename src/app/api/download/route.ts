@@ -2,11 +2,14 @@ export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { incrementDownloadCount, getAllFiles, appendFileDownloadRecord, getSiteConfig } from '@/lib/sheets';
+import { verifyGoogleToken } from '@/lib/auth';
 
 /**
  * POST /api/download
  *
- * Increments the download counter for a file record and logs download details with the user's email.
+ * Increments the download counter for a file record and logs download details.
+ * The user's email is extracted from the verified Google ID token (Authorization header),
+ * NOT from the request body, to prevent email spoofing in download logs.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +19,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { fileId, email } = body;
+    const { fileId } = body;
 
     if (!fileId) {
       return NextResponse.json(
@@ -25,7 +28,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const userEmail = email || 'unknown@niser.ac.in';
+    // Resolve the user email from the verified token (prevents spoofing).
+    // If requireNiserToDownload is on, token is mandatory and we enforce NISER domain.
+    let userEmail = 'anonymous';
+
+    const authHeader = request.headers.get('Authorization') || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+
+    if (siteConfig.requireNiserToDownload) {
+      if (!token) {
+        return NextResponse.json({ error: 'Unauthorized: Missing credentials' }, { status: 401 });
+      }
+      try {
+        const googleUser = await verifyGoogleToken(token);
+        const isNiser = googleUser.email.toLowerCase().endsWith('@niser.ac.in');
+        const isAdmin = googleUser.email.toLowerCase() === 'bioarchive007@gmail.com';
+        const isDev = process.env.NODE_ENV === 'development';
+        const isAllowed = isNiser || isAdmin || isDev;
+        if (!isAllowed) {
+          return NextResponse.json({ error: 'Forbidden: Only @niser.ac.in accounts are permitted to download.' }, { status: 403 });
+        }
+        userEmail = googleUser.email;
+      } catch (err: any) {
+        return NextResponse.json({ error: `Authentication failed: ${err.message}` }, { status: 401 });
+      }
+    } else if (token) {
+      // Token is optional when restrictions are off, but if provided, use the verified email
+      try {
+        const googleUser = await verifyGoogleToken(token);
+        userEmail = googleUser.email;
+      } catch {
+        // Token invalid/expired — log as anonymous rather than rejecting
+        userEmail = 'anonymous';
+      }
+    }
+
     const userAgent = request.headers.get('user-agent') || 'Unknown';
 
     // Log the download details (fire-and-forget/non-blocking)

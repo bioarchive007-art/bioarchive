@@ -8,6 +8,33 @@ import { checkDuplicate, appendFileRecord, initializeSheetHeaders, fulfillReques
 import { notifyModsOfUpload } from '@/lib/notify';
 import { apiCache } from '@/lib/api-cache';
 import { verifyGoogleToken, isAdminEmail } from '@/lib/auth';
+import { getAccessToken } from '@/lib/google-auth';
+
+const ALLOWED_MIME_TYPES = new Set([
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/zip',
+  'application/x-zip-compressed',
+  'image/png',
+  'image/jpeg',
+  'application/vnd.ms-powerpoint',
+]);
+
+/**
+ * Verify the actual file size and MIME type on Google Drive after upload.
+ * This catches clients that sent a fake fileSize/mimeType to bypass session validation.
+ */
+async function verifyDriveFile(driveFileId: string): Promise<{ size: number; mimeType: string }> {
+  const token = await getAccessToken();
+  const res = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${driveFileId}?fields=size,mimeType`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  if (!res.ok) throw new Error('Failed to fetch uploaded file metadata from Drive');
+  return res.json() as Promise<{ size: number; mimeType: string }>;
+}
 
 /**
  * POST /api/upload/confirm
@@ -66,6 +93,33 @@ export async function POST(request: NextRequest) {
     }
     const isDuplicate = metadata.isDuplicate === true;
     const status = metadata.status || (siteConfig.requireModeration ? 'pending_approval' : 'approved');
+
+    // ── Server-side file size + MIME verification ──────────────────────────────
+    // The session endpoint validated numbers from the request body (client-controlled).
+    // Here we check the *actual* uploaded file on Drive to catch any bypass attempts.
+    try {
+      const driveFileMeta = await verifyDriveFile(driveFileId);
+      const maxBytes = CONFIG.MAX_FILE_SIZE_MB * 1024 * 1024;
+      const actualSize = Number(driveFileMeta.size);
+
+      if (actualSize > maxBytes) {
+        return NextResponse.json(
+          { error: `Uploaded file exceeds the maximum allowed size of ${CONFIG.MAX_FILE_SIZE_MB} MB. Actual size: ${(actualSize / 1024 / 1024).toFixed(1)} MB.` },
+          { status: 413 }
+        );
+      }
+
+      if (!ALLOWED_MIME_TYPES.has(driveFileMeta.mimeType)) {
+        return NextResponse.json(
+          { error: `Uploaded file type "${driveFileMeta.mimeType}" is not allowed.` },
+          { status: 415 }
+        );
+      }
+    } catch (verifyErr) {
+      console.error('[api/upload/confirm] Drive file verification failed:', verifyErr);
+      // Non-blocking — don't reject the upload if Drive metadata fetch fails
+    }
+    // ──────────────────────────────────────────────────────────────────────────
 
     if (!siteConfig.requireModeration) {
       await makeFilePublic(driveFileId).catch(() => {});

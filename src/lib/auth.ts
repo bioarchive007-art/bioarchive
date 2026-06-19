@@ -32,27 +32,17 @@ export function decodeGoogleCredential(token: string): GoogleUser | null {
 }
 
 /**
- * Checks if the email is a valid NISER domain email.
- * Allows standard Gmail accounts during local development for testing convenience.
+ * Checks if the email is authorized to use the site.
+ * On the client, only the NISER domain and the permanent bioarchive007@gmail.com
+ * admin account are allowed. Server-side admin email checks use ADMIN_EMAILS env var.
+ * NOTE: Never use NEXT_PUBLIC_ADMIN_EMAILS — it exposes admin emails in the browser bundle.
  */
-export function isAuthorizedEmail(email: string, isDev = false, customAdminEmails: string[] = []): boolean {
+export function isAuthorizedEmail(email: string, isDev = false): boolean {
   if (!email) return false;
   const normalized = email.toLowerCase().trim();
 
-  
-  if (customAdminEmails && customAdminEmails.length > 0) {
-    const customList = customAdminEmails.map(e => e.toLowerCase().trim()).filter(Boolean);
-    if (customList.includes(normalized)) {
-      return true;
-    }
-  }
-  
-  // Expose the admin emails to frontend auth validation
-  const adminEmailsVal = process.env.NEXT_PUBLIC_ADMIN_EMAILS || process.env.ADMIN_EMAILS || '';
-  const adminEmails = adminEmailsVal.split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
-  if (adminEmails.includes(normalized)) {
-    return true;
-  }
+  // bioarchive007@gmail.com is permanently authorized (cannot be removed by config)
+  if (normalized === 'bioarchive007@gmail.com') return true;
 
   if (isDev) {
     return normalized.endsWith('@niser.ac.in') || normalized.endsWith('@gmail.com');

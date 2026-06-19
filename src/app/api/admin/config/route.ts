@@ -52,12 +52,9 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const config = await getSiteConfig();
-    const envVal = process.env.ADMIN_EMAILS || process.env.MOD_EMAILS || '';
-    const adminEmails = envVal.split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
-    return NextResponse.json({
-      ...config,
-      adminEmails,
-    });
+    // NOTE: Do NOT include adminEmails here — they must remain server-only secrets.
+    // The client identifies permanent admin bioarchive007@gmail.com by hardcoded check.
+    return NextResponse.json(config);
   } catch (err: any) {
     console.error('[api/admin/config] GET Error:', err);
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
