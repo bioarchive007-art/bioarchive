@@ -127,7 +127,7 @@ export default function UploadModal({
       }
       if (siteConfig?.requireNiserToUpload && user) {
         const isNiser = user.email.toLowerCase().endsWith('@niser.ac.in');
-        const isAdmin = (siteConfig?.adminEmails || []).includes(user.email.toLowerCase().trim());
+        const isAdmin = user.email.toLowerCase().trim() === 'bioarchive007@gmail.com';
         if (!isNiser && !isAdmin) {
           alert(`Access Restricted: Only @niser.ac.in institutional accounts are authorized to upload study materials.`);
           onClose();

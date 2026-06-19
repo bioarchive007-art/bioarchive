@@ -147,7 +147,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
         const email = currUser?.email || '';
         const isDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
         const isNiser = email.toLowerCase().endsWith('@niser.ac.in');
-        const isAdmin = (siteConfig?.adminEmails || []).includes(email.toLowerCase().trim()) || email.toLowerCase().trim() === 'bioarchive007@gmail.com';
+        const isAdmin = email.toLowerCase().trim() === 'bioarchive007@gmail.com';
         const isAllowed = isNiser || isAdmin || (isDev && email.toLowerCase().endsWith('@gmail.com'));
         if (!isAllowed) {
           alert('Access Restricted: Only @niser.ac.in institutional accounts are authorized to download reference books.');

@@ -35,7 +35,7 @@ export default function SortableFileTable({
   const [previewFile, setPreviewFile] = useState<SheetRow | null>(null);
 
   const triggerDownloadAction = (file: SheetRow) => {
-    incrementFileDownloads(file.fileId, user?.email);
+    incrementFileDownloads(file.fileId);
     const downloadUrl = `https://drive.google.com/uc?export=download&id=${file.driveFileId}`;
     window.open(downloadUrl, '_blank');
   };
@@ -46,7 +46,7 @@ export default function SortableFileTable({
         const email = currUser?.email || '';
         const isDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
         const isNiser = email.toLowerCase().endsWith('@niser.ac.in');
-        const isAdmin = (siteConfig?.adminEmails || []).includes(email.toLowerCase().trim()) || email.toLowerCase().trim() === 'bioarchive007@gmail.com';
+        const isAdmin = email.toLowerCase().trim() === 'bioarchive007@gmail.com';
         const isAllowed = isNiser || isAdmin || (isDev && email.toLowerCase().endsWith('@gmail.com'));
         if (!isAllowed) {
           alert('Access Restricted: Only @niser.ac.in institutional accounts are authorized to download study materials.');

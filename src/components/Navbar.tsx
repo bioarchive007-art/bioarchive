@@ -29,7 +29,6 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
   const [showDropdown, setShowDropdown] = useState(false);
 
   const isAdmin = !!(user && (
-    (siteConfig?.adminEmails || []).includes(user.email.toLowerCase().trim()) || 
     user.email.toLowerCase().trim() === 'bioarchive007@gmail.com'
   ));
 
