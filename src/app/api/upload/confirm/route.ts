@@ -9,6 +9,7 @@ import { notifyModsOfUpload } from '@/lib/notify';
 import { apiCache } from '@/lib/api-cache';
 import { verifyGoogleToken, isAdminEmail } from '@/lib/auth';
 import { getAccessToken } from '@/lib/google-auth';
+import { rateLimit } from '@/lib/rate-limit';
 
 const ALLOWED_MIME_TYPES = new Set([
   'application/pdf',
@@ -45,6 +46,13 @@ async function verifyDriveFile(driveFileId: string): Promise<{ size: number; mim
  */
 export async function POST(request: NextRequest) {
   try {
+    // Rate-limit: 10 confirm calls per IP per 10 minutes.
+    // Protects Google Sheets from being flooded with fake file records.
+    const rl = await rateLimit(request, 'upload-confirm', 10, 600);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: rl.error }, { status: 429 });
+    }
+
     const body = await request.json();
 
     const {

@@ -6,6 +6,7 @@ import { generateRenamedFilename } from '@/lib/file-renaming';
 import { createResumableUploadSession, resolveNestedFolder } from '@/lib/drive';
 import { checkDuplicateMetadata, getSiteConfig } from '@/lib/sheets';
 import { verifyGoogleToken, isAdminEmail } from '@/lib/auth';
+import { rateLimit } from '@/lib/rate-limit';
 
 /**
  * Allowed MIME types for upload validation.
@@ -30,6 +31,13 @@ const ALLOWED_MIME_TYPES = new Set([
  */
 export async function POST(request: NextRequest) {
   try {
+    // Rate-limit: 10 upload sessions per IP per 10 minutes.
+    // Protects Google Drive API quota from bot-driven session flooding.
+    const rl = await rateLimit(request, 'upload-session', 10, 600);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: rl.error }, { status: 429 });
+    }
+
     const body = await request.json();
 
     const {

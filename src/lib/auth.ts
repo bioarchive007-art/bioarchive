@@ -97,7 +97,9 @@ export async function verifyGoogleToken(idToken: string): Promise<GoogleUser> {
  * Checks if the given email is a registered administrator.
  */
 export function isAdminEmail(email: string): boolean {
-  const envVal = process.env.ADMIN_EMAILS || process.env.NEXT_PUBLIC_ADMIN_EMAILS || process.env.MOD_EMAILS || '';
+  // NEXT_PUBLIC_ADMIN_EMAILS is intentionally excluded: NEXT_PUBLIC_ variables are
+  // embedded in the browser bundle and would expose admin emails to every user.
+  const envVal = process.env.ADMIN_EMAILS || process.env.MOD_EMAILS || '';
   const adminEmails = envVal
     .split(',')
     .map((e) => e.trim().toLowerCase())

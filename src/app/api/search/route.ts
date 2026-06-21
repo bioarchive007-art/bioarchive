@@ -3,6 +3,7 @@ export const runtime = 'edge';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllFiles, getSiteConfig } from '@/lib/sheets';
 import { SheetRow } from '@/types';
+import { rateLimit } from '@/lib/rate-limit';
 
 /**
  * GET /api/search?q=query
@@ -12,6 +13,13 @@ import { SheetRow } from '@/types';
  */
 export async function GET(request: NextRequest) {
   try {
+    // Rate-limit: 30 searches per IP per minute.
+    // Each cache miss triggers a full Google Sheets read — this protects API quota.
+    const rl = await rateLimit(request, 'search', 30, 60);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: rl.error }, { status: 429 });
+    }
+
     const siteConfig = await getSiteConfig().catch(() => ({ enableSearch: true }));
     if (siteConfig.enableSearch === false) {
       return NextResponse.json([]);

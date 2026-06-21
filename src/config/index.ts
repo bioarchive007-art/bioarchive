@@ -1,7 +1,10 @@
-const DRIVE_FOLDER_ID = process.env.DRIVE_FOLDER_ID || process.env.NEXT_PUBLIC_DRIVE_FOLDER_ID || '';
-const DRIVE_QUARANTINE_FOLDER_ID = process.env.DRIVE_QUARANTINE_FOLDER_ID || process.env.NEXT_PUBLIC_DRIVE_QUARANTINE_FOLDER_ID || '';
-const BACKUP_DRIVE_FOLDER_ID = process.env.BACKUP_DRIVE_FOLDER_ID || process.env.NEXT_PUBLIC_BACKUP_DRIVE_FOLDER_ID || '';
-const SHEET_ID = process.env.SHEET_ID || process.env.NEXT_PUBLIC_SHEET_ID || '';
+// Server-only IDs — NEXT_PUBLIC_* fallbacks intentionally removed to prevent
+// these values from leaking into the client-side JS bundle.
+const DRIVE_FOLDER_ID = process.env.DRIVE_FOLDER_ID || '';
+const DRIVE_QUARANTINE_FOLDER_ID = process.env.DRIVE_QUARANTINE_FOLDER_ID || '';
+const BACKUP_DRIVE_FOLDER_ID = process.env.BACKUP_DRIVE_FOLDER_ID || '';
+const SHEET_ID = process.env.SHEET_ID || '';
+// R2 public URL and Google Client ID are legitimately public-facing values.
 const R2_PUBLIC_BASE_URL = process.env.R2_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_URL || '';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
 

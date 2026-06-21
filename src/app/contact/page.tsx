@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Send, CheckCircle2, AlertCircle, Mail } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
+import TurnstileWidget, { TURNSTILE_ENABLED } from '@/components/TurnstileWidget';
 
 export default function ContactPage() {
   const [name, setName] = useState('');
@@ -54,6 +55,7 @@ export default function ContactPage() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [cfTurnstileToken, setCfTurnstileToken] = useState('');
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,7 +70,7 @@ export default function ContactPage() {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, subject, message }),
+        body: JSON.stringify({ name, email, subject, message, cfTurnstileToken }),
       });
 
       if (res.ok) {
@@ -194,10 +196,15 @@ export default function ContactPage() {
                   />
                 </div>
 
+                <TurnstileWidget
+                  onToken={(t) => setCfTurnstileToken(t)}
+                  onExpire={() => setCfTurnstileToken('')}
+                />
+
                 <button
                   type="submit"
                   className="btn-gold contact-submit-btn"
-                  disabled={submitting}
+                  disabled={submitting || (TURNSTILE_ENABLED && !cfTurnstileToken)}
                 >
                   {submitting ? 'Sending...' : 'Send Message'}
                   {!submitting && <Send size={14} style={{ marginLeft: 6 }} />}

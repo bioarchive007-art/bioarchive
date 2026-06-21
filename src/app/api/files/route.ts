@@ -3,6 +3,7 @@ export const runtime = 'edge';
 import { NextRequest, NextResponse } from 'next/server';
 import { getFilesByCourse } from '@/lib/sheets';
 import { apiCache } from '@/lib/api-cache';
+import { rateLimit } from '@/lib/rate-limit';
 
 /**
  * GET /api/files?courseCode=XXX&semester=N
@@ -12,6 +13,13 @@ import { apiCache } from '@/lib/api-cache';
  */
 export async function GET(request: NextRequest) {
   try {
+    // Rate-limit: 60 file list requests per IP per minute.
+    // Cache misses hit Google Sheets — this guards against cache-busting attacks.
+    const rl = await rateLimit(request, 'files', 60, 60);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: rl.error }, { status: 429 });
+    }
+
     const { searchParams } = new URL(request.url);
     const courseCode = searchParams.get('courseCode');
     const semester = searchParams.get('semester');

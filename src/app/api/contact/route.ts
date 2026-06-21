@@ -3,6 +3,7 @@ export const runtime = 'edge';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSiteConfig } from '@/lib/sheets';
 import { rateLimit } from '@/lib/rate-limit';
+import { verifyTurnstileToken } from '@/lib/turnstile';
 
 /** Escapes special HTML characters to prevent XSS in email bodies. */
 function escapeHtml(str: string): string {
@@ -33,7 +34,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, email, subject, message } = body;
+    const { name, email, subject, message, cfTurnstileToken } = body;
+
+    // Verify Turnstile challenge (skipped gracefully if TURNSTILE_SECRET_KEY not yet set)
+    const turnstileOk = await verifyTurnstileToken(cfTurnstileToken);
+    if (!turnstileOk) {
+      return NextResponse.json(
+        { error: 'Human verification failed. Please complete the challenge and try again.' },
+        { status: 403 }
+      );
+    }
 
     if (!name || !email || !subject || !message) {
       return NextResponse.json(

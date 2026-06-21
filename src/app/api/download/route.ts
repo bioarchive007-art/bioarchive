@@ -3,6 +3,7 @@ export const runtime = 'edge';
 import { NextRequest, NextResponse } from 'next/server';
 import { incrementDownloadCount, getAllFiles, appendFileDownloadRecord, getSiteConfig } from '@/lib/sheets';
 import { verifyGoogleToken } from '@/lib/auth';
+import { rateLimit } from '@/lib/rate-limit';
 
 /**
  * POST /api/download
@@ -13,6 +14,12 @@ import { verifyGoogleToken } from '@/lib/auth';
  */
 export async function POST(request: NextRequest) {
   try {
+    // Rate-limit: 30 download log calls per IP per minute.
+    const rl = await rateLimit(request, 'download', 30, 60);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: rl.error }, { status: 429 });
+    }
+
     const siteConfig: Record<string, boolean> = await getSiteConfig().catch(() => ({ enableDownloads: true }));
     if (siteConfig.enableDownloads === false) {
       return NextResponse.json({ error: 'Downloads are currently disabled by the administrator.' }, { status: 403 });
@@ -24,6 +31,16 @@ export async function POST(request: NextRequest) {
     if (!fileId) {
       return NextResponse.json(
         { error: 'Missing required field: fileId' },
+        { status: 400 }
+      );
+    }
+
+    // Validate fileId is a proper UUID — rejects garbage/random strings from bots
+    // without needing an extra Sheets API call to look it up.
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_REGEX.test(fileId)) {
+      return NextResponse.json(
+        { error: 'Invalid file ID.' },
         { status: 400 }
       );
     }

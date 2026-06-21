@@ -1,8 +1,13 @@
 /**
  * KV-based IP rate limiter for Cloudflare edge API routes.
  *
- * Uses the BIOARCHIVE_CACHE KV namespace (same as apiCache) with short TTLs.
- * Falls back to a per-process in-memory counter when KV is unavailable (local dev).
+ * Uses the BIOARCHIVE_CACHE KV namespace with short TTLs.
+ * On KV errors, falls through to a per-process in-memory counter rather than
+ * failing open — this prevents a broken KV from disabling all rate limiting.
+ *
+ * IP is sourced exclusively from cf-connecting-ip (Cloudflare-injected, cannot
+ * be spoofed). The x-forwarded-for header is intentionally NOT used because it
+ * is a user-controlled header and can be trivially spoofed.
  *
  * Usage:
  *   const result = await rateLimit(request, 'contact', 5, 60);
@@ -18,9 +23,9 @@ export interface RateLimitResult {
 }
 
 /**
- * @param request  - The incoming NextRequest (used to extract IP)
- * @param endpoint - A short identifier for the endpoint (e.g. 'contact', 'login')
- * @param limit    - Max allowed requests per window
+ * @param request    - The incoming NextRequest (used to extract IP)
+ * @param endpoint   - A short identifier for the endpoint (e.g. 'contact', 'upload')
+ * @param limit      - Max allowed requests per window
  * @param windowSecs - Time window in seconds
  */
 export async function rateLimit(
@@ -29,11 +34,11 @@ export async function rateLimit(
   limit: number,
   windowSecs: number
 ): Promise<RateLimitResult> {
-  // Determine the caller's IP from Cloudflare headers
+  // Only use cf-connecting-ip — set by Cloudflare at the edge and cannot be spoofed.
+  // x-forwarded-for is intentionally excluded as it is user-controlled.
   const ip =
     (request.headers as any).get?.('cf-connecting-ip') ||
-    (request.headers as any).get?.('x-forwarded-for')?.split(',')[0]?.trim() ||
-    'unknown';
+    'dev-local'; // Local dev: all requests share a single bucket
 
   const key = `rl:${endpoint}:${ip}`;
   const now = Date.now();
@@ -46,7 +51,7 @@ export async function rateLimit(
       const raw = await kv.get(key, { type: 'json' }) as { count: number; resetAt: number } | null;
 
       if (raw && raw.resetAt > now) {
-        // Window still active
+        // Window still active — increment counter
         const newCount = raw.count + 1;
         await kv.put(key, JSON.stringify({ count: newCount, resetAt: raw.resetAt }), {
           expirationTtl: Math.ceil((raw.resetAt - now) / 1000),
@@ -65,13 +70,13 @@ export async function rateLimit(
         return { allowed: true, remaining: limit - 1 };
       }
     } catch (err) {
-      // KV error — fail open (don't block users due to infra issues)
-      console.error('[rateLimit] KV error:', err);
-      return { allowed: true, remaining: limit };
+      // KV error — fall through to in-memory fallback rather than failing open.
+      // This ensures rate limiting stays active even during KV outages.
+      console.error('[rateLimit] KV error, using in-memory fallback:', err);
     }
   }
 
-  // In-memory fallback (local dev / no KV)
+  // In-memory fallback (local dev / KV unavailable / KV error)
   const entry = memRateLimitStore.get(key);
   if (entry && entry.resetAt > now) {
     entry.count += 1;

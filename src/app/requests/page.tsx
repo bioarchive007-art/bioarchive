@@ -9,6 +9,7 @@ import { CONFIG } from '@/config';
 import { FileRequest } from '@/types';
 import UploadModal from '@/components/UploadModal';
 import { useAuth } from '@/components/AuthProvider';
+import TurnstileWidget, { TURNSTILE_ENABLED } from '@/components/TurnstileWidget';
 
 export default function RequestsPage() {
   const [requests, setRequests] = useState<FileRequest[]>([]);
@@ -75,6 +76,7 @@ export default function RequestsPage() {
   const [formRemarks, setFormRemarks] = useState('');
   const [submittingRequest, setSubmittingRequest] = useState(false);
   const [formError, setFormError] = useState('');
+  const [cfTurnstileToken, setCfTurnstileToken] = useState('');
 
   const isValidYear = useMemo(() => {
     if (!formYear) return false;
@@ -136,6 +138,7 @@ export default function RequestsPage() {
           fileType: formFileType,
           uploaderName: formName,
           remarks: formRemarks,
+          cfTurnstileToken,
         }),
       });
 
@@ -396,14 +399,20 @@ export default function RequestsPage() {
 
                 <div className="um-footer" style={{ marginTop: 12 }}>
                   <div style={{ flex: 1 }} />
-                  <button
-                    type="submit"
-                    className="btn-gold"
-                    disabled={submittingRequest || !isValidYear}
-                  >
-                    {submittingRequest ? <Loader2 size={14} className="spinner" /> : <Plus size={14} />}
-                    Submit Request
-                  </button>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                    <TurnstileWidget
+                      onToken={(t) => setCfTurnstileToken(t)}
+                      onExpire={() => setCfTurnstileToken('')}
+                    />
+                    <button
+                      type="submit"
+                      className="btn-gold"
+                      disabled={submittingRequest || !isValidYear || (TURNSTILE_ENABLED && !cfTurnstileToken)}
+                    >
+                      {submittingRequest ? <Loader2 size={14} className="spinner" /> : <Plus size={14} />}
+                      Submit Request
+                    </button>
+                  </div>
                 </div>
               </form>
             </motion.div>

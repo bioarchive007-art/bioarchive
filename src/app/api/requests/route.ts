@@ -3,6 +3,8 @@ export const runtime = 'edge';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllRequests, appendRequestRecord, getSiteConfig } from '@/lib/sheets';
 import { FileRequest } from '@/types';
+import { rateLimit } from '@/lib/rate-limit';
+import { verifyTurnstileToken } from '@/lib/turnstile';
 
 /**
  * GET /api/requests -> Returns requests list
@@ -10,6 +12,12 @@ import { FileRequest } from '@/types';
  */
 export async function GET(request: NextRequest) {
   try {
+    // Rate-limit: 60 per IP per minute (cached, low cost)
+    const rl = await rateLimit(request, 'requests-get', 60, 60);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: rl.error }, { status: 429 });
+    }
+
     const siteConfig = await getSiteConfig().catch(() => ({ enableFileRequests: true }));
     if (siteConfig.enableFileRequests === false) {
       return NextResponse.json([]);
@@ -47,6 +55,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate-limit: 5 requests per IP per 10 minutes to prevent spam submissions.
+    const rl = await rateLimit(request, 'requests-post', 5, 600);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: rl.error }, { status: 429 });
+    }
+
     const siteConfig = await getSiteConfig().catch(() => ({ enableFileRequests: true }));
     if (siteConfig.enableFileRequests === false) {
       return NextResponse.json({ error: 'Requests are currently disabled by the administrator.' }, { status: 403 });
@@ -61,7 +75,17 @@ export async function POST(request: NextRequest) {
       fileType,
       uploaderName, // requester
       remarks,
+      cfTurnstileToken, // Cloudflare Turnstile challenge token (optional until configured)
     } = body;
+
+    // Verify Turnstile challenge (skipped gracefully if TURNSTILE_SECRET_KEY not yet set)
+    const turnstileOk = await verifyTurnstileToken(cfTurnstileToken);
+    if (!turnstileOk) {
+      return NextResponse.json(
+        { error: 'Human verification failed. Please complete the challenge and try again.' },
+        { status: 403 }
+      );
+    }
 
     if (!courseCode || !semester || !year || !fileType || !uploaderName) {
       return NextResponse.json(

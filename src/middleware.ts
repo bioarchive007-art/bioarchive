@@ -59,7 +59,8 @@ export function middleware(request: NextRequest) {
     }
 
     const email = payload.email.toLowerCase().trim();
-    const envVal = process.env.ADMIN_EMAILS || process.env.NEXT_PUBLIC_ADMIN_EMAILS || process.env.MOD_EMAILS || '';
+    // NEXT_PUBLIC_ADMIN_EMAILS excluded: it would leak admin emails into the browser bundle.
+    const envVal = process.env.ADMIN_EMAILS || process.env.MOD_EMAILS || '';
     const adminEmails = envVal.split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
 
     // Grant access to both configured admins and the master bioarchive007@gmail.com account

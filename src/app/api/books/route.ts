@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { findSubfolderId, listFilesInFolder } from '@/lib/drive';
 import { getAccessToken } from '@/lib/google-auth';
 import { apiCache } from '@/lib/api-cache';
+import { rateLimit } from '@/lib/rate-limit';
 
 async function listSubfolders(parentFolderId: string): Promise<Array<{ id: string; name: string }>> {
   const token = await getAccessToken();
@@ -33,6 +34,14 @@ async function listSubfolders(parentFolderId: string): Promise<Array<{ id: strin
  */
 export async function GET(request: NextRequest) {
   try {
+    // Rate-limit: 20 requests per IP per minute.
+    // This endpoint chains up to 5 Google Drive API calls per cache miss —
+    // rate limiting is essential to prevent Drive quota exhaustion.
+    const rl = await rateLimit(request, 'books', 20, 60);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: rl.error }, { status: 429 });
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const semester = searchParams.get('semester') || '';
     const courseCode = searchParams.get('courseCode') || '';

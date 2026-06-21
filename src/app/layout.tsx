@@ -79,6 +79,14 @@ export default function RootLayout({
             strategy="afterInteractive"
           />
 
+          {/* Cloudflare Turnstile — only loaded when NEXT_PUBLIC_TURNSTILE_SITE_KEY is configured */}
+          {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+            <Script
+              src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+              strategy="afterInteractive"
+            />
+          )}
+
           {/* Google Analytics */}
           <Script
             src="https://www.googletagmanager.com/gtag/js?id=G-CZS52D25M3"
