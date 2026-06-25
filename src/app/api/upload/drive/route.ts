@@ -1,6 +1,7 @@
 export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { serverError } from '@/lib/errors';
 
 /**
  * PUT /api/upload/drive
@@ -22,6 +23,14 @@ export async function PUT(request: NextRequest) {
     if (!uploadUrl) {
       return NextResponse.json(
         { error: 'Missing X-Upload-Url header' },
+        { status: 400 }
+      );
+    }
+
+    // SSRF protection: only allow upload URLs targeting Google APIs resumable drive upload
+    if (!uploadUrl.startsWith('https://www.googleapis.com/upload/drive/')) {
+      return NextResponse.json(
+        { error: 'Invalid X-Upload-Url header' },
         { status: 400 }
       );
     }
@@ -53,7 +62,7 @@ export async function PUT(request: NextRequest) {
       const errorText = await driveRes.text().catch(() => 'Unknown error');
       console.error('[api/upload/drive] Drive upload failed:', driveRes.status, errorText);
       return NextResponse.json(
-        { error: `Drive upload failed: ${driveRes.statusText}` },
+        { error: 'Drive upload failed. Please try again.' },
         { status: driveRes.status }
       );
     }
@@ -77,7 +86,7 @@ export async function PUT(request: NextRequest) {
   } catch (err: any) {
     console.error('[api/upload/drive] Error:', err);
     return NextResponse.json(
-      { error: err.message || 'Internal server error' },
+      { error: serverError(err, 'Failed to upload file to storage. Please try again.') },
       { status: 500 }
     );
   }

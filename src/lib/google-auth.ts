@@ -1,3 +1,5 @@
+import { fetchWithTimeout } from './utils';
+
 let cachedToken: string | null = null;
 let tokenExpiryTime: number = 0; // Epoch time in ms
 
@@ -24,7 +26,7 @@ export async function getAccessToken(): Promise<string> {
   }
 
   // Request new access token using the refresh token
-  const response = await fetch("https://oauth2.googleapis.com/token", {
+  const response = await fetchWithTimeout("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",

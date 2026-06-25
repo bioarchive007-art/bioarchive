@@ -11,6 +11,7 @@ import { SheetRow } from '@/types';
 import { CONFIG } from '@/config';
 import { CURRICULUM } from '@/data/curriculum';
 import { fetchFilesByCourse } from '@/lib/api-client';
+import { normalizeCourseCode } from '@/lib/utils';
 import SortableFileTable from './SortableFileTable';
 import UploadModal from './UploadModal';
 import { useAuth } from './AuthProvider';
@@ -53,7 +54,11 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
   // Find the course from curriculum
   const course = useMemo(() => {
     const semCourses = CURRICULUM[activeSemester] || [];
-    return semCourses.find((c) => c.code === courseCode);
+    const { oldCode: queryOld } = normalizeCourseCode(courseCode);
+    return semCourses.find((c) => {
+      const { oldCode: courseOld } = normalizeCourseCode(c.code);
+      return courseOld === queryOld;
+    });
   }, [courseCode, activeSemester]);
 
   useEffect(() => {
@@ -147,7 +152,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
         const email = currUser?.email || '';
         const isDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
         const isNiser = email.toLowerCase().endsWith('@niser.ac.in');
-        const isAdmin = email.toLowerCase().trim() === 'bioarchive007@gmail.com';
+        const isAdmin = !!currUser?.isAdmin;
         const isAllowed = isNiser || isAdmin || (isDev && email.toLowerCase().endsWith('@gmail.com'));
         if (!isAllowed) {
           alert('Access Restricted: Only @niser.ac.in institutional accounts are authorized to download reference books.');
@@ -315,8 +320,8 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
               <span>Back</span>
             </Link>
             <div className="cd-header-info">
-              <span className="cd-code">{courseCode}</span>
-              <h1 className="cd-title">{course?.name || courseCode}</h1>
+              <span className="cd-code">{normalizeCourseCode(courseCode).canonical}</span>
+              <h1 className="cd-title">{course?.name || normalizeCourseCode(courseCode).canonical}</h1>
               {course && course.professors.length > 0 && (
                 <div className="cd-profs">
                   <Users size={13} strokeWidth={1.5} />

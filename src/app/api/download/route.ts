@@ -2,8 +2,9 @@ export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { incrementDownloadCount, getAllFiles, appendFileDownloadRecord, getSiteConfig } from '@/lib/sheets';
-import { verifyGoogleToken } from '@/lib/auth';
+import { verifyGoogleToken, isAdminEmail } from '@/lib/auth';
 import { rateLimit } from '@/lib/rate-limit';
+import { serverError } from '@/lib/errors';
 
 /**
  * POST /api/download
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
       try {
         const googleUser = await verifyGoogleToken(token);
         const isNiser = googleUser.email.toLowerCase().endsWith('@niser.ac.in');
-        const isAdmin = googleUser.email.toLowerCase() === 'bioarchive007@gmail.com';
+        const isAdmin = isAdminEmail(googleUser.email);
         const isDev = process.env.NODE_ENV === 'development';
         const isAllowed = isNiser || isAdmin || isDev;
         if (!isAllowed) {
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest) {
         }
         userEmail = googleUser.email;
       } catch (err: any) {
-        return NextResponse.json({ error: `Authentication failed: ${err.message}` }, { status: 401 });
+        return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
       }
     } else if (token) {
       // Token is optional when restrictions are off, but if provided, use the verified email
@@ -109,7 +110,7 @@ export async function POST(request: NextRequest) {
   } catch (err: any) {
     console.error('[api/download] Error:', err);
     return NextResponse.json(
-      { error: err.message || 'Internal server error' },
+      { error: serverError(err, 'Failed to process download request. Please try again.') },
       { status: 500 }
     );
   }

@@ -3,6 +3,7 @@ export const runtime = 'edge';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSiteConfig, updateSiteConfig } from '@/lib/sheets';
 import { verifyGoogleToken } from '@/lib/auth';
+import { serverError } from '@/lib/errors';
 
 function getAdminEmails(): string[] {
   const envVal = process.env.ADMIN_EMAILS || process.env.MOD_EMAILS || '';
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (err: any) {
     console.error('[api/admin/config] POST Error:', err);
-    return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: serverError(err, 'Failed to update site configuration. Please try again.') }, { status: 500 });
   }
 }
 
@@ -53,10 +54,10 @@ export async function GET(request: NextRequest) {
   try {
     const config = await getSiteConfig();
     // NOTE: Do NOT include adminEmails here — they must remain server-only secrets.
-    // The client identifies permanent admin bioarchive007@gmail.com by hardcoded check.
+    // The client verifies admin status dynamically using `/api/auth/login-log`.
     return NextResponse.json(config);
   } catch (err: any) {
     console.error('[api/admin/config] GET Error:', err);
-    return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: serverError(err, 'Failed to load site configuration. Please try again.') }, { status: 500 });
   }
 }

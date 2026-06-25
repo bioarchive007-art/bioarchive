@@ -6,6 +6,8 @@ import { makeFilePublic, copyToBackupFolder, resolveNestedFolder, moveDriveFile 
 import { getAllFiles, approveFileRecord } from '@/lib/sheets';
 import { authorizeAdminRequest } from '@/lib/auth';
 import { apiCache } from '@/lib/api-cache';
+import { serverError } from '@/lib/errors';
+import { normalizeCourseCode } from '@/lib/utils';
 
 /**
  * POST /api/admin/approve
@@ -64,7 +66,8 @@ export async function POST(request: NextRequest) {
       if (!isAdvance) {
         pathComponents.push(`Sem ${semester}`);
       }
-      pathComponents.push(`${courseCode.trim()} ${courseName.trim()}`);
+      const { canonical, oldCode } = normalizeCourseCode(courseCode);
+      pathComponents.push(`${canonical} ${courseName.trim()}`);
 
       const FILE_TYPE_FOLDERS: Record<string, string> = {
         qpaper: 'Question Papers',
@@ -101,7 +104,8 @@ export async function POST(request: NextRequest) {
     await approveFileRecord(fileId);
 
     // 7. Invalidate caches
-    const cacheKey = `files:${courseCode}:${semester}`;
+    const { oldCode: cacheOldCode } = normalizeCourseCode(courseCode);
+    const cacheKey = `files:${cacheOldCode.toLowerCase()}:${semester.toLowerCase().trim()}`;
     await apiCache.delete(cacheKey).catch(() => {});
     await apiCache.delete('files:all').catch(() => {});
     await apiCache.delete('files:approved:all').catch(() => {});
@@ -110,7 +114,7 @@ export async function POST(request: NextRequest) {
   } catch (err: any) {
     console.error('[api/admin/approve] Error:', err);
     return NextResponse.json(
-      { error: err.message || 'Internal server error' },
+      { error: serverError(err, 'Failed to approve file. Please try again.') },
       { status: 500 }
     );
   }

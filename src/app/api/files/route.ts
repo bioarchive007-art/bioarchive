@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getFilesByCourse } from '@/lib/sheets';
 import { apiCache } from '@/lib/api-cache';
 import { rateLimit } from '@/lib/rate-limit';
+import { serverError } from '@/lib/errors';
+import { normalizeCourseCode } from '@/lib/utils';
 
 /**
  * GET /api/files?courseCode=XXX&semester=N
@@ -31,7 +33,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const cacheKey = `files:${courseCode}:${semester}`;
+    const { oldCode } = normalizeCourseCode(courseCode);
+    const cacheKey = `files:${oldCode.toLowerCase()}:${semester.toLowerCase().trim()}`;
 
     // Try cache first
     const cached = await apiCache.get(cacheKey);
@@ -49,7 +52,7 @@ export async function GET(request: NextRequest) {
   } catch (err: any) {
     console.error('[api/files] Error:', err);
     return NextResponse.json(
-      { error: err.message || 'Internal server error' },
+      { error: serverError(err, 'Failed to retrieve files. Please try again.') },
       { status: 500 }
     );
   }

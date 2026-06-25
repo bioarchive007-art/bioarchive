@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ExternalLink, Download, User, Calendar, FileText, Bookmark } from 'lucide-react';
 import { SheetRow } from '@/types';
+import { stripHiddenRemarks } from '@/lib/utils';
 
 interface FilePreviewModalProps {
   file: SheetRow | null;
@@ -217,7 +218,7 @@ export default function FilePreviewModal({
                   </div>
                 </div>
 
-                {file.remarks && (
+                {stripHiddenRemarks(file.remarks) && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <span style={{ fontSize: '0.66rem', color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Moderator Notes</span>
                     <p style={{
@@ -231,7 +232,7 @@ export default function FilePreviewModal({
                       border: '1px solid rgba(255,255,255,0.04)',
                       borderRadius: '8px'
                     }}>
-                      &ldquo;{file.remarks}&rdquo;
+                      &ldquo;{stripHiddenRemarks(file.remarks)}&rdquo;
                     </p>
                   </div>
                 )}

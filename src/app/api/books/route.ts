@@ -5,6 +5,11 @@ import { findSubfolderId, listFilesInFolder } from '@/lib/drive';
 import { getAccessToken } from '@/lib/google-auth';
 import { apiCache } from '@/lib/api-cache';
 import { rateLimit } from '@/lib/rate-limit';
+import { fetchWithTimeout } from '@/lib/utils';
+import { serverError } from '@/lib/errors';
+
+// Shadow global fetch with our custom timeout wrapper
+const fetch = fetchWithTimeout;
 
 async function listSubfolders(parentFolderId: string): Promise<Array<{ id: string; name: string }>> {
   const token = await getAccessToken();
@@ -165,7 +170,7 @@ export async function GET(request: NextRequest) {
   } catch (err: any) {
     console.error('[api/books] GET Error:', err);
     return NextResponse.json(
-      { error: err.message || 'Internal server error' },
+      { error: serverError(err, 'Failed to fetch textbook files. Please try again.') },
       { status: 500 }
     );
   }

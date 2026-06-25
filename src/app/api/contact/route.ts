@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSiteConfig } from '@/lib/sheets';
 import { rateLimit } from '@/lib/rate-limit';
 import { verifyTurnstileToken } from '@/lib/turnstile';
+import { serverError } from '@/lib/errors';
 
 /** Escapes special HTML characters to prevent XSS in email bodies. */
 function escapeHtml(str: string): string {
@@ -109,7 +110,7 @@ export async function POST(request: NextRequest) {
   } catch (err: any) {
     console.error('[api/contact] Error:', err);
     return NextResponse.json(
-      { error: err.message || 'Internal server error' },
+      { error: serverError(err, 'Failed to send contact message. Please try again.') },
       { status: 500 }
     );
   }

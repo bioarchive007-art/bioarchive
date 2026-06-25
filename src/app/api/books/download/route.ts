@@ -4,6 +4,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { appendBookDownloadRecord, getSiteConfig } from '@/lib/sheets';
 import { getAccessToken } from '@/lib/google-auth';
 import { verifyGoogleToken, isAdminEmail } from '@/lib/auth';
+import { fetchWithTimeout } from '@/lib/utils';
+import { serverError } from '@/lib/errors';
+
+// Shadow global fetch with our custom timeout wrapper
+const fetch = fetchWithTimeout;
 
 /**
  * GET /api/books/download
@@ -44,7 +49,7 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: 'Forbidden: Only @niser.ac.in accounts are permitted to download reference books.' }, { status: 403 });
         }
       } catch (err: any) {
-        return NextResponse.json({ error: `Authentication failed: ${err.message}` }, { status: 401 });
+        return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
       }
     } else {
       // Parse token if present for log tracking, otherwise fallback to query email or default
@@ -88,11 +93,11 @@ export async function GET(request: NextRequest) {
       console.error('Failed to log book download to Google Sheet:', sheetErr);
     }
 
-    // Fetch the file directly from Google Drive using bioarchive007 access token
+    // Fetch the file directly from Google Drive using administrator access token
     const token = await getAccessToken();
     const driveRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
       headers: { Authorization: `Bearer ${token}` }
-    });
+    }, null); // Disable timeout for file streaming download
 
     if (!driveRes.ok) {
       const errorText = await driveRes.text();
@@ -117,7 +122,7 @@ export async function GET(request: NextRequest) {
   } catch (err: any) {
     console.error('[api/books/download] GET Error:', err);
     return NextResponse.json(
-      { error: err.message || 'Internal server error' },
+      { error: serverError(err, 'Failed to download textbook. Please try again.') },
       { status: 500 }
     );
   }

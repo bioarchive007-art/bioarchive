@@ -2,8 +2,9 @@ export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { appendLoginRecord } from '@/lib/sheets';
-import { verifyGoogleToken } from '@/lib/auth';
+import { verifyGoogleToken, isAdminEmail } from '@/lib/auth';
 import { rateLimit } from '@/lib/rate-limit';
+import { serverError } from '@/lib/errors';
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
       verifiedEmail = googleUser.email;
       verifiedName = googleUser.name;
     } catch (err: any) {
-      return NextResponse.json({ error: `Authentication failed: ${err.message}` }, { status: 401 });
+      return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
     }
 
     const userAgent = request.headers.get('user-agent') || 'Unknown';
@@ -38,11 +39,12 @@ export async function POST(request: NextRequest) {
     // Log login event to Google Sheets using verified data only
     await appendLoginRecord({ email: verifiedEmail, name: verifiedName, userAgent });
 
-    return NextResponse.json({ success: true });
+    const isAdmin = isAdminEmail(verifiedEmail);
+    return NextResponse.json({ success: true, isAdmin });
   } catch (err: any) {
     console.error('[api/auth/login-log] Logging failed:', err);
     return NextResponse.json(
-      { error: err.message || 'Internal server error' },
+      { error: serverError(err, 'Failed to log login details. Please try again.') },
       { status: 500 }
     );
   }

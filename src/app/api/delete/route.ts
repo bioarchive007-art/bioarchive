@@ -5,6 +5,8 @@ import { deleteFromDrive } from '@/lib/drive';
 import { deleteFileRecord, getAllFiles } from '@/lib/sheets';
 import { authorizeAdminRequest } from '@/lib/auth';
 import { apiCache } from '@/lib/api-cache';
+import { serverError } from '@/lib/errors';
+import { normalizeCourseCode } from '@/lib/utils';
 
 /**
  * POST /api/delete
@@ -60,7 +62,8 @@ export async function POST(request: NextRequest) {
 
     // Step 4: Invalidate caches
     if (courseCode && semester) {
-      await apiCache.delete(`files:${courseCode}:${semester}`).catch(() => {});
+      const { oldCode } = normalizeCourseCode(courseCode);
+      await apiCache.delete(`files:${oldCode.toLowerCase()}:${semester.toLowerCase().trim()}`).catch(() => {});
     }
     await apiCache.clearPattern('files:').catch(() => {});
 
@@ -68,7 +71,7 @@ export async function POST(request: NextRequest) {
   } catch (err: any) {
     console.error('[api/delete] Error:', err);
     return NextResponse.json(
-      { error: err.message || 'Internal server error' },
+      { error: serverError(err, 'Failed to delete file. Please try again.') },
       { status: 500 }
     );
   }

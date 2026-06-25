@@ -3,6 +3,7 @@ export const runtime = 'edge';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllNotices, getSiteConfig } from '@/lib/sheets';
 import { Notice } from '@/types';
+import { serverError } from '@/lib/errors';
 
 /**
  * GET /api/notices
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
   } catch (err: any) {
     console.error('[api/notices] Error:', err);
     return NextResponse.json(
-      { error: err.message || 'Internal server error' },
+      { error: serverError(err, 'Failed to fetch notices. Please try again.') },
       { status: 500 }
     );
   }

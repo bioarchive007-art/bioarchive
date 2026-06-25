@@ -8,6 +8,7 @@ import {
 import { SheetRow } from '@/types';
 import { CONFIG } from '@/config';
 import { fetchFilesByCourse, incrementFileDownloads } from '@/lib/api-client';
+import { stripHiddenRemarks } from '@/lib/utils';
 
 interface FileListProps {
   courseCode: string;
@@ -196,10 +197,10 @@ export default function FileList({ courseCode, semester }: FileListProps) {
                 )}
               </div>
 
-              {file.remarks && (
+              {stripHiddenRemarks(file.remarks) && (
                 <div className="fl-remarks">
                   <MessageCircle size={11} strokeWidth={1.5} />
-                  <span>{file.remarks}</span>
+                  <span>{stripHiddenRemarks(file.remarks)}</span>
                 </div>
               )}
 

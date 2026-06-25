@@ -1,5 +1,9 @@
 import { CONFIG } from '@/config';
 import { getAccessToken } from './google-auth';
+import { fetchWithTimeout } from './utils';
+
+// Shadow global fetch with our custom timeout-supported fetch wrapper
+const fetch = fetchWithTimeout;
 
 /**
  * Uploads a file to Google Drive using multipart upload.
@@ -42,7 +46,8 @@ export async function uploadToDrive(params: {
         'Content-Type': `multipart/related; boundary=${boundary}`
       },
       body: body
-    }
+    },
+    null // Disable timeout for large data upload
   );
 
   if (!res.ok) {
@@ -320,7 +325,12 @@ export async function resolveNestedFolder(
   rootFolderId: string,
   pathComponents: string[]
 ): Promise<string> {
-  const normalize = (s: string) => s.toLowerCase().replace(/bio/g, 'b').replace(/[^a-z0-9]/g, '');
+  const normalize = (s: string) => {
+    return s.toLowerCase()
+      .replace(/bio(\d{3})/g, 'b$1')
+      .replace(/b(\d{3})\s*\(b\d{3}\)/g, 'b$1')
+      .replace(/[^a-z0-9]/g, '');
+  };
   let currentFolderId = rootFolderId;
   
   for (const component of pathComponents) {

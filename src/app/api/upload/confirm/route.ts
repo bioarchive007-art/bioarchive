@@ -10,6 +10,8 @@ import { apiCache } from '@/lib/api-cache';
 import { verifyGoogleToken, isAdminEmail } from '@/lib/auth';
 import { getAccessToken } from '@/lib/google-auth';
 import { rateLimit } from '@/lib/rate-limit';
+import { serverError } from '@/lib/errors';
+import { normalizeCourseCode } from '@/lib/utils';
 
 const ALLOWED_MIME_TYPES = new Set([
   'application/pdf',
@@ -80,27 +82,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Uploads are currently disabled by the administrator.' }, { status: 403 });
     }
 
-    // Check requireNiserToUpload
-    if (siteConfig.requireNiserToUpload) {
-      const authHeader = request.headers.get('Authorization') || '';
-      const token = authHeader.replace(/^Bearer\s+/i, '').trim();
-      if (!token) {
-        return NextResponse.json({ error: 'Unauthorized: Missing credentials' }, { status: 401 });
-      }
+    const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-real-ip') || 'unknown';
+    let email = '';
+    const authHeader = request.headers.get('Authorization') || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    if (token) {
       try {
         const googleUser = await verifyGoogleToken(token);
-        const isNiser = googleUser.email.toLowerCase().endsWith('@niser.ac.in');
-        const isAdmin = isAdminEmail(googleUser.email);
-
-        if (!isNiser && !isAdmin) {
-          return NextResponse.json({ error: 'Forbidden: Only @niser.ac.in accounts are permitted to upload.' }, { status: 403 });
-        }
-      } catch (err: any) {
-        return NextResponse.json({ error: `Authentication failed: ${err.message}` }, { status: 401 });
+        email = googleUser.email;
+      } catch (err) {
+        // Silently ignore auth failure for anonymous upload
       }
     }
+    const tracking = `[HIDDEN: ip=${ip}, email=${email || 'none'}]`;
+    const finalRemarks = metadata.remarks ? `${metadata.remarks} ${tracking}` : tracking;
     const isDuplicate = metadata.isDuplicate === true;
-    const status = metadata.status || (siteConfig.requireModeration ? 'pending_approval' : 'approved');
+    const status = siteConfig.requireModeration ? 'pending_approval' : 'approved';
 
     // ── Server-side file size + MIME verification ──────────────────────────────
     // The session endpoint validated numbers from the request body (client-controlled).
@@ -140,13 +137,14 @@ export async function POST(request: NextRequest) {
 
     // Step 2: Build SheetRow
     const fileId = crypto.randomUUID();
+    const { canonical, oldCode } = normalizeCourseCode(metadata.courseCode);
     const sheetRow: SheetRow = {
       fileId,
       r2Key,
       driveFileId,
       semester: metadata.semester || '',
       year: metadata.year || '',
-      courseCode: metadata.courseCode || '',
+      courseCode: canonical,
       courseName: metadata.courseName || '',
       professor: metadata.professor || '',
       professor2: metadata.professor2 || '',
@@ -160,7 +158,7 @@ export async function POST(request: NextRequest) {
       r2Url,
       driveWebViewLink: metadata.driveWebViewLink || '',
       downloadCount: 0,
-      remarks: metadata.remarks || '',
+      remarks: finalRemarks,
       status,
     };
 
@@ -178,7 +176,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 4: Invalidate cache for this course
-    const cacheKey = `files:${sheetRow.courseCode}:${sheetRow.semester}`;
+    const cacheKey = `files:${oldCode.toLowerCase()}:${sheetRow.semester.toLowerCase().trim()}`;
     await apiCache.delete(cacheKey).catch(() => { });
 
     // Step 5: Notify moderators (fire-and-forget, only on the last file in the batch)
@@ -201,7 +199,7 @@ export async function POST(request: NextRequest) {
   } catch (err: any) {
     console.error('[api/upload/confirm] Error:', err);
     return NextResponse.json(
-      { error: err.message || 'Internal server error' },
+      { error: serverError(err, 'Failed to confirm upload. Please try again.') },
       { status: 500 }
     );
   }

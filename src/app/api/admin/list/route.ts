@@ -3,6 +3,7 @@ export const runtime = 'edge';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllFiles } from '@/lib/sheets';
 import { authorizeAdminRequest } from '@/lib/auth';
+import { serverError } from '@/lib/errors';
 
 /**
  * POST /api/admin/list
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
   } catch (err: any) {
     console.error('[api/admin/list] Error:', err);
     return NextResponse.json(
-      { error: err.message || 'Internal server error' },
+      { error: serverError(err, 'Failed to retrieve file list. Please try again.') },
       { status: 500 }
     );
   }

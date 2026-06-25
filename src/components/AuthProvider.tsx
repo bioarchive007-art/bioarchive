@@ -8,7 +8,9 @@ interface AuthUser {
   email: string;
   name: string;
   picture: string;
+  isAdmin?: boolean;
 }
+
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -100,6 +102,18 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       });
   }, []);
 
+  const clearSession = () => {
+    setUser(null);
+    setIdToken(null);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('bioarchive:idToken');
+      localStorage.removeItem('bioarchive:user');
+    }
+    document.cookie = 'bioarchive_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+  };
+
+  const logout = clearSession;
+
   // Session restore — only runs after the real config has been fetched.
   // This prevents accepting a cached non-NISER session when the restriction
   // was just enabled and the config hasn't loaded yet.
@@ -110,24 +124,16 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const cachedUser = localStorage.getItem('bioarchive:user');
     const cachedToken = localStorage.getItem('bioarchive:idToken');
 
-    const clearSession = () => {
-      setUser(null);
-      setIdToken(null);
-      localStorage.removeItem('bioarchive:idToken');
-      localStorage.removeItem('bioarchive:user');
-      document.cookie = 'bioarchive_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-    };
-
     if (cachedUser) {
       try {
         const u = JSON.parse(cachedUser);
         const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const isAllowed = !siteConfig.restrictToInstitutionalEmail || isAuthorizedEmail(u.email, isDev);
+        const isAllowed = !siteConfig.restrictToInstitutionalEmail || isAuthorizedEmail(u.email, isDev) || u.isAdmin;
         if (u && u.email && isAllowed) {
           setUser(u);
           if (cachedToken) {
             setIdToken(cachedToken);
-            document.cookie = `bioarchive_token=${cachedToken}; path=/; max-age=31536000; SameSite=Lax; Secure`;
+            document.cookie = `bioarchive_token=${cachedToken}; path=/; max-age=15552000; SameSite=Lax; Secure`;
           }
         } else {
           // Config changed — user no longer meets the domain requirement.
@@ -146,7 +152,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
           setUser(decoded);
           setIdToken(cachedToken);
           localStorage.setItem('bioarchive:user', JSON.stringify(decoded));
-          document.cookie = `bioarchive_token=${cachedToken}; path=/; max-age=31536000; SameSite=Lax; Secure`;
+          document.cookie = `bioarchive_token=${cachedToken}; path=/; max-age=15552000; SameSite=Lax; Secure`;
         } else {
           clearSession();
         }
@@ -164,24 +170,12 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     if (!configLoaded || !user) return;
     const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const isAllowed = !siteConfig.restrictToInstitutionalEmail || isAuthorizedEmail(user.email, isDev);
+    const isAllowed = !siteConfig.restrictToInstitutionalEmail || isAuthorizedEmail(user.email, isDev) || user.isAdmin;
     if (!isAllowed) {
-      setUser(null);
-      setIdToken(null);
-      localStorage.removeItem('bioarchive:idToken');
-      localStorage.removeItem('bioarchive:user');
-      document.cookie = 'bioarchive_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      clearSession();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [siteConfig, configLoaded]);
-
-  const logout = () => {
-    setUser(null);
-    setIdToken(null);
-    localStorage.removeItem('bioarchive:idToken');
-    localStorage.removeItem('bioarchive:user');
-    document.cookie = 'bioarchive_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-  };
 
   const triggerLogin = (callback?: () => void) => {
     if (callback) {
@@ -199,21 +193,16 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     if (!decoded) return;
 
     const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const isAllowed = !siteConfig.restrictToInstitutionalEmail || isAuthorizedEmail(decoded.email, isDev);
-    if (!isAllowed) {
-      alert(`Access Restricted: Only @niser.ac.in accounts are permitted. Your email "${decoded.email}" is not authorized.`);
-      return;
-    }
 
+    // Optimistically set the session on client
     setUser(decoded);
     setIdToken(credential);
     localStorage.setItem('bioarchive:idToken', credential);
     localStorage.setItem('bioarchive:user', JSON.stringify(decoded));
-    document.cookie = `bioarchive_token=${credential}; path=/; max-age=31536000; SameSite=Lax; Secure`;
+    document.cookie = `bioarchive_token=${credential}; path=/; max-age=15552000; SameSite=Lax; Secure`;
     setShowLogin(false);
 
-    // Call Login history logging API (fire-and-forget)
-    // Send the credential as Bearer so the server verifies identity, not the body
+    // Call Login history logging API and verify role/access
     fetch('/api/auth/login-log', {
       method: 'POST',
       headers: {
@@ -221,7 +210,35 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         'Authorization': `Bearer ${credential}`,
       },
       body: JSON.stringify({}),
-    }).catch((err) => console.error('[AuthProvider] Failed to log login:', err));
+    })
+    .then((res) => {
+      if (res.ok) return res.json();
+      throw new Error('Verification failed');
+    })
+    .then((data) => {
+      const isNiser = decoded.email.toLowerCase().endsWith('@niser.ac.in');
+      const isAdmin = data.isAdmin === true;
+      const isAllowedLogin = !siteConfig.restrictToInstitutionalEmail || isNiser || isAdmin || isDev;
+
+      if (!isAllowedLogin) {
+        alert(`Access Restricted: Only @niser.ac.in accounts are permitted. Your email "${decoded.email}" is not authorized.`);
+        clearSession();
+      } else if (isAdmin) {
+        // Cache isAdmin property in user object
+        const updatedUser = { ...decoded, isAdmin: true };
+        setUser(updatedUser);
+        localStorage.setItem('bioarchive:user', JSON.stringify(updatedUser));
+      }
+    })
+    .catch((err) => {
+      console.error('[AuthProvider] Verification failed:', err);
+      // Re-validate strictly on load. If the restrictions are enabled and email is not allowed, clear
+      const isNiser = decoded.email.toLowerCase().endsWith('@niser.ac.in');
+      const isAllowedLogin = !siteConfig.restrictToInstitutionalEmail || isNiser || isDev;
+      if (!isAllowedLogin) {
+        clearSession();
+      }
+    });
 
     // If there was a callback pending, execute it
     if (loginSuccessCallback) {

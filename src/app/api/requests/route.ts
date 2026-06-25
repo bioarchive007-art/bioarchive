@@ -5,6 +5,7 @@ import { getAllRequests, appendRequestRecord, getSiteConfig } from '@/lib/sheets
 import { FileRequest } from '@/types';
 import { rateLimit } from '@/lib/rate-limit';
 import { verifyTurnstileToken } from '@/lib/turnstile';
+import { serverError } from '@/lib/errors';
 
 /**
  * GET /api/requests -> Returns requests list
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest) {
   } catch (err: any) {
     console.error('[api/requests] GET Error:', err);
     return NextResponse.json(
-      { error: err.message || 'Internal server error' },
+      { error: serverError(err, 'Failed to fetch requests. Please try again.') },
       { status: 500 }
     );
   }
@@ -130,7 +131,7 @@ export async function POST(request: NextRequest) {
   } catch (err: any) {
     console.error('[api/requests] POST Error:', err);
     return NextResponse.json(
-      { error: err.message || 'Internal server error' },
+      { error: serverError(err, 'Failed to submit request. Please try again.') },
       { status: 500 }
     );
   }

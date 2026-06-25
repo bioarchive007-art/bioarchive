@@ -1,6 +1,10 @@
 import { CONFIG } from '@/config';
 import { SheetRow } from '@/types';
 import { getAccessToken } from './google-auth';
+import { fetchWithTimeout, normalizeCourseCode } from './utils';
+
+// Shadow global fetch with our custom timeout-supported fetch wrapper
+const fetch = fetchWithTimeout;
 
 const DEFAULT_HEADER_MAP = CONFIG.SHEET_HEADERS.reduce((acc, header, index) => {
   acc[header] = index;
@@ -148,12 +152,15 @@ export async function getAllFiles(): Promise<SheetRow[]> {
 }
 
 export async function getFilesByCourse(courseCode: string, semester: string, includePending = false): Promise<SheetRow[]> {
+  const { oldCode: queryOld } = normalizeCourseCode(courseCode);
   const allFiles = await getAllFiles();
   return allFiles.filter(
-    (file) =>
-      file.courseCode.toLowerCase() === courseCode.toLowerCase() &&
-      file.semester.toString() === semester.toString() &&
-      (includePending || file.status === 'approved')
+    (file) => {
+      const { oldCode: fileOld } = normalizeCourseCode(file.courseCode);
+      return fileOld.toLowerCase() === queryOld.toLowerCase() &&
+        file.semester.toString() === semester.toString() &&
+        (includePending || file.status === 'approved');
+    }
   );
 }
 

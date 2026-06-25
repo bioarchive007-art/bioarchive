@@ -125,15 +125,6 @@ export default function UploadModal({
       if (user) {
         setUploaderName(user.name);
       }
-      if (siteConfig?.requireNiserToUpload && user) {
-        const isNiser = user.email.toLowerCase().endsWith('@niser.ac.in');
-        const isAdmin = user.email.toLowerCase().trim() === 'bioarchive007@gmail.com';
-        if (!isNiser && !isAdmin) {
-          alert(`Access Restricted: Only @niser.ac.in institutional accounts are authorized to upload study materials.`);
-          onClose();
-          return;
-        }
-      }
       if (initialCourseCode) setCourseCode(initialCourseCode);
       if (initialSemester) setSemester(initialSemester);
       if (initialFileType) setFileType(initialFileType);
@@ -255,6 +246,33 @@ export default function UploadModal({
     setError('');
     setShowWarning(true);
 
+    let secondaryTimer: any = null;
+    const startDynamicStatus = (baseStatus: string) => {
+      if (secondaryTimer) clearInterval(secondaryTimer);
+      let count = 0;
+      setUploadStatus(baseStatus);
+      const messages = [
+        "Getting link...",
+        "It's taking time...",
+        "Checking network connection...",
+        "Still working on it...",
+        "Almost there..."
+      ];
+      secondaryTimer = setInterval(() => {
+        if (count < messages.length) {
+          setUploadStatus(`${baseStatus} (${messages[count]})`);
+          count++;
+        }
+      }, 5000);
+    };
+
+    const stopDynamicStatus = () => {
+      if (secondaryTimer) {
+        clearInterval(secondaryTimer);
+        secondaryTimer = null;
+      }
+    };
+
     try {
       const displayName = showName ? uploaderName : 'Anonymous';
       const filesToUpload = [...files];
@@ -263,10 +281,10 @@ export default function UploadModal({
       const duplicateWarnings: string[] = [];
 
       // Step A: Create upload sessions sequentially to avoid concurrent folder creation race conditions
-      setUploadStatus(`Preparing upload sessions...`);
       const sessions: any[] = [];
       for (let i = 0; i < filesToUpload.length; i++) {
         const currentFile = filesToUpload[i];
+        startDynamicStatus(`Preparing upload session ${i + 1}/${totalFiles}: ${currentFile.name}`);
         const session = await createUploadSession({
           fileName: currentFile.name,
           mimeType: currentFile.type,
@@ -287,6 +305,7 @@ export default function UploadModal({
       }
 
       // Step B: Upload all files concurrently to Google Drive
+      stopDynamicStatus();
       setUploadStatus(`Uploading ${totalFiles} file(s) in parallel...`);
       const uploadPromises = filesToUpload.map(async (currentFile, index) => {
         const session = sessions[index];
@@ -378,7 +397,7 @@ export default function UploadModal({
       // Step 2: Confirm all uploads sequentially on the backend to avoid sheet conflicts/zip race conditions
       for (let i = 0; i < uploadResults.length; i++) {
         const { session, driveData, file } = uploadResults[i];
-        setUploadStatus(`Confirming upload ${i + 1}/${totalFiles}: ${file.name}`);
+        startDynamicStatus(`Confirming upload ${i + 1}/${totalFiles}: ${file.name}`);
 
         const isLastFile = i === uploadResults.length - 1;
 
@@ -404,6 +423,7 @@ export default function UploadModal({
         }
       }
 
+      stopDynamicStatus();
       setProgress(100);
       setUploadStatus('');
       if (duplicateWarnings.length > 0 && duplicateWarnings.length < totalFiles) {
@@ -415,6 +435,7 @@ export default function UploadModal({
       setError(err.message || 'Upload failed');
       setShowWarning(false);
     } finally {
+      stopDynamicStatus();
       setUploading(false);
     }
   };

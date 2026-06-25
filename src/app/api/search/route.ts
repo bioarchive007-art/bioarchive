@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAllFiles, getSiteConfig } from '@/lib/sheets';
 import { SheetRow } from '@/types';
 import { rateLimit } from '@/lib/rate-limit';
+import { serverError } from '@/lib/errors';
 
 /**
  * GET /api/search?q=query
@@ -89,7 +90,7 @@ export async function GET(request: NextRequest) {
   } catch (err: any) {
     console.error('[api/search] Error:', err);
     return NextResponse.json(
-      { error: err.message || 'Internal server error' },
+      { error: serverError(err, 'Failed to perform search. Please try again.') },
       { status: 500 }
     );
   }

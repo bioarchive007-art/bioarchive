@@ -28,16 +28,10 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
   const { user, logout, triggerLogin, siteConfig } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
 
-  const isAdmin = !!(user && (
-    user.email.toLowerCase().trim() === 'bioarchive007@gmail.com'
-  ));
+  const isAdmin = !!(user && user.isAdmin);
 
   const handleUploadClick = () => {
-    if (!user) {
-      triggerLogin(onUploadClick);
-    } else {
-      onUploadClick();
-    }
+    onUploadClick();
   };
 
   return (
