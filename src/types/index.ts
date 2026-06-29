@@ -36,6 +36,25 @@ export interface FileRequest {
   fulfilledFileId: string;
 }
 
+export interface BookRequest {
+  requestId: string;
+  timestamp: string;
+  name: string;
+  email: string;
+  semester: string;
+  courseCode: string;
+  courseName: string;
+  bookName: string;
+  driveFileId: string;     // empty for new books until admin approves
+  driveViewLink: string;   // empty for new books until approved
+  isNewBook: boolean;
+  author: string;          // only for new books
+  edition: string;         // only for new books
+  status: string;          // 'Pending' | 'Allowed' | 'Denied'
+  allowedAt: string;       // ISO timestamp when admin approved
+  expiresAt: string;       // ISO timestamp 3 days after allowedAt
+}
+
 export interface Notice {
   id: string;
   date: string;

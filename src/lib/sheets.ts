@@ -612,68 +612,208 @@ export async function fulfillRequest(requestId: string, fileId: string): Promise
   }
 }
 
-export async function appendBookDownloadRecord(record: {
-  bookName: string;
-  courseCode: string;
-  semester: string;
-  driveFileId: string;
-  userAgent: string;
-  userEmail: string;
-}): Promise<void> {
-  const token = await getAccessToken();
-  await createSheetTab('BookDownloads', token);
+/* ================================================================
+   Book Request Sheet Helper Functions
+   (Replaces the old direct-download BookDownloads tab)
+   ================================================================ */
 
-  const headers = ['Timestamp', 'Book Name', 'Course Code', 'Semester', 'Drive File ID', 'User Agent', 'User Email'];
+import { BookRequest } from '@/types';
 
-  // Check and initialize headers if empty
-  const headerCheck = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/BookDownloads!1:1`, {
+const BOOK_REQUEST_HEADERS = [
+  'Request ID', 'Timestamp', 'Name', 'Email',
+  'Semester', 'Course Code', 'Course Name',
+  'Book Name', 'Drive File ID', 'Drive View Link',
+  'Is New Book', 'Author', 'Edition', 'Status',
+  'Allowed At', 'Expires At'
+];
+
+async function initializeBookRequestsTab(token: string): Promise<void> {
+  await createSheetTab('BookRequests', token);
+  const headerCheck = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/BookRequests!1:1`, {
     headers: { Authorization: `Bearer ${token}` }
   });
   if (headerCheck.ok) {
     const data = await headerCheck.json() as any;
     if (!data.values || data.values.length === 0) {
-      await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/BookDownloads!A1:G1?valueInputOption=RAW`, {
+      const lastCol = String.fromCharCode(64 + BOOK_REQUEST_HEADERS.length); // 'N' for 14 cols
+      await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/BookRequests!A1:${lastCol}1?valueInputOption=RAW`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ values: [headers] })
+        body: JSON.stringify({ values: [BOOK_REQUEST_HEADERS] })
       });
     }
   }
+}
 
-  const config = await getSiteConfig().catch(() => ({ collectTimestamps: true, collectEmails: true, collectUserAgents: true, enableDownloadLogging: true }));
-  if (config.enableDownloadLogging === false) {
-    return;
-  }
-  const timestamp = config.collectTimestamps ? new Date().toISOString() : 'Omitted';
-  const email = config.collectEmails ? record.userEmail : 'Anonymous';
-  const userAgent = config.collectUserAgents ? record.userAgent : 'Omitted';
+export async function appendBookRequestRecord(req: BookRequest): Promise<void> {
+  const token = await getAccessToken();
+  await initializeBookRequestsTab(token);
 
   const rowArray = [
-    timestamp,
-    record.bookName,
-    record.courseCode,
-    record.semester,
-    record.driveFileId,
-    userAgent,
-    email,
+    req.requestId,
+    req.timestamp,
+    req.name,
+    req.email,
+    req.semester,
+    req.courseCode,
+    req.courseName,
+    req.bookName,
+    req.driveFileId || '',
+    req.driveViewLink || '',
+    req.isNewBook ? 'TRUE' : 'FALSE',
+    req.author || '',
+    req.edition || '',
+    req.status,
+    req.allowedAt || '',
+    req.expiresAt || '',
   ];
 
-  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/BookDownloads!A:A:append?valueInputOption=RAW`, {
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/BookRequests!A:A:append?valueInputOption=RAW`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ values: [rowArray] })
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Failed to append book request record: ${res.statusText} - ${err}`);
+  }
+}
+
+export async function updateBookRequestStatus(
+  requestId: string,
+  status: 'Allowed' | 'Denied',
+  driveFileId?: string,
+  driveViewLink?: string
+): Promise<void> {
+  const token = await getAccessToken();
+  await initializeBookRequestsTab(token);
+
+  // Fetch all request IDs to find the row
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/BookRequests!A2:A`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!res.ok) return;
+
+  const data = await res.json() as { values?: any[][] };
+  const rows = data.values || [];
+  let rowIndex = -1;
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i][0] === requestId) {
+      rowIndex = i + 2; // 1-indexed, +1 for header row
+      break;
+    }
+  }
+  if (rowIndex === -1) return;
+
+  // Columns: I=driveFileId(col9), J=driveViewLink(col10), N=status(col14), O=allowedAt(col15), P=expiresAt(col16)
+  const updates: Array<{ range: string; values: any[][] }> = [
+    { range: `BookRequests!N${rowIndex}`, values: [[status]] },
+  ];
+  if (driveFileId) {
+    updates.push({ range: `BookRequests!I${rowIndex}`, values: [[driveFileId]] });
+  }
+  if (driveViewLink) {
+    updates.push({ range: `BookRequests!J${rowIndex}`, values: [[driveViewLink]] });
+  }
+  if (status === 'Allowed') {
+    const now = new Date().toISOString();
+    const expiresAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+    updates.push({ range: `BookRequests!O${rowIndex}`, values: [[now]] });
+    updates.push({ range: `BookRequests!P${rowIndex}`, values: [[expiresAt]] });
+  }
+
+  const batchRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values:batchUpdate`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      values: [rowArray]
+      valueInputOption: 'RAW',
+      data: updates
     })
   });
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Failed to append book download record: ${res.statusText} - ${err}`);
+  if (!batchRes.ok) {
+    const err = await batchRes.text();
+    throw new Error(`Failed to update book request status: ${batchRes.statusText} - ${err}`);
   }
 }
+
+export async function getBookRequestById(requestId: string): Promise<BookRequest | null> {
+  const token = await getAccessToken();
+  await initializeBookRequestsTab(token);
+
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/BookRequests!A2:P`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!res.ok) return null;
+
+  const data = await res.json() as { values?: any[][] };
+  const rows = data.values || [];
+
+  const row = rows.find(r => r[0] === requestId);
+  if (!row) return null;
+
+  return {
+    requestId: row[0] || '',
+    timestamp: row[1] || '',
+    name: row[2] || '',
+    email: row[3] || '',
+    semester: row[4] || '',
+    courseCode: row[5] || '',
+    courseName: row[6] || '',
+    bookName: row[7] || '',
+    driveFileId: row[8] || '',
+    driveViewLink: row[9] || '',
+    isNewBook: row[10] === 'TRUE',
+    author: row[11] || '',
+    edition: row[12] || '',
+    status: row[13] || 'Pending',
+    allowedAt: row[14] || '',
+    expiresAt: row[15] || '',
+  };
+}
+
+export async function getBookRequestsByEmail(email: string): Promise<BookRequest[]> {
+  const token = await getAccessToken();
+  await initializeBookRequestsTab(token);
+
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/BookRequests!A2:P`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!res.ok) return [];
+
+  const data = await res.json() as { values?: any[][] };
+  const rows = data.values || [];
+
+  return rows
+    .filter(row => row.length > 0 && row[3] === email)
+    .map(row => ({
+      requestId: row[0] || '',
+      timestamp: row[1] || '',
+      name: row[2] || '',
+      email: row[3] || '',
+      semester: row[4] || '',
+      courseCode: row[5] || '',
+      courseName: row[6] || '',
+      bookName: row[7] || '',
+      driveFileId: row[8] || '',
+      driveViewLink: row[9] || '',
+      isNewBook: row[10] === 'TRUE',
+      author: row[11] || '',
+      edition: row[12] || '',
+      status: row[13] || 'Pending',
+      allowedAt: row[14] || '',
+      expiresAt: row[15] || '',
+    }));
+}
+
+
 
 export async function appendFileDownloadRecord(record: {
   fileName: string;

@@ -41,10 +41,9 @@ const FILE_TYPE_ORDER = ['qpaper', 'notes', 'slides', 'lab', 'assignment', 'othe
 export default function CourseDetail({ courseCode, semester }: CourseDetailProps) {
   const searchParams = useSearchParams();
   const activeSemester = semester || searchParams.get('semester') || '1';
-  const { user, idToken, triggerLogin, siteConfig } = useAuth();
+  const { siteConfig } = useAuth();
 
   const [files, setFiles] = useState<SheetRow[]>([]);
-  const [books, setBooks] = useState<Array<{ id: string; name: string; webViewLink: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -66,16 +65,8 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
     setLoading(true);
     setError('');
 
-    Promise.all([
-      fetchFilesByCourse(courseCode, activeSemester),
-      fetch(`/api/books?semester=${encodeURIComponent(activeSemester)}&courseCode=${encodeURIComponent(courseCode)}`).then(res => res.json()).catch(() => [])
-    ])
-      .then(([filesData, booksData]) => {
-        if (!cancelled) {
-          setFiles(filesData);
-          setBooks(Array.isArray(booksData) ? booksData : []);
-        }
-      })
+    fetchFilesByCourse(courseCode, activeSemester)
+      .then((filesData) => { if (!cancelled) setFiles(filesData); })
       .catch((err) => { if (!cancelled) setError(err.message); })
       .finally(() => { if (!cancelled) setLoading(false); });
 
@@ -145,59 +136,6 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
     });
   }, []);
 
-  const handleBookDownload = (bookId: string, bookName: string) => {
-    const triggerBookDownloadAction = (currUser: any, currToken: string | null) => {
-      const token = currToken || (typeof window !== 'undefined' ? localStorage.getItem('bioarchive:idToken') : null);
-      if (siteConfig?.requireNiserToDownload) {
-        const email = currUser?.email || '';
-        const isDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-        const isNiser = email.toLowerCase().endsWith('@niser.ac.in');
-        const isAdmin = !!currUser?.isAdmin;
-        const isAllowed = isNiser || isAdmin || (isDev && email.toLowerCase().endsWith('@gmail.com'));
-        if (!isAllowed) {
-          alert('Access Restricted: Only @niser.ac.in institutional accounts are authorized to download reference books.');
-          return;
-        }
-      }
-      
-      const tokenQuery = token ? `&token=${encodeURIComponent(token)}` : '';
-      const downloadUrl = `/api/books/download?fileId=${bookId}&bookName=${encodeURIComponent(bookName)}&courseCode=${courseCode}&semester=${activeSemester}${tokenQuery}`;
-      window.open(downloadUrl, '_blank');
-    };
-
-    if (!user) {
-      triggerLogin(() => {
-        const cachedUserStr = localStorage.getItem('bioarchive:user');
-        const cachedToken = localStorage.getItem('bioarchive:idToken');
-        if (cachedUserStr) {
-          try {
-            const cachedUser = JSON.parse(cachedUserStr);
-            triggerBookDownloadAction(cachedUser, cachedToken);
-          } catch (e) {
-            triggerBookDownloadAction(null, null);
-          }
-        } else {
-          triggerBookDownloadAction(null, null);
-        }
-      });
-    } else {
-      triggerBookDownloadAction(user, idToken);
-    }
-  };
-
-  // Fuzzy match textbook name in curriculum to a filename in Google Drive
-  const findMatchingBook = useCallback((textbookName: string) => {
-    if (!books || books.length === 0) return null;
-
-    const cleanName = textbookName.toLowerCase().replace(/[^a-z0-9]/g, ' ');
-    const words = cleanName.split(/\s+/).filter(w => w.length > 3);
-
-    return books.find(b => {
-      const cleanFileName = b.name.toLowerCase().replace(/[^a-z0-9]/g, ' ');
-      const matchCount = words.filter(word => cleanFileName.includes(word)).length;
-      return matchCount >= Math.min(2, words.length) || cleanFileName.includes(cleanName) || cleanName.includes(cleanFileName);
-    });
-  }, [books]);
 
   const totalFiles = files.length;
   const hasAnyFiles = totalFiles > 0;
@@ -447,79 +385,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
             </div>
           )}
 
-          {/* Reference Books Section (Moved to Bottom, Styled as Collapsible) */}
-          {!loading && !error && books && books.length > 0 && siteConfig?.enableReferenceBooks !== false && (
-            <motion.section
-              className="cd-type-section"
-              variants={{
-                hidden: { opacity: 0, y: 14 },
-                show: { opacity: 1, y: 0 }
-              }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-              style={{ marginTop: '10px' }}
-            >
-              <button
-                className="cd-type-header"
-                onClick={() => toggleSection('books')}
-              >
-                <span
-                  className="cd-type-accent"
-                  style={{ background: 'var(--gold)' }}
-                />
-                {/* <BookOpen size={16} strokeWidth={1.5} style={{ marginRight: 4 }} /> */}
-                <span className="cd-type-label">Reference Books</span>
-                <span className="cd-type-count">{books.length}</span>
-                <motion.span
-                  className="cd-type-chevron"
-                  animate={{ rotate: expandedSection === 'books' ? 180 : 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <ChevronDown size={18} strokeWidth={1.5} />
-                </motion.span>
-              </button>
-
-              <AnimatePresence initial={false}>
-                {expandedSection === 'books' && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.25, ease: 'easeInOut' }}
-                    className="cd-type-body"
-                  >
-                    <div className="cd-books-body">
-                      {books.map((book) => {
-                        return (
-                          <div key={book.id} className="cd-book-row">
-                            <span className="cd-book-name">{book.name}</span>
-                            <div className="cd-book-actions">
-                              {siteConfig?.enableDownloads !== false && (
-                                <button
-                                  onClick={() => handleBookDownload(book.id, book.name)}
-                                  className="cd-book-btn openlib"
-                                  style={{ background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.25)', color: '#10B981', cursor: 'pointer' }}
-                                >
-                                  Download PDF
-                                </button>
-                              )}
-                              <a
-                                href={`https://books.google.com/books?q=${encodeURIComponent(book.name)}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="cd-book-btn google"
-                              >
-                                Google Books
-                              </a>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.section>
-          )}
+          {/* Reference Books: Removed direct display — users must request books via the Request Book page */}
         </motion.div>
       </div>
 

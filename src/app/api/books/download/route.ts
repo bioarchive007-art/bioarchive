@@ -1,7 +1,7 @@
 export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { appendBookDownloadRecord, getSiteConfig } from '@/lib/sheets';
+import { getSiteConfig } from '@/lib/sheets';
 import { getAccessToken } from '@/lib/google-auth';
 import { verifyGoogleToken, isAdminEmail } from '@/lib/auth';
 import { fetchWithTimeout } from '@/lib/utils';
@@ -78,20 +78,7 @@ export async function GET(request: NextRequest) {
 
     const userAgent = request.headers.get('user-agent') || 'Unknown';
 
-    // Log the download event to the sheet
-    try {
-      await appendBookDownloadRecord({
-        bookName,
-        courseCode,
-        semester,
-        driveFileId: fileId,
-        userAgent,
-        userEmail: email,
-      });
-    } catch (sheetErr) {
-      // Non-blocking log failure - make sure user still gets their download even if logging has a glitch
-      console.error('Failed to log book download to Google Sheet:', sheetErr);
-    }
+    // Note: Direct book download logging removed; book access is now tracked via the Request system.
 
     // Fetch the file directly from Google Drive using administrator access token
     const token = await getAccessToken();

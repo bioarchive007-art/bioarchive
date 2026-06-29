@@ -833,6 +833,22 @@ img { max-width: 100%; display: block; }
 .nav-link:hover {
   color: rgba(255, 255, 255, 0.9);
 }
+.nav-link-book {
+  color: var(--gold) !important;
+  background: rgba(212, 168, 83, 0.08);
+  border: 1px solid rgba(212, 168, 83, 0.2);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+}
+.nav-link-book:hover {
+  background: rgba(212, 168, 83, 0.16) !important;
+  color: #e8c06a !important;
+  border-color: rgba(212, 168, 83, 0.4) !important;
+  box-shadow: 0 0 12px rgba(212, 168, 83, 0.12);
+}
+
 .navbar-hamburger {
   display: none;
   background: none;

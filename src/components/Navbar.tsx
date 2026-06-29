@@ -70,6 +70,10 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
               <Link href="/features" className="nav-link">Features</Link>
               {siteConfig?.enableNotices !== false && <Link href="/notices" className="nav-link">Notices</Link>}
               {siteConfig?.enableFileRequests !== false && <Link href="/requests" className="nav-link">Requests</Link>}
+              <Link href="/request-book" className="nav-link nav-link-book">
+                <BookOpen size={13} strokeWidth={1.5} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
+                Request Book
+              </Link>
               <Link href="/about" className="nav-link">About</Link>
               {siteConfig?.enableContactForm !== false && <Link href="/contact" className="nav-link">Contact</Link>}
             </div>
@@ -176,6 +180,27 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
                           <span>Admin Panel</span>
                         </Link>
                       )}
+                      <Link
+                        href="/my-books"
+                        onClick={() => setShowDropdown(false)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          color: 'var(--gold)',
+                          padding: '6px 8px',
+                          width: '100%',
+                          textAlign: 'left',
+                          fontSize: '0.76rem',
+                          borderRadius: '6px',
+                          fontFamily: "'Outfit', sans-serif",
+                          textDecoration: 'none',
+                          transition: 'background 0.2s',
+                        }}
+                      >
+                        <BookOpen size={12} />
+                        <span>My Books</span>
+                      </Link>
                       <button
                         onClick={() => {
                           logout();
@@ -383,6 +408,17 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
                     <span>Requests</span>
                   </Link>
                 )}
+                <Link
+                  href="/request-book"
+                  className="mobile-menu-link"
+                  onClick={() => setIsOpen(false)}
+                  style={{ color: 'var(--gold)' }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <BookOpen size={14} />
+                    <span>Request Book</span>
+                  </span>
+                </Link>
                 <Link
                   href="/about"
                   className="mobile-menu-link"
