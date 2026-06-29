@@ -32,9 +32,9 @@ const ALLOWED_MIME_TYPES = new Set([
  */
 export async function POST(request: NextRequest) {
   try {
-    // Rate-limit: 10 upload sessions per IP per 10 minutes.
+    // Rate-limit: 40 upload sessions per IP per 10 minutes.
     // Protects Google Drive API quota from bot-driven session flooding.
-    const rl = await rateLimit(request, 'upload-session', 10, 600);
+    const rl = await rateLimit(request, 'upload-session', 40, 600);
     if (!rl.allowed) {
       return NextResponse.json({ error: rl.error }, { status: 429 });
     }

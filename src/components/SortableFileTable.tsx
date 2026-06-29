@@ -8,6 +8,7 @@ import { CONFIG } from '@/config';
 import { incrementFileDownloads } from '@/lib/api-client';
 import { useAuth } from './AuthProvider';
 import { checkIsDev } from '@/lib/auth';
+import { useToast } from './Toast';
 import FilePreviewModal from './FilePreviewModal';
 
 type SortField = 'fileName' | 'professor' | 'uploaderName' | 'year' | 'examType' | 'downloadCount';
@@ -33,6 +34,7 @@ export default function SortableFileTable({
   accentColor,
 }: SortableFileTableProps) {
   const { user, triggerLogin, siteConfig } = useAuth();
+  const { showToast } = useToast();
   const [previewFile, setPreviewFile] = useState<SheetRow | null>(null);
 
   const triggerDownloadAction = (file: SheetRow) => {
@@ -51,7 +53,7 @@ export default function SortableFileTable({
         const isBioarchive = email.toLowerCase() === 'bioarchive007@gmail.com' || email.toLowerCase().startsWith('bioarchive007@');
         const isAllowed = isNiser || isAdmin || isBioarchive || (isDev && email.toLowerCase().endsWith('@gmail.com'));
         if (!isAllowed) {
-          alert('Access Restricted: Only @niser.ac.in institutional accounts are authorized to download study materials.');
+          showToast('Access Restricted: Only @niser.ac.in institutional accounts are authorized to download study materials.', 'error');
           return;
         }
       }

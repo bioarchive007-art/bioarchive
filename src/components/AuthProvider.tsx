@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CONFIG } from '@/config';
 import { decodeGoogleCredential, isAuthorizedEmail, checkIsDev } from '@/lib/auth';
+import { useToast } from './Toast';
 
 interface AuthUser {
   email: string;
@@ -56,6 +57,7 @@ const AuthContext = createContext<AuthContextType>({
 export const useAuth = () => useContext(AuthContext);
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
+  const { showToast } = useToast();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [idToken, setIdToken] = useState<string | null>(null);
   const [showLogin, setShowLogin] = useState(false);
@@ -223,7 +225,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       const isAllowedLogin = !siteConfig.restrictToInstitutionalEmail || isNiser || isAdmin || isDev;
 
       if (!isAllowedLogin) {
-        alert(`Access Restricted: Only @niser.ac.in accounts are permitted. Your email "${decoded.email}" is not authorized.`);
+        showToast(`Access Restricted: Only @niser.ac.in accounts are permitted. Your email "${decoded.email}" is not authorized.`, 'error');
         clearSession();
       } else if (isAdmin) {
         // Cache isAdmin property in user object

@@ -990,7 +990,16 @@ export async function appendLoginRecord(record: {
   }
 }
 
+// Simple memory cache for SiteConfig to prevent exceeding Google Sheets API quotas.
+let cachedConfig: Record<string, boolean> | null = null;
+let cachedConfigTimestamp = 0;
+const CONFIG_CACHE_TTL = 30000; // 30 seconds cache TTL
+
 export async function getSiteConfig(): Promise<Record<string, boolean>> {
+  const now = Date.now();
+  if (cachedConfig && (now - cachedConfigTimestamp < CONFIG_CACHE_TTL)) {
+    return cachedConfig;
+  }
   const token = await getAccessToken();
   await createSheetTab('SiteConfig', token);
 
@@ -1052,10 +1061,16 @@ export async function getSiteConfig(): Promise<Record<string, boolean>> {
     }
   });
 
+  cachedConfig = config;
+  cachedConfigTimestamp = Date.now();
   return config;
 }
 
 export async function updateSiteConfig(config: Record<string, boolean>): Promise<void> {
+  // Invalidate cache immediately on updates
+  cachedConfig = null;
+  cachedConfigTimestamp = 0;
+
   const token = await getAccessToken();
   await createSheetTab('SiteConfig', token);
 

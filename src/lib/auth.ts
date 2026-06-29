@@ -74,6 +74,9 @@ export function isAuthorizedEmail(email: string, isDev = checkIsDev()): boolean 
   return normalized.endsWith('@niser.ac.in');
 }
 
+// Cache for verified Google SSO ID tokens to reduce tokeninfo endpoint calls.
+const tokenCache = new Map<string, { user: GoogleUser; expiresAt: number }>();
+
 /**
  * Verifies a Google ID token with Google's tokeninfo endpoint.
  * This runs securely in Edge runtimes without external dependencies.
@@ -81,6 +84,12 @@ export function isAuthorizedEmail(email: string, isDev = checkIsDev()): boolean 
 export async function verifyGoogleToken(idToken: string): Promise<GoogleUser> {
   if (!idToken) {
     throw new Error('Google ID token is required');
+  }
+
+  const now = Date.now();
+  const cached = tokenCache.get(idToken);
+  if (cached && cached.expiresAt > now) {
+    return cached.user;
   }
 
   const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`);
@@ -97,6 +106,7 @@ export async function verifyGoogleToken(idToken: string): Promise<GoogleUser> {
     picture?: string;
     aud?: string;
     hd?: string;
+    exp?: string | number;
   };
 
   if (!data.email) {
@@ -109,12 +119,24 @@ export async function verifyGoogleToken(idToken: string): Promise<GoogleUser> {
     throw new Error('Google account email is not verified');
   }
 
-  return {
+  const googleUser = {
     email: data.email,
     name: data.name || '',
     picture: '',
     verified: true,
   };
+
+  // Cache the token validation. ID tokens have an expiration claim (exp) in seconds.
+  const expSeconds = typeof data.exp === 'number' ? data.exp : parseInt(data.exp || '0', 10);
+  const expiresAt = expSeconds ? expSeconds * 1000 : now + (5 * 60 * 1000);
+
+  // Prevent memory leaks by resetting cache if it gets too large
+  if (tokenCache.size > 1000) {
+    tokenCache.clear();
+  }
+  tokenCache.set(idToken, { user: googleUser, expiresAt });
+
+  return googleUser;
 }
 
 /**

@@ -48,9 +48,9 @@ async function verifyDriveFile(driveFileId: string): Promise<{ size: number; mim
  */
 export async function POST(request: NextRequest) {
   try {
-    // Rate-limit: 10 confirm calls per IP per 10 minutes.
+    // Rate-limit: 40 confirm calls per IP per 10 minutes.
     // Protects Google Sheets from being flooded with fake file records.
-    const rl = await rateLimit(request, 'upload-confirm', 10, 600);
+    const rl = await rateLimit(request, 'upload-confirm', 40, 600);
     if (!rl.allowed) {
       return NextResponse.json({ error: rl.error }, { status: 429 });
     }
