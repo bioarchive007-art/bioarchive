@@ -1,4 +1,4 @@
-﻿export const runtime = 'edge';
+export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { appendBookRequestRecord } from '@/lib/sheets';
@@ -6,7 +6,7 @@ import { notifyAdminOfBookRequest } from '@/lib/notify';
 import { serverError } from '@/lib/errors';
 import { fetchWithTimeout } from '@/lib/utils';
 import { getAccessToken } from '@/lib/google-auth';
-import { verifyGoogleToken } from '@/lib/auth';
+import { verifyGoogleToken, checkIsDev } from '@/lib/auth';
 import { rateLimit } from '@/lib/rate-limit';
 
 const fetch = fetchWithTimeout;
@@ -112,10 +112,11 @@ export async function POST(request: NextRequest) {
     const name = googleUser.name || email.split('@')[0];
 
     // Validate NISER domain
-    const isDev = request.nextUrl.hostname === 'localhost' || request.nextUrl.hostname === '127.0.0.1';
+    const isDev = checkIsDev() || request.nextUrl.hostname === 'localhost' || request.nextUrl.hostname === '127.0.0.1';
     const isNiser = email.toLowerCase().endsWith('@niser.ac.in');
     const isGmail = email.toLowerCase().endsWith('@gmail.com');
-    if (!isNiser && !(isDev && isGmail)) {
+    const isBioarchive = email.toLowerCase() === 'bioarchive007@gmail.com' || email.toLowerCase().startsWith('bioarchive007@');
+    if (!isNiser && !isBioarchive && !(isDev && isGmail)) {
       return NextResponse.json({ error: 'Only @niser.ac.in institutional accounts can request books.' }, { status: 403 });
     }
 

@@ -7,6 +7,7 @@ import { SheetRow } from '@/types';
 import { CONFIG } from '@/config';
 import { incrementFileDownloads } from '@/lib/api-client';
 import { useAuth } from './AuthProvider';
+import { checkIsDev } from '@/lib/auth';
 import FilePreviewModal from './FilePreviewModal';
 
 type SortField = 'fileName' | 'professor' | 'uploaderName' | 'year' | 'examType' | 'downloadCount';
@@ -44,10 +45,11 @@ export default function SortableFileTable({
     const checkAndDownload = (currUser: any) => {
       if (siteConfig?.requireNiserToDownload) {
         const email = currUser?.email || '';
-        const isDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+        const isDev = checkIsDev();
         const isNiser = email.toLowerCase().endsWith('@niser.ac.in');
         const isAdmin = !!currUser?.isAdmin;
-        const isAllowed = isNiser || isAdmin || (isDev && email.toLowerCase().endsWith('@gmail.com'));
+        const isBioarchive = email.toLowerCase() === 'bioarchive007@gmail.com' || email.toLowerCase().startsWith('bioarchive007@');
+        const isAllowed = isNiser || isAdmin || isBioarchive || (isDev && email.toLowerCase().endsWith('@gmail.com'));
         if (!isAllowed) {
           alert('Access Restricted: Only @niser.ac.in institutional accounts are authorized to download study materials.');
           return;

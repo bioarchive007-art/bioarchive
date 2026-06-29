@@ -1009,6 +1009,7 @@ export async function getSiteConfig(): Promise<Record<string, boolean>> {
     enableReferenceBooks: true,
     enableUploads: true,
     enableFileRequests: true,
+    enableBookRequests: true,
     enableNotices: true,
     enableSearch: true,
     enableDownloadLogging: true,

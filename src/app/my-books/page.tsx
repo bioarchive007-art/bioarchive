@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, BookOpen, Download, Clock, AlertCircle, Loader2, Library, CheckCircle2, XCircle } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 import { BookRequest } from '@/types';
+import { checkIsDev } from '@/lib/auth';
 
 export default function MyBooksPage() {
   const { user, idToken, triggerLogin } = useAuth();
@@ -13,8 +14,13 @@ export default function MyBooksPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const isDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-  const isNiserAccount = !!user && (user.email.toLowerCase().endsWith('@niser.ac.in') || (isDev && user.email.toLowerCase().endsWith('@gmail.com')));
+  const isDev = checkIsDev();
+  const isNiserAccount = !!user && (
+    user.email.toLowerCase().endsWith('@niser.ac.in') || 
+    (isDev && user.email.toLowerCase().endsWith('@gmail.com')) ||
+    user.email.toLowerCase() === 'bioarchive007@gmail.com' ||
+    user.email.toLowerCase().startsWith('bioarchive007@')
+  );
 
   useEffect(() => {
     if (!idToken || !isNiserAccount) {

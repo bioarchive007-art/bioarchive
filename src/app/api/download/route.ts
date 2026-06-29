@@ -2,7 +2,7 @@ export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { incrementDownloadCount, getAllFiles, appendFileDownloadRecord, getSiteConfig } from '@/lib/sheets';
-import { verifyGoogleToken, isAdminEmail } from '@/lib/auth';
+import { verifyGoogleToken, isAdminEmail, checkIsDev } from '@/lib/auth';
 import { rateLimit } from '@/lib/rate-limit';
 import { serverError } from '@/lib/errors';
 
@@ -61,8 +61,9 @@ export async function POST(request: NextRequest) {
         const googleUser = await verifyGoogleToken(token);
         const isNiser = googleUser.email.toLowerCase().endsWith('@niser.ac.in');
         const isAdmin = isAdminEmail(googleUser.email);
-        const isDev = process.env.NODE_ENV === 'development';
-        const isAllowed = isNiser || isAdmin || isDev;
+        const isDev = checkIsDev();
+        const isBioarchive = googleUser.email.toLowerCase() === 'bioarchive007@gmail.com' || googleUser.email.toLowerCase().startsWith('bioarchive007@');
+        const isAllowed = isNiser || isAdmin || isDev || isBioarchive;
         if (!isAllowed) {
           return NextResponse.json({ error: 'Forbidden: Only @niser.ac.in accounts are permitted to download.' }, { status: 403 });
         }

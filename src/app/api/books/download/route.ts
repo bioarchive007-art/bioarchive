@@ -3,7 +3,7 @@ export const runtime = 'edge';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSiteConfig } from '@/lib/sheets';
 import { getAccessToken } from '@/lib/google-auth';
-import { verifyGoogleToken, isAdminEmail } from '@/lib/auth';
+import { verifyGoogleToken, isAdminEmail, checkIsDev } from '@/lib/auth';
 import { fetchWithTimeout } from '@/lib/utils';
 import { serverError } from '@/lib/errors';
 
@@ -42,8 +42,9 @@ export async function GET(request: NextRequest) {
         email = googleUser.email;
         const isNiser = email.toLowerCase().endsWith('@niser.ac.in');
         const isAdmin = isAdminEmail(email);
-        const isDev = process.env.NODE_ENV === 'development';
-        const isAllowed = isNiser || isAdmin || (isDev && email.toLowerCase().endsWith('@gmail.com'));
+        const isDev = checkIsDev();
+        const isBioarchive = email.toLowerCase() === 'bioarchive007@gmail.com' || email.toLowerCase().startsWith('bioarchive007@');
+        const isAllowed = isNiser || isAdmin || isBioarchive || (isDev && email.toLowerCase().endsWith('@gmail.com'));
 
         if (!isAllowed) {
           return NextResponse.json({ error: 'Forbidden: Only @niser.ac.in accounts are permitted to download reference books.' }, { status: 403 });

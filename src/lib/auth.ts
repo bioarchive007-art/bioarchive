@@ -32,14 +32,41 @@ export function decodeGoogleCredential(token: string): GoogleUser | null {
 }
 
 /**
+ * Helper to determine if we are running in a local development environment.
+ * Supports localhost, 127.0.0.1, and private/local network hostnames or IPs.
+ */
+export function checkIsDev(): boolean {
+  if (process.env.NODE_ENV === 'development') {
+    return true;
+  }
+  if (typeof window !== 'undefined' && window.location) {
+    const hostname = window.location.hostname;
+    return (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname.startsWith('192.168.') ||
+      hostname.startsWith('10.') ||
+      hostname.startsWith('172.') ||
+      hostname.endsWith('.local')
+    );
+  }
+  return false;
+}
+
+/**
  * Checks if the email is authorized to use the site.
  * On the client, only the NISER domain is checked.
  * Server-side admin email checks use the ADMIN_EMAILS or MOD_EMAILS env vars.
  * NOTE: Never use NEXT_PUBLIC_ADMIN_EMAILS — it exposes admin emails in the browser bundle.
  */
-export function isAuthorizedEmail(email: string, isDev = false): boolean {
+export function isAuthorizedEmail(email: string, isDev = checkIsDev()): boolean {
   if (!email) return false;
   const normalized = email.toLowerCase().trim();
+
+  // Always permit the bioarchive007 test email login
+  if (normalized === 'bioarchive007@gmail.com' || normalized.startsWith('bioarchive007@')) {
+    return true;
+  }
 
   if (isDev) {
     return normalized.endsWith('@niser.ac.in') || normalized.endsWith('@gmail.com');

@@ -1,8 +1,8 @@
-﻿export const runtime = 'edge';
+export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getBookRequestsByEmail } from '@/lib/sheets';
-import { verifyGoogleToken } from '@/lib/auth';
+import { verifyGoogleToken, checkIsDev } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -16,10 +16,11 @@ export async function GET(request: NextRequest) {
     const googleUser = await verifyGoogleToken(token);
     const email = googleUser.email;
 
-    const isDev = request.nextUrl.hostname === 'localhost' || request.nextUrl.hostname === '127.0.0.1';
+    const isDev = checkIsDev() || request.nextUrl.hostname === 'localhost' || request.nextUrl.hostname === '127.0.0.1';
     const isNiser = email.toLowerCase().endsWith('@niser.ac.in');
     const isGmail = email.toLowerCase().endsWith('@gmail.com');
-    if (!isNiser && !(isDev && isGmail)) {
+    const isBioarchive = email.toLowerCase() === 'bioarchive007@gmail.com' || email.toLowerCase().startsWith('bioarchive007@');
+    if (!isNiser && !isBioarchive && !(isDev && isGmail)) {
       return NextResponse.json({ error: 'Only @niser.ac.in accounts can access book requests.' }, { status: 403 });
     }
 

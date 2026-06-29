@@ -66,23 +66,19 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
               </motion.a>
             </Link>
             <div className="navbar-links">
-              <Link href="/" className="nav-link">Curriculum</Link>
               <Link href="/features" className="nav-link">Features</Link>
               {siteConfig?.enableNotices !== false && <Link href="/notices" className="nav-link">Notices</Link>}
-              {siteConfig?.enableFileRequests !== false && <Link href="/requests" className="nav-link">Requests</Link>}
-              <Link href="/request-book" className="nav-link nav-link-book">
-                <BookOpen size={13} strokeWidth={1.5} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
-                Request Book
-              </Link>
+              {(siteConfig?.enableFileRequests !== false || siteConfig?.enableBookRequests !== false) && (
+                <Link href="/requests" className="nav-link">Requests</Link>
+              )}
               <Link href="/about" className="nav-link">About</Link>
-              {siteConfig?.enableContactForm !== false && <Link href="/contact" className="nav-link">Contact</Link>}
             </div>
           </div>
 
           {/* Right section */}
           <div className="navbar-right">
             <span className="navbar-label">NISER · SBS</span>
-            
+
             {user ? (
               <div className="navbar-user-container" style={{ position: 'relative' }}>
                 <button
@@ -377,13 +373,6 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
                   </Link>
                 )}
                 <Link
-                  href="/"
-                  className="mobile-menu-link"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <span>Curriculum</span>
-                </Link>
-                <Link
                   href="/features"
                   className="mobile-menu-link"
                   onClick={() => setIsOpen(false)}
@@ -399,7 +388,7 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
                     <span>Notices</span>
                   </Link>
                 )}
-                {siteConfig?.enableFileRequests !== false && (
+                {(siteConfig?.enableFileRequests !== false || siteConfig?.enableBookRequests !== false) && (
                   <Link
                     href="/requests"
                     className="mobile-menu-link"
@@ -409,32 +398,12 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
                   </Link>
                 )}
                 <Link
-                  href="/request-book"
-                  className="mobile-menu-link"
-                  onClick={() => setIsOpen(false)}
-                  style={{ color: 'var(--gold)' }}
-                >
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <BookOpen size={14} />
-                    <span>Request Book</span>
-                  </span>
-                </Link>
-                <Link
                   href="/about"
                   className="mobile-menu-link"
                   onClick={() => setIsOpen(false)}
                 >
                   <span>About</span>
                 </Link>
-                {siteConfig?.enableContactForm !== false && (
-                  <Link
-                    href="/contact"
-                    className="mobile-menu-link"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <span>Contact</span>
-                  </Link>
-                )}
                 {siteConfig?.enableUploads !== false && (
                   <button
                     className="mobile-menu-upload-btn"

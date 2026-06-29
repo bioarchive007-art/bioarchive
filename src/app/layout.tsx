@@ -136,7 +136,10 @@ export default function RootLayout({
           <div className="page-content" id="page-content">
             {children}
             <footer className="site-footer">
-              BioArchive © {year} · Managed by BIO-Archive.
+              <p>Maintained by BioArchive © {year}</p>
+              <a href="mailto:bioarchive007@gmail.com">
+                Contact Us
+              </a>
             </footer>
           </div>
 

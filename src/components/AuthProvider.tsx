@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CONFIG } from '@/config';
-import { decodeGoogleCredential, isAuthorizedEmail } from '@/lib/auth';
+import { decodeGoogleCredential, isAuthorizedEmail, checkIsDev } from '@/lib/auth';
 
 interface AuthUser {
   email: string;
@@ -42,6 +42,7 @@ const AuthContext = createContext<AuthContextType>({
     enableReferenceBooks: true,
     enableUploads: true,
     enableFileRequests: true,
+    enableBookRequests: true,
     enableNotices: true,
     enableSearch: true,
     enableDownloadLogging: true,
@@ -76,6 +77,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     enableReferenceBooks: true,
     enableUploads: true,
     enableFileRequests: true,
+    enableBookRequests: true,
     enableNotices: true,
     enableSearch: true,
     enableDownloadLogging: true,
@@ -127,7 +129,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     if (cachedUser) {
       try {
         const u = JSON.parse(cachedUser);
-        const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const isDev = checkIsDev();
         const isAllowed = !siteConfig.restrictToInstitutionalEmail || isAuthorizedEmail(u.email, isDev) || u.isAdmin;
         if (u && u.email && isAllowed) {
           setUser(u);
@@ -146,7 +148,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     } else if (cachedToken) {
       const decoded = decodeGoogleCredential(cachedToken);
       if (decoded) {
-        const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const isDev = checkIsDev();
         const isAllowed = !siteConfig.restrictToInstitutionalEmail || isAuthorizedEmail(decoded.email, isDev);
         if (isAllowed) {
           setUser(decoded);
@@ -169,7 +171,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   // no longer meets the new requirement without requiring a page refresh.
   useEffect(() => {
     if (!configLoaded || !user) return;
-    const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const isDev = checkIsDev();
     const isAllowed = !siteConfig.restrictToInstitutionalEmail || isAuthorizedEmail(user.email, isDev) || user.isAdmin;
     if (!isAllowed) {
       clearSession();
@@ -192,7 +194,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const decoded = decodeGoogleCredential(credential);
     if (!decoded) return;
 
-    const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const isDev = checkIsDev();
 
     // Optimistically set the session on client
     setUser(decoded);
