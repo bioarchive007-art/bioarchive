@@ -459,16 +459,14 @@ img { max-width: 100%; display: block; }
    Page Reveal
    ================================================================ */
 .page-content {
-  opacity: 0;
-  transition: opacity 0.5s var(--ease-out);
+  /* opacity is always 1 — the loading screen is shown/hidden by layout.tsx inline script
+     directly on #loading-screen, so page content must stay fully visible at all times. */
+  opacity: 1;
   position: relative;
   z-index: 1;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-}
-.page-content.visible {
-  opacity: 1;
 }
 
 /* ================================================================
