@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Upload, BookOpen, AlertCircle, Info, LogOut, Lock } from 'lucide-react';
+import { Menu, X, Upload, AlertCircle, Info, LogOut, Lock } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from './AuthProvider';
 
@@ -68,7 +68,7 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
             <div className="navbar-links">
               <Link href="/features" className="nav-link">Features</Link>
               {siteConfig?.enableNotices !== false && <Link href="/notices" className="nav-link">Notices</Link>}
-              {(siteConfig?.enableFileRequests !== false || siteConfig?.enableBookRequests !== false) && (
+              {siteConfig?.enableFileRequests !== false && (
                 <Link href="/requests" className="nav-link">Requests</Link>
               )}
               <Link href="/about" className="nav-link">About</Link>
@@ -176,27 +176,7 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
                           <span>Admin Panel</span>
                         </Link>
                       )}
-                      <Link
-                        href="/my-books"
-                        onClick={() => setShowDropdown(false)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          color: 'var(--gold)',
-                          padding: '6px 8px',
-                          width: '100%',
-                          textAlign: 'left',
-                          fontSize: '0.76rem',
-                          borderRadius: '6px',
-                          fontFamily: "'Outfit', sans-serif",
-                          textDecoration: 'none',
-                          transition: 'background 0.2s',
-                        }}
-                      >
-                        <BookOpen size={12} />
-                        <span>My Books</span>
-                      </Link>
+
                       <button
                         onClick={() => {
                           logout();
@@ -388,7 +368,7 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
                     <span>Notices</span>
                   </Link>
                 )}
-                {(siteConfig?.enableFileRequests !== false || siteConfig?.enableBookRequests !== false) && (
+                {siteConfig?.enableFileRequests !== false && (
                   <Link
                     href="/requests"
                     className="mobile-menu-link"

@@ -7,6 +7,8 @@ import { apiCache } from '@/lib/api-cache';
 import { rateLimit } from '@/lib/rate-limit';
 import { fetchWithTimeout } from '@/lib/utils';
 import { serverError } from '@/lib/errors';
+import { verifyGoogleToken, isAdminEmail, checkIsDev } from '@/lib/auth';
+import { getSiteConfig } from '@/lib/sheets';
 
 // Shadow global fetch with our custom timeout wrapper
 const fetch = fetchWithTimeout;
@@ -45,6 +47,29 @@ export async function GET(request: NextRequest) {
     const rl = await rateLimit(request, 'books', 20, 60);
     if (!rl.allowed) {
       return NextResponse.json({ error: rl.error }, { status: 429 });
+    }
+
+    // Auth gate: only NISER / admin / bioarchive007 accounts can list book files
+    const siteConfig: Record<string, boolean> = await getSiteConfig().catch(() => ({ requireNiserToDownload: true }));
+    if (siteConfig.requireNiserToDownload !== false) {
+      const tokenParam = request.nextUrl.searchParams.get('token') || '';
+      if (!tokenParam) {
+        return NextResponse.json({ error: 'Unauthorized: Sign in with a NISER account to view books.' }, { status: 401 });
+      }
+      try {
+        const googleUser = await verifyGoogleToken(tokenParam);
+        const email = googleUser.email.toLowerCase();
+        const isNiser = email.endsWith('@niser.ac.in');
+        const isAdmin = isAdminEmail(email);
+        const isDev = checkIsDev();
+        const isBioarchive = email === 'bioarchive007@gmail.com' || email.startsWith('bioarchive007@');
+        const isAllowed = isNiser || isAdmin || isBioarchive || (isDev && email.endsWith('@gmail.com'));
+        if (!isAllowed) {
+          return NextResponse.json({ error: 'Forbidden: Only @niser.ac.in accounts can access reference books.' }, { status: 403 });
+        }
+      } catch (err: any) {
+        return NextResponse.json({ error: 'Authentication failed. Please sign in again.' }, { status: 401 });
+      }
     }
 
     const searchParams = request.nextUrl.searchParams;

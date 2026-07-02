@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft, BookOpen, Upload, ChevronDown, Users, AlertTriangle,
+  ArrowLeft, BookOpen, Upload, ChevronDown, Users, AlertTriangle, Lock, Download, Loader2,
 } from 'lucide-react';
 import { SheetRow } from '@/types';
 import { CONFIG } from '@/config';
@@ -41,7 +41,7 @@ const FILE_TYPE_ORDER = ['qpaper', 'notes', 'slides', 'lab', 'assignment', 'othe
 export default function CourseDetail({ courseCode, semester }: CourseDetailProps) {
   const searchParams = useSearchParams();
   const activeSemester = semester || searchParams.get('semester') || '1';
-  const { siteConfig } = useAuth();
+  const { siteConfig, user, idToken, triggerLogin } = useAuth();
 
   const [files, setFiles] = useState<SheetRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,6 +49,21 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
   const [uploadOpen, setUploadOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [sortStates, setSortStates] = useState<Record<string, { field: SortField; order: SortOrder }>>({});
+
+  // Books state
+  const [booksExpanded, setBooksExpanded] = useState(false);
+  const [books, setBooks] = useState<Array<{ id: string; name: string; webViewLink?: string; mimeType?: string }>>([]);
+  const [booksLoading, setBooksLoading] = useState(false);
+  const [booksError, setBooksError] = useState('');
+  const [booksFetched, setBooksFetched] = useState(false);
+
+  // Determine if user has access to books
+  const isNiserOrPrivileged = !!user && (
+    user.email.toLowerCase().endsWith('@niser.ac.in') ||
+    user.email.toLowerCase() === 'bioarchive007@gmail.com' ||
+    user.email.toLowerCase().startsWith('bioarchive007@') ||
+    user.isAdmin === true
+  );
 
   // Find the course from curriculum
   const course = useMemo(() => {
@@ -383,6 +398,148 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
                 );
               })}
             </div>
+          )}
+
+          {/* Reference Books Section */}
+          {siteConfig?.enableReferenceBooks !== false && (
+            <motion.section
+              className="cd-type-section"
+              variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+            >
+              <button
+                className="cd-type-header"
+                onClick={async () => {
+                  const newExpanded = !booksExpanded;
+                  setBooksExpanded(newExpanded);
+                  if (newExpanded && !booksFetched && isNiserOrPrivileged && idToken) {
+                    setBooksLoading(true);
+                    setBooksError('');
+                    try {
+                      const params = new URLSearchParams({ semester: activeSemester, courseCode });
+                      if (idToken) params.set('token', idToken);
+                      const res = await fetch(`/api/books?${params.toString()}`);
+                      if (!res.ok) {
+                        const errData = await res.json().catch(() => ({}));
+                        throw new Error(errData.error || 'Failed to load books');
+                      }
+                      const data = await res.json();
+                      setBooks(Array.isArray(data) ? data : []);
+                    } catch (err: any) {
+                      setBooksError(err.message || 'Could not load books');
+                    } finally {
+                      setBooksLoading(false);
+                      setBooksFetched(true);
+                    }
+                  }
+                }}
+              >
+                <span className="cd-type-accent" style={{ background: 'var(--gold)' }} />
+                <span className="cd-type-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <BookOpen size={14} strokeWidth={1.5} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+                  Reference Books
+                </span>
+                {!isNiserOrPrivileged && (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)', marginRight: '4px', fontFamily: "'Outfit', sans-serif" }}>
+                    <Lock size={11} strokeWidth={1.5} /> NISER only
+                  </span>
+                )}
+                <motion.span
+                  className="cd-type-chevron"
+                  animate={{ rotate: booksExpanded ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ChevronDown size={18} strokeWidth={1.5} />
+                </motion.span>
+              </button>
+
+              <AnimatePresence initial={false}>
+                {booksExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.25, ease: 'easeInOut' }}
+                    className="cd-type-body"
+                  >
+                    <div style={{ padding: '12px 16px' }}>
+                      {/* Auth gate */}
+                      {!user && (
+                        <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                          <Lock size={28} strokeWidth={1} style={{ opacity: 0.3, marginBottom: '10px' }} />
+                          <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: '0.84rem', color: 'rgba(255,255,255,0.5)', marginBottom: '14px' }}>
+                            Sign in with your NISER Google account to access reference books.
+                          </p>
+                          <button
+                            className="btn-gold"
+                            style={{ fontSize: '0.78rem' }}
+                            onClick={(e) => { e.stopPropagation(); triggerLogin(); }}
+                          >
+                            Sign In
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Wrong account */}
+                      {user && !isNiserOrPrivileged && (
+                        <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                          <Lock size={28} strokeWidth={1} style={{ color: '#f87171', opacity: 0.6, marginBottom: '10px' }} />
+                          <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: '0.84rem', color: '#f87171', marginBottom: '6px' }}>
+                            NISER Account Required
+                          </p>
+                          <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)' }}>
+                            Only <code style={{ color: 'var(--gold)' }}>@niser.ac.in</code> accounts can view reference books.
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Authorized: loading */}
+                      {isNiserOrPrivileged && booksLoading && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '20px 0', color: 'rgba(255,255,255,0.4)', fontFamily: "'Outfit', sans-serif", fontSize: '0.82rem' }}>
+                          <Loader2 size={18} className="cd-spin" /> Loading books...
+                        </div>
+                      )}
+
+                      {/* Authorized: error */}
+                      {isNiserOrPrivileged && !booksLoading && booksError && (
+                        <div style={{ color: '#f87171', fontFamily: "'Outfit', sans-serif", fontSize: '0.82rem', textAlign: 'center', padding: '12px 0' }}>
+                          {booksError}
+                        </div>
+                      )}
+
+                      {/* Authorized: empty */}
+                      {isNiserOrPrivileged && !booksLoading && !booksError && booksFetched && books.length === 0 && (
+                        <div style={{ textAlign: 'center', padding: '20px 0', fontFamily: "'Outfit', sans-serif", fontSize: '0.82rem', color: 'rgba(255,255,255,0.35)' }}>
+                          No reference books available for this course yet.
+                        </div>
+                      )}
+
+                      {/* Authorized: files list */}
+                      {isNiserOrPrivileged && !booksLoading && !booksError && books.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                          {books.map((book) => (
+                            <div key={book.id} className="cd-book-row">
+                              <span className="cd-book-name">{book.name.replace(/\.pdf$/i, '')}</span>
+                              <div className="cd-book-actions">
+                                <a
+                                  href={`/api/books/download?fileId=${book.id}&bookName=${encodeURIComponent(book.name)}&courseCode=${encodeURIComponent(courseCode)}&semester=${activeSemester}&token=${encodeURIComponent(idToken || '')}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="cd-book-btn openlib"
+                                  style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                >
+                                  <Download size={12} strokeWidth={1.5} /> Download
+                                </a>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.section>
           )}
 
           {/* Reference Books: Removed direct display — users must request books via the Request Book page */}
@@ -736,6 +893,8 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
           0%, 100% { opacity: 0.5; }
           50% { opacity: 1; }
         }
+        .cd-spin { animation: cdSpin 0.7s linear infinite; }
+        @keyframes cdSpin { to { transform: rotate(360deg); } }
       `}</style>
     </>
   );
