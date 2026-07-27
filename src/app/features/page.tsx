@@ -2,25 +2,67 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import {
+  ArrowLeft, BookOpen, UploadCloud, Eye, Search, Download,
+  HelpCircle, ShieldCheck, Bell, BookMarked, Table, CloudUpload,
+} from 'lucide-react';
 
 export default function FeaturesPage() {
   const features = [
     {
+      icon: BookOpen,
       title: 'Curriculum Archive',
-      description: 'Quickly browse/search NISER SBS course syllabus resources, past year papers, lab documents, and notes organized by semester.',
+      description: 'Browse and search NISER SBS course syllabi, past year papers, lab manuals, and lecture slides neatly organized by semester.',
     },
     {
-      title: 'Smart Uploads',
-      description: 'Directly upload files up to 500MB. Uploaded materials are automatically organized, duplicate-checked, and named with co-teaching professors\' last names.',
+      icon: UploadCloud,
+      title: 'Smart Automated Renaming',
+      description: 'Upload files easily — materials are automatically standardized with course codes, category tags, academic year, and professor names.',
     },
     {
+      icon: Eye,
+      title: 'In-Browser File Preview',
+      description: 'Preview PDFs, lecture slides, and documents directly inside the browser before downloading, saving time and storage.',
+    },
+    {
+      icon: Search,
+      title: 'Global Search (Ctrl + K)',
+      description: 'Press Ctrl + K (or Cmd + K) anywhere to search across courses, files, professors, student requests, and announcements instantly.',
+    },
+    {
+      icon: Download,
+      title: 'One-Click Bulk Downloads',
+      description: 'Download all uploaded study materials for an entire course or category in a single click using bundled ZIP archives.',
+    },
+    {
+      icon: HelpCircle,
+      title: 'Resource Request Board',
+      description: 'Can\'t find a specific paper or slide deck? Post a request on the Requests board, or help classmates by fulfilling missing materials.',
+    },
+    {
+      icon: ShieldCheck,
+      title: 'NISER SSO & Anonymity',
+      description: 'Sign in securely with your @niser.ac.in Google account. Choose to show your display name or remain completely anonymous when uploading.',
+    },
+    {
+      icon: Bell,
+      title: 'Department Notice Board',
+      description: 'Stay informed with official department circulars, exam schedules, syllabus updates, and community announcements.',
+    },
+    {
+      icon: BookMarked,
+      title: 'Reference Textbooks Library',
+      description: 'Access recommended standard reference textbooks categorized by biology disciplines (Biochemistry, Cell Bio, Genetics, Microbiology, etc.).',
+    },
+    {
+      icon: Table,
+      title: 'Interactive Grid & Table Views',
+      description: 'Switch between a visual card grid and a compact sortable table view to filter files by professor, exam type, or year.',
+    },
+    {
+      icon: CloudUpload,
       title: 'Background Uploading',
-      description: 'Do not close the window/tab while uploading. This will abort the upload',
-    },
-    {
-      title: 'Request Materials',
-      description: 'Can\'t find a specific slide deck or past year paper? Request it on the Requests board, or help peers by fulfilling their missing material requests.',
+      description: 'Minimize the upload modal to keep browsing while your files upload. Note: keep the browser tab open until uploads complete.',
     },
   ];
 
@@ -72,13 +114,6 @@ export default function FeaturesPage() {
 
         {/* Content */}
         <div className="features-content">
-          {/* <header className="features-hero">
-            <h2>Get to know <span className="highlight">BioArchive</span></h2>
-            <p>A community repository to access, share, and request School of Biological Sciences study resources.</p>
-          </header> */}
-
-
-
           <div
             className="features-carousel"
             ref={containerRef}
@@ -86,14 +121,18 @@ export default function FeaturesPage() {
             onTouchStart={() => setIsPaused(p => !p)}
           >
             <div className="features-grid">
-              {duplicatedFeatures.map((feat, index) => (
-                <div key={index} className="feature-card">
-                  <div className="card-header">
-                    <h3>{feat.title}</h3>
+              {duplicatedFeatures.map((feat, index) => {
+                const IconComponent = feat.icon;
+                return (
+                  <div key={index} className="feature-card">
+                    <div className="card-header">
+                      <IconComponent className="feat-icon" style={{ color: 'var(--gold)' }} />
+                      <h3>{feat.title}</h3>
+                    </div>
+                    <p>{feat.description}</p>
                   </div>
-                  <p>{feat.description}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
