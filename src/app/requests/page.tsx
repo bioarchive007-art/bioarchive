@@ -29,6 +29,13 @@ export default function RequestsPage() {
     requestId: '',
   });
 
+  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'fulfilled'>('all');
+
+  const filteredRequests = useMemo(() => {
+    if (filterStatus === 'all') return requests;
+    return requests.filter(r => r.status === filterStatus);
+  }, [requests, filterStatus]);
+
   // Request Form State
   const [formSem, setFormSem] = useState('');
   const [formCourse, setFormCourse] = useState('');
@@ -205,18 +212,40 @@ export default function RequestsPage() {
             </div>
           ) : (
             <div className="requests-column">
-              <div className="column-title-wrap">
-                <span className="title-accent request" />
-                <h3>Need Files Board</h3>
+              <div className="column-title-wrap" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span className="title-accent request" />
+                  <h3>Need Files Board</h3>
+                </div>
+                <div className="requests-filter-pills">
+                  <button
+                    className={`req-filter-btn ${filterStatus === 'all' ? 'active' : ''}`}
+                    onClick={() => setFilterStatus('all')}
+                  >
+                    All ({requests.length})
+                  </button>
+                  <button
+                    className={`req-filter-btn ${filterStatus === 'pending' ? 'active' : ''}`}
+                    onClick={() => setFilterStatus('pending')}
+                  >
+                    Pending ({requests.filter(r => r.status === 'pending').length})
+                  </button>
+                  <button
+                    className={`req-filter-btn ${filterStatus === 'fulfilled' ? 'active' : ''}`}
+                    onClick={() => setFilterStatus('fulfilled')}
+                  >
+                    Fulfilled ({requests.filter(r => r.status === 'fulfilled').length})
+                  </button>
+                </div>
               </div>
               <div className="column-body requests-list">
-                {requests.length === 0 ? (
+                {filteredRequests.length === 0 ? (
                   <div className="empty-card">
                     <HelpCircle size={36} />
-                    <p>No active material requests. Everything is up to date!</p>
+                    <p>No material requests found for this filter.</p>
                   </div>
                 ) : (
-                  requests.map((req) => {
+                  filteredRequests.map((req) => {
                     const cat = CONFIG.FILE_CATEGORIES[req.fileType as keyof typeof CONFIG.FILE_CATEGORIES] || CONFIG.FILE_CATEGORIES.other;
                     const isPending = req.status === 'pending';
 
@@ -542,6 +571,31 @@ export default function RequestsPage() {
           font-weight: 600;
           color: #f0f0f0;
           margin: 0;
+        }
+        .requests-filter-pills {
+          display: flex;
+          gap: 6px;
+        }
+        .req-filter-btn {
+          font-family: 'Outfit', sans-serif;
+          font-size: 0.72rem;
+          font-weight: 600;
+          padding: 4px 10px;
+          border-radius: 8px;
+          border: 1px solid var(--glass-border);
+          background: rgba(255, 255, 255, 0.03);
+          color: var(--text-3);
+          cursor: pointer;
+          transition: all 0.15s;
+        }
+        .req-filter-btn:hover {
+          background: rgba(255, 255, 255, 0.08);
+          color: var(--text-2);
+        }
+        .req-filter-btn.active {
+          background: rgba(2, 132, 199, 0.15);
+          color: var(--green-bright);
+          border-color: rgba(2, 132, 199, 0.3);
         }
         .column-body {
           display: flex;

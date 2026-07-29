@@ -8,6 +8,7 @@ import { CURRICULUM, Course } from '@/data/curriculum';
 import { SheetRow } from '@/types';
 import { incrementFileDownloads } from '@/lib/api-client';
 import { CONFIG } from '@/config';
+import { findProfessorProfile } from '@/lib/search-utils';
 
 const categoryMeta = CONFIG.FILE_CATEGORIES;
 
@@ -30,15 +31,32 @@ export default function GlobalSearch() {
     return list;
   }, []);
 
-  // Filter courses locally
+  // Filter courses locally with smart professor & alias resolution
   const matchedCourses = useMemo(() => {
     if (!query.trim()) return [];
-    const q = query.toLowerCase();
-    return coursesList.filter(
-      (item) =>
-        item.course.name.toLowerCase().includes(q) ||
-        item.course.code.toLowerCase().includes(q)
-    );
+    const q = query.trim().toLowerCase();
+    const profProfile = findProfessorProfile(q);
+
+    return coursesList.filter((item) => {
+      const nameMatch = item.course.name.toLowerCase().includes(q);
+      const codeMatch = item.course.code.toLowerCase().includes(q);
+
+      let profMatch = false;
+      if (item.course.professors && item.course.professors.length > 0) {
+        profMatch = item.course.professors.some((p) => {
+          const pLower = p.toLowerCase();
+          if (pLower.includes(q)) return true;
+          if (profProfile) {
+            if (pLower.includes(profProfile.name.toLowerCase()) || profProfile.aliases.some(alias => pLower.includes(alias))) {
+              return true;
+            }
+          }
+          return false;
+        });
+      }
+
+      return nameMatch || codeMatch || profMatch;
+    });
   }, [query, coursesList]);
 
   // Click outside to close results
@@ -93,9 +111,51 @@ export default function GlobalSearch() {
     }
   };
 
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+
+  // Reset selectedIndex on query change
+  useEffect(() => {
+    setSelectedIndex(-1);
+  }, [query]);
+
+  const allResultItems = useMemo(() => {
+    const items: Array<{ type: 'course'; course: Course; semester: string } | { type: 'file'; file: SheetRow }> = [];
+    matchedCourses.forEach(c => items.push({ type: 'course', course: c.course, semester: c.semester }));
+    matchingFiles.forEach(f => items.push({ type: 'file', file: f }));
+    return items;
+  }, [matchedCourses, matchingFiles]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!isOpen || allResultItems.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev < allResultItems.length - 1 ? prev + 1 : 0));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev > 0 ? prev - 1 : allResultItems.length - 1));
+    } else if (e.key === 'Escape') {
+      setIsOpen(false);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (selectedIndex >= 0 && selectedIndex < allResultItems.length) {
+        const item = allResultItems[selectedIndex];
+        if (item.type === 'course') {
+          window.location.href = `/course/${encodeURIComponent(item.course.code)}?semester=${encodeURIComponent(item.semester)}`;
+          setIsOpen(false);
+        } else if (item.type === 'file' && item.file.driveWebViewLink) {
+          const url = item.file.driveWebViewLink.replace(/\/view.*$/, '/preview');
+          window.open(url, '_blank');
+          setIsOpen(false);
+        }
+      }
+    }
+  };
+
   const clearSearch = () => {
     setQuery('');
     setMatchingFiles([]);
+    setSelectedIndex(-1);
     setIsOpen(false);
   };
 
@@ -115,6 +175,7 @@ export default function GlobalSearch() {
           }}
           onFocus={() => { setIsOpen(true); setIsFocused(true); }}
           onBlur={() => setIsFocused(false)}
+          onKeyDown={handleKeyDown}
           className="search-input"
         />
         {isLoading && (
@@ -149,26 +210,29 @@ export default function GlobalSearch() {
                   <div className="search-section">
                     <h4 className="search-section-title">Courses</h4>
                     <div className="search-courses-list">
-                      {matchedCourses.map(({ course, semester }, idx) => (
-                        <Link key={course.code} href={`/course/${encodeURIComponent(course.code)}?semester=${semester}`} passHref legacyBehavior>
-                          <motion.a
-                            className="search-course-item"
-                            onClick={() => setIsOpen(false)}
-                            initial={{ opacity: 0, x: -8 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: idx * 0.03, duration: 0.2 }}
-                          >
-                            <div className="sci-badge">
-                              {semester === 'ADVANCE COURSES' ? 'ADV' : `S${semester}`}
-                            </div>
-                            <div className="sci-info">
-                              <span className="sci-code">{course.code}</span>
-                              <span className="sci-name">{course.name}</span>
-                            </div>
-                            <BookOpen size={14} className="sci-icon" />
-                          </motion.a>
-                        </Link>
-                      ))}
+                      {matchedCourses.map(({ course, semester }, idx) => {
+                        const isSelected = selectedIndex === idx;
+                        return (
+                          <Link key={course.code} href={`/course/${encodeURIComponent(course.code)}?semester=${semester}`} passHref legacyBehavior>
+                            <motion.a
+                              className={`search-course-item ${isSelected ? 'selected' : ''}`}
+                              onClick={() => setIsOpen(false)}
+                              initial={{ opacity: 0, x: -8 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: idx * 0.03, duration: 0.2 }}
+                            >
+                              <div className="sci-badge">
+                                {semester === 'ADVANCE COURSES' ? 'ADV' : `S${semester}`}
+                              </div>
+                              <div className="sci-info">
+                                <span className="sci-code">{course.code}</span>
+                                <span className="sci-name">{course.name}</span>
+                              </div>
+                              <BookOpen size={14} className="sci-icon" />
+                            </motion.a>
+                          </Link>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -181,10 +245,11 @@ export default function GlobalSearch() {
                       {matchingFiles.map((file, idx) => {
                         const fileTypeLower = file.fileType?.toLowerCase();
                         const cat = categoryMeta[fileTypeLower as keyof typeof categoryMeta] || categoryMeta.other;
+                        const isSelected = selectedIndex === matchedCourses.length + idx;
                         return (
                           <motion.div
                             key={file.fileId}
-                            className="search-file-item"
+                            className={`search-file-item ${isSelected ? 'selected' : ''}`}
                             onClick={(e) => handlePreview(file, e)}
                             title="Preview file"
                             initial={{ opacity: 0, x: -8 }}
@@ -392,8 +457,9 @@ export default function GlobalSearch() {
           text-decoration: none;
           color: var(--text-2);
         }
-        .search-course-item:hover {
-          background: rgba(255, 255, 255, 0.04);
+        .search-course-item:hover,
+        .search-course-item.selected {
+          background: rgba(2, 132, 199, 0.15);
           color: var(--text);
         }
         .sci-badge {
@@ -441,8 +507,9 @@ export default function GlobalSearch() {
           transition: background 0.15s;
           cursor: pointer;
         }
-        .search-file-item:hover {
-          background: rgba(255, 255, 255, 0.04);
+        .search-file-item:hover,
+        .search-file-item.selected {
+          background: rgba(2, 132, 199, 0.15);
         }
         .sfi-type-icon {
           width: 28px;

@@ -1,26 +1,68 @@
-/**
- * File Renaming Utility for BioArchive
- * Renames uploaded files according to consistent naming convention
- * 
- * Pattern:
- * - Question Papers: COURSECODE_COURSENAME_qpaper_YEAR_EXAMTYPE
- * - Other types:    COURSECODE_COURSENAME_FILETYPE_YEAR
- */
+import { getProfessorAcronym } from './utils';
 
 /**
- * Sanitize a string for use in filenames
- * - Removes special characters
- * - Converts to uppercase
- * - Replaces spaces with underscores
+ * Sanitize a string for traditional naming (PascalCase / Title Case)
+ */
+export function toTraditionalCase(str: string): string {
+  if (!str) return '';
+
+  const knownAcronyms = new Set([
+    'DNA', 'RNA', 'PCR', 'ATP', 'ADP', 'AMP', 'NMR', 'HPLC', 'GC',
+    'MS', 'ES', 'UV', 'IR', 'TCA', 'ECG', 'EEG', 'EMG', 'ELISA',
+  ]);
+
+  return str
+    .trim()
+    .replace(/[^\w\s\-]/g, '')
+    .split(/[\s_\-]+/)
+    .filter(Boolean)
+    .map((word) => {
+      const upper = word.toUpperCase();
+      if (knownAcronyms.has(upper)) return upper;
+      if (/^[A-Z]*\d+[A-Z0-9]*$/i.test(word)) return upper;
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join('');
+}
+
+/**
+ * Standardize exam type: MID_SEMESTER -> MS, END_SEMESTER -> ES
+ */
+export function formatExamType(examType?: string): string {
+  if (!examType) return '';
+  const clean = examType.trim().toLowerCase().replace(/[\s_\-]+/g, '_');
+  if (clean === 'mid_semester' || clean === 'midsemester' || clean === 'mid' || clean === 'ms') {
+    return 'MS';
+  }
+  if (clean === 'end_semester' || clean === 'endsemester' || clean === 'end' || clean === 'es') {
+    return 'ES';
+  }
+  return toTraditionalCase(examType);
+}
+
+/**
+ * Standardize file category labels: qpaper -> QPaper, assignment -> Asgn, etc.
+ */
+export function formatFileTypeLabel(fileType: string): string {
+  const clean = (fileType || '').trim().toLowerCase();
+  if (clean === 'qpaper' || clean === 'question paper' || clean === 'question_paper') return 'QPaper';
+  if (clean === 'notes') return 'Notes';
+  if (clean === 'slides') return 'Slides';
+  if (clean === 'lab' || clean === 'lab_materials') return 'Lab';
+  if (clean === 'assignment' || clean === 'asgn') return 'Asgn';
+  return 'Other';
+}
+
+/**
+ * Sanitize a string for use in filenames while maintaining upper case where needed
  */
 export function sanitizeForFilename(str: string): string {
   return str
     .trim()
-    .toUpperCase()
-    .replace(/\s+/g, '_')           // Replace spaces with underscores
-    .replace(/[^\w\-]/g, '')        // Remove special characters except hyphens
-    .replace(/_+/g, '_')            // Collapse multiple underscores
-    .replace(/^_+|_+$/g, '');       // Remove leading/trailing underscores
+    .replace(/\s+/g, '_')
+    .replace(/[^\w\-]/g, '')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '');
 }
 
 /**
@@ -32,24 +74,7 @@ function getFileExtension(fileName: string): string {
 }
 
 /**
- * Extract first name with Dr. prefix for professor names
- */
-export function getShortProfessorName(profName: string): string {
-  if (!profName) return '';
-  if (profName.trim().toLowerCase() === 'other') {
-    return 'Dr. Unknown';
-  }
-  // Remove common prefixes like Dr., Prof., etc. (case-insensitive)
-  let clean = profName.replace(/^(Dr\.|Prof\.|Dr|Prof)\s+/i, '').trim();
-  // Split on spaces, dots, hyphens, underscores and filter out empty strings
-  const parts = clean.split(/[\s._-]+/).filter(Boolean);
-  if (parts.length === 0) return 'Dr. Unknown';
-  const lastName = parts[parts.length - 1];
-  return `Dr. ${lastName}`;
-}
-
-/**
- * Generate renamed filename based on file type and metadata
+ * Generate renamed filename based on file type and metadata using acronyms and traditional casing
  */
 export function generateRenamedFilename(
   originalFileName: string,
@@ -58,52 +83,49 @@ export function generateRenamedFilename(
     professor: string;
     fileType: string;
     year: string;
-    examType?: string;  // Only for qpaper type
+    examType?: string;
   }
 ): string {
   const extension = getFileExtension(originalFileName);
+  const courseCode = metadata.courseCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
 
-  const courseCode = sanitizeForFilename(metadata.courseCode);
+  // Use professor acronym for filename (e.g. AR, TKC)
+  const profAcronym = getProfessorAcronym(metadata.professor);
 
-  // Use shortened professor name
-  const shortProf = getShortProfessorName(metadata.professor);
-  const professorName = sanitizeForFilename(shortProf);
-
-  // Use abbreviation for assignment
-  let fileType = sanitizeForFilename(metadata.fileType);
-  if (fileType.toLowerCase() === 'assignment') {
-    fileType = 'ASGN';
-  }
+  // Traditional file type label (e.g. QPaper, Notes, Slides, Lab, Asgn)
+  const fileTypeStr = formatFileTypeLabel(metadata.fileType);
 
   const year = metadata.year.trim();
 
-  let newName = '';
   let suffix = '';
   if (originalFileName.toLowerCase().includes('_all_files')) {
-    suffix = '_ALL_FILES';
+    suffix = '_AllFiles';
   }
 
-  // Get current date in dd_mm_yyyy format (representing dd/mm/yyyy without forbidden slashes)
-  const now = new Date();
-  const day = String(now.getDate()).padStart(2, '0');
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const yearStr = now.getFullYear();
-  const dateStr = `${day}_${month}_${yearStr}`;
-
-  // Build name based on file type
+  let newName = '';
   if (metadata.fileType.toLowerCase() === 'qpaper' && metadata.examType) {
-    const examType = sanitizeForFilename(metadata.examType);
-    newName = `${courseCode}_${professorName}_${fileType}_${year}_${examType}${suffix}_${dateStr}`;
+    const examTypeStr = formatExamType(metadata.examType);
+    newName = `${courseCode}_${profAcronym}_${fileTypeStr}_${year}_${examTypeStr}${suffix}`;
   } else {
-    // Extract base original name, sanitize it, and limit length to keep file name reasonable
     const dotIndex = originalFileName.lastIndexOf('.');
     const originalNameWithoutExt = dotIndex !== -1 ? originalFileName.substring(0, dotIndex) : originalFileName;
-    let sanitizedOriginal = sanitizeForFilename(originalNameWithoutExt);
-    if (sanitizedOriginal.length > 80) {
-      sanitizedOriginal = sanitizedOriginal.substring(0, 80);
+
+    // Clean up original filename if it already contains old prefix patterns (e.g. B202_, DR_REHMAN_, NOTES_, 2024_, etc.)
+    let cleanTopic = originalNameWithoutExt
+      .replace(/^B\d{3}_/i, '')
+      .replace(/^(DR_[A-Z_]+|DR[A-Z_]+|PROF_[A-Z_]+)_/i, '')
+      .replace(/^(NOTES|SLIDES|QPAPER|LAB|ASSIGNMENT|ASGN)_/i, '')
+      .replace(/^\d{4}_/i, '')
+      .replace(/_\d{2}_\d{2}_\d{4}$/, '')
+      .replace(/_AllFiles$/i, '');
+
+    // Convert topic to traditional case (PascalCase / Title Case, not all caps)
+    let traditionalTopic = toTraditionalCase(cleanTopic);
+    if (traditionalTopic.length > 50) {
+      traditionalTopic = traditionalTopic.substring(0, 50);
     }
-    const topicPart = sanitizedOriginal ? `_${sanitizedOriginal}` : '';
-    newName = `${courseCode}_${professorName}_${fileType}_${year}${topicPart}${suffix}_${dateStr}`;
+    const topicPart = traditionalTopic ? `_${traditionalTopic}` : '';
+    newName = `${courseCode}_${profAcronym}_${fileTypeStr}_${year}${topicPart}${suffix}`;
   }
 
   return newName + extension;
@@ -134,3 +156,4 @@ export function formatMetadataForRenaming(metadata: {
     examType: metadata.examType?.trim(),
   };
 }
+

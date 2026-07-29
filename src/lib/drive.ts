@@ -388,3 +388,24 @@ export async function moveDriveFile(driveFileId: string, destFolderId: string): 
     throw new Error(`Failed to move file on Google Drive: ${patchRes.statusText} - ${errorText}`);
   }
 }
+
+/**
+ * Renames a file on Google Drive.
+ */
+export async function renameDriveFile(driveFileId: string, newName: string): Promise<void> {
+  const token = await getAccessToken();
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ name: newName })
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to rename file on Google Drive: ${res.statusText} - ${errorText}`);
+  }
+}
+

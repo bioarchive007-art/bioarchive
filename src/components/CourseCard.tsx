@@ -88,12 +88,20 @@ export default function CourseCard({ course, semester }: CourseCardProps) {
           flex-shrink: 0;
           overflow: hidden;
           border: 1px solid rgba(255, 255, 255, 0.1);
+          transition: width 0.3s, height 0.3s;
+        }
+        @media (min-width: 768px) {
+          .cc-icon-wrap {
+            width: 58px;
+            height: 58px;
+            border-radius: 14px;
+          }
         }
         .cc-icon-img {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          border-radius: 10px;
+          border-radius: inherit;
         }
         .cc-icon-fallback {
           font-family: 'Outfit', sans-serif;
@@ -101,6 +109,11 @@ export default function CourseCard({ course, semester }: CourseCardProps) {
           font-weight: 700;
           color: var(--green-bright);
           letter-spacing: 0.04em;
+        }
+        @media (min-width: 768px) {
+          .cc-icon-fallback {
+            font-size: 1.05rem;
+          }
         }
         .cc-info {
           flex: 1;

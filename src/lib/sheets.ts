@@ -361,6 +361,64 @@ export async function incrementDownloadCount(fileId: string): Promise<void> {
   }
 }
 
+export async function updateSheetFileName(fileId: string, newFileName: string): Promise<void> {
+  const token = await getAccessToken();
+  const headerMap = await getSheetHeaderMap();
+
+  const lastCol = getColumnLetter(CONFIG.SHEET_HEADERS.length - 1);
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/Sheet1!A:${lastCol}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch sheet values: ${res.statusText}`);
+  }
+
+  const data = (await res.json()) as { values?: any[][] };
+  const rows = data.values || [];
+  if (rows.length < 2) return;
+
+  const fileIdColIdx = headerMap['fileId'];
+  const fileNameColIdx = headerMap['fileName'];
+
+  if (fileIdColIdx === undefined || fileNameColIdx === undefined) {
+    throw new Error('Missing fileId or fileName columns in the sheet registry');
+  }
+
+  let sheetRowIndex = -1;
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][fileIdColIdx] === fileId) {
+      sheetRowIndex = i + 1;
+      break;
+    }
+  }
+
+  if (sheetRowIndex === -1) return;
+
+  const colLetter = getColumnLetter(fileNameColIdx);
+  const cellRange = `Sheet1!${colLetter}${sheetRowIndex}`;
+
+  const updateRes = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${cellRange}?valueInputOption=RAW`,
+    {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        values: [[newFileName]],
+      }),
+    }
+  );
+
+  if (!updateRes.ok) {
+    const err = await updateRes.text();
+    throw new Error(`Failed to update fileName cell: ${updateRes.statusText} - ${err}`);
+  }
+}
+
+
 export async function deleteFileRecord(fileId: string): Promise<void> {
   const token = await getAccessToken();
   const headerMap = await getSheetHeaderMap();

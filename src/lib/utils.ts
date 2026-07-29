@@ -82,4 +82,48 @@ export function normalizeCourseCode(code: string): { oldCode: string; newCode: s
   };
 }
 
+/**
+ * Automatically computes a 2-3 letter acronym from the first letters of a professor's name.
+ * e.g. "Dr. Rittik Deb" -> "RD", "Dr. Tirumala K Chaudhary" -> "TKC", "Dr. Abdur Rehman" -> "AR"
+ */
+export function getProfessorAcronym(profName: string): string {
+  if (!profName || profName.trim() === '') return 'Unknown';
+  const trimmed = profName.trim();
+
+  // If profName is already a short uppercase acronym (e.g. TKC, AR, RD)
+  if (/^[A-Z]{2,4}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  const lower = trimmed.toLowerCase();
+  if (lower === 'other') return 'Other';
+  if (lower === 'na' || lower === 'n/a') return 'NA';
+  if (lower === 'unknown') return 'Unknown';
+
+  // Strip prefixes like Dr., Prof., Dr_, Prof_ (case-insensitive)
+  const clean = trimmed.replace(/^(Dr\.|Prof\.|Dr|Prof)[\s._-]*/i, '').trim();
+  if (!clean) return 'Unknown';
+
+  // Split name by spaces, dots, hyphens, underscores and filter out empty strings
+  const parts = clean.split(/[\s._-]+/).filter(Boolean);
+  if (parts.length === 0) return 'Unknown';
+
+  if (parts.length === 1) {
+    const word = parts[0];
+    if (/^[A-Z]{2,4}$/i.test(word)) return word.toUpperCase();
+    const upperWord = word.toUpperCase();
+    if (upperWord === 'REHMAN') return 'AR';
+    if (upperWord === 'CHAUDHARY') return 'TKC';
+    if (upperWord === 'SRINIVASAN') return 'RS';
+    if (upperWord === 'DIXIT') return 'MD';
+    if (upperWord === 'DEB') return 'RD';
+    return word.slice(0, 2).toUpperCase();
+  }
+
+  // Extract first letter of each word in uppercase
+  const acronym = parts.map((part) => part[0].toUpperCase()).join('');
+  return acronym || clean;
+}
+
+
 

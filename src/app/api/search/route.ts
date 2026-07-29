@@ -3,6 +3,7 @@ export const runtime = 'edge';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllFiles, getSiteConfig } from '@/lib/sheets';
 import { SheetRow } from '@/types';
+import { scoreAndFilterFiles } from '@/lib/search-utils';
 import { rateLimit } from '@/lib/rate-limit';
 import { serverError } from '@/lib/errors';
 
@@ -56,37 +57,12 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Perform query matching
-    const searchTerms = q.split(/\s+/).filter(Boolean);
-    const filtered = files.filter((file) => {
-      // Exclude files that are not approved (backup check)
-      if (file.status && file.status !== 'approved') return false;
+    // Perform smart query matching & relevance scoring
+    const approvedFiles = files.filter(f => f.status === 'approved' || !f.status);
+    const filtered = scoreAndFilterFiles(approvedFiles, q);
 
-      const fileName = (file.fileName || '').toLowerCase();
-      const courseCode = (file.courseCode || '').toLowerCase();
-      const courseName = (file.courseName || '').toLowerCase();
-      const professor = (file.professor || '').toLowerCase();
-      const uploaderName = (file.uploaderName || '').toLowerCase();
-      const year = (file.year || '').toLowerCase();
-      const examType = (file.examType || '').toLowerCase();
-      const remarks = (file.remarks || '').toLowerCase();
-
-      // Check if all search terms are found in at least one metadata field
-      return searchTerms.every(
-        (term) =>
-          fileName.includes(term) ||
-          courseCode.includes(term) ||
-          courseName.includes(term) ||
-          professor.includes(term) ||
-          uploaderName.includes(term) ||
-          year.includes(term) ||
-          examType.includes(term) ||
-          remarks.includes(term)
-      );
-    });
-
-    // Return top 20 matches
-    return NextResponse.json(filtered.slice(0, 20));
+    // Return top 50 matches
+    return NextResponse.json(filtered.slice(0, 50));
   } catch (err: any) {
     console.error('[api/search] Error:', err);
     return NextResponse.json(

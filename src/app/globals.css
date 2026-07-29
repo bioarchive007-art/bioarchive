@@ -1189,5 +1189,12 @@ select option {
   text-align: left !important;
 }
 
+/* Prevent automatic Safari/iOS browser zoom on form input focus */
+@media (max-width: 768px) {
+  input, select, textarea, .search-input, .um-input, .um-select, .um-textarea {
+    font-size: 16px !important;
+  }
+}
+
 
 

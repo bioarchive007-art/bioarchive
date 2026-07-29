@@ -66,7 +66,6 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
               </motion.a>
             </Link>
             <div className="navbar-links">
-              <Link href="/features" className="nav-link">Features</Link>
               {siteConfig?.enableNotices !== false && <Link href="/notices" className="nav-link">Notices</Link>}
               {siteConfig?.enableFileRequests !== false && (
                 <Link href="/requests" className="nav-link">Requests</Link>
@@ -352,13 +351,7 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
                     </span>
                   </Link>
                 )}
-                <Link
-                  href="/features"
-                  className="mobile-menu-link"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <span>Features</span>
-                </Link>
+
                 {siteConfig?.enableNotices !== false && (
                   <Link
                     href="/notices"

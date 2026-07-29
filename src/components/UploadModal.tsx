@@ -14,6 +14,7 @@ import {
   createUploadSession,
   confirmUpload,
 } from '@/lib/api-client';
+import { getProfessorAcronym } from '@/lib/utils';
 import { useAuth } from './AuthProvider';
 
 interface UploadModalProps {

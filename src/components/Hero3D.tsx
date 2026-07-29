@@ -15,20 +15,27 @@ export default function Hero3D() {
     let timeoutId: any;
 
     const initThree = () => {
-      // Create canvas
-      const canvas = document.createElement('canvas');
-      canvas.setAttribute('role', 'img');
-      canvas.setAttribute('aria-label', 'Interactive 3D rotating DNA double helix model. Move your cursor to rotate and interact.');
-      container.appendChild(canvas);
+      try {
+        // Create canvas and check for WebGL support
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (!gl) {
+          console.warn('[Hero3D] WebGL context unavailable. Skipping 3D background.');
+          return;
+        }
 
-      // Renderer
-      const renderer = new THREE.WebGLRenderer({
-        canvas,
-        antialias: true,
-        alpha: true,
-        powerPreference: 'high-performance', // Hint to browser to use discrete GPU if available
-      });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // Capped at 1.5 for performance on mobile
+        canvas.setAttribute('role', 'img');
+        canvas.setAttribute('aria-label', 'Interactive 3D rotating DNA double helix model. Move your cursor to rotate and interact.');
+        container.appendChild(canvas);
+
+        // Renderer
+        const renderer = new THREE.WebGLRenderer({
+          canvas,
+          antialias: true,
+          alpha: true,
+          powerPreference: 'high-performance',
+        });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 
       // Scene
       const scene = new THREE.Scene();
@@ -323,6 +330,9 @@ export default function Hero3D() {
           container.removeChild(canvas);
         }
       };
+      } catch (err) {
+        console.warn('[Hero3D] WebGL initialization caught error:', err);
+      }
     };
 
     // Initialize deferred to prevent blocking critical paint path/hydration

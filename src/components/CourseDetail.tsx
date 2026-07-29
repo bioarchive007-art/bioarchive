@@ -11,7 +11,7 @@ import { SheetRow } from '@/types';
 import { CONFIG } from '@/config';
 import { CURRICULUM } from '@/data/curriculum';
 import { fetchFilesByCourse } from '@/lib/api-client';
-import { normalizeCourseCode } from '@/lib/utils';
+import { normalizeCourseCode, getProfessorAcronym } from '@/lib/utils';
 import SortableFileTable from './SortableFileTable';
 import UploadModal from './UploadModal';
 import { useAuth } from './AuthProvider';
@@ -48,7 +48,15 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
   const [error, setError] = useState('');
   const [uploadOpen, setUploadOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [expandedAuthors, setExpandedAuthors] = useState<Record<string, boolean>>({});
   const [sortStates, setSortStates] = useState<Record<string, { field: SortField; order: SortOrder }>>({});
+
+  const toggleAuthor = useCallback((author: string) => {
+    setExpandedAuthors((prev) => ({
+      ...prev,
+      [author]: prev[author] !== undefined ? !prev[author] : false,
+    }));
+  }, []);
 
   // Books state
   const [booksExpanded, setBooksExpanded] = useState(false);
@@ -125,6 +133,35 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
     }
     return result;
   }, [filesByType, sortStates]);
+
+  // Group notes files by author (uploaderName)
+  const notesByAuthor = useMemo(() => {
+    const notesFiles = sortedFilesByType['notes'] || [];
+    const groups: Record<string, SheetRow[]> = {};
+
+    for (const file of notesFiles) {
+      const raw = (file.uploaderName || '').trim();
+      let authorName = raw;
+      if (!raw || raw.toLowerCase() === 'anonymous' || raw.toLowerCase() === 'unknown') {
+        authorName = 'Unknown';
+      }
+      if (!groups[authorName]) {
+        groups[authorName] = [];
+      }
+      groups[authorName].push(file);
+    }
+
+    const keys = Object.keys(groups).sort((a, b) => {
+      if (a === 'Unknown') return 1;
+      if (b === 'Unknown') return -1;
+      return a.localeCompare(b);
+    });
+
+    return keys.map((key) => ({
+      author: key,
+      files: groups[key],
+    }));
+  }, [sortedFilesByType]);
 
   const toggleSection = useCallback((section: string) => {
     setExpandedSection((prev) => (prev === section ? null : section));
@@ -276,9 +313,14 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
               <span className="cd-code">{normalizeCourseCode(courseCode).canonical}</span>
               <h1 className="cd-title">{course?.name || normalizeCourseCode(courseCode).canonical}</h1>
               {course && course.professors.length > 0 && (
-                <div className="cd-profs">
+                <div className="cd-profs" title={course.professors.filter((p) => p !== 'Other').join(' · ')}>
                   <Users size={13} strokeWidth={1.5} />
-                  <span>{course.professors.filter((p) => p !== 'Other').join(' · ')}</span>
+                  <span>
+                    {course.professors
+                      .filter((p) => p !== 'Other')
+                      .map((p) => getProfessorAcronym(p))
+                      .join(' · ')}
+                  </span>
                 </div>
               )}
             </div>
@@ -381,16 +423,71 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
                           transition={{ duration: 0.25, ease: 'easeInOut' }}
                           className="cd-type-body"
                         >
-                          <div className="cd-type-table-wrap">
-                            <SortableFileTable
-                              files={typeFiles}
-                              fileType={type}
-                              sortField={sort.field}
-                              sortOrder={sort.order}
-                              onSort={(field) => handleSort(type, field)}
-                              accentColor={config.colorHex}
-                            />
-                          </div>
+                          {type === 'notes' ? (
+                            <div className="cd-authors-wrap">
+                              {notesByAuthor.map(({ author, files: authorFiles }) => {
+                                const isAuthorOpen = expandedAuthors[author] !== false;
+                                return (
+                                  <div key={author} className="cd-author-group">
+                                    <button
+                                      className="cd-author-header"
+                                      onClick={() => toggleAuthor(author)}
+                                    >
+                                      <div className="cd-author-title">
+                                        <Users size={14} style={{ color: config.colorHex }} />
+                                        <span>{author === 'Unknown' ? 'Unknown' : author}</span>
+                                      </div>
+                                      <div className="cd-author-meta">
+                                        <span className="cd-author-count">
+                                          {authorFiles.length} file{authorFiles.length !== 1 ? 's' : ''}
+                                        </span>
+                                        <motion.span
+                                          animate={{ rotate: isAuthorOpen ? 180 : 0 }}
+                                          transition={{ duration: 0.2 }}
+                                          style={{ display: 'flex' }}
+                                        >
+                                          <ChevronDown size={15} strokeWidth={1.5} />
+                                        </motion.span>
+                                      </div>
+                                    </button>
+                                    <AnimatePresence initial={false}>
+                                      {isAuthorOpen && (
+                                        <motion.div
+                                          initial={{ height: 0, opacity: 0 }}
+                                          animate={{ height: 'auto', opacity: 1 }}
+                                          exit={{ height: 0, opacity: 0 }}
+                                          transition={{ duration: 0.2, ease: 'easeInOut' }}
+                                          className="cd-author-body"
+                                        >
+                                          <div className="cd-type-table-wrap">
+                                            <SortableFileTable
+                                              files={authorFiles}
+                                              fileType={type}
+                                              sortField={sort.field}
+                                              sortOrder={sort.order}
+                                              onSort={(field) => handleSort(type, field)}
+                                              accentColor={config.colorHex}
+                                            />
+                                          </div>
+                                        </motion.div>
+                                      )}
+                                    </AnimatePresence>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className="cd-type-table-wrap">
+                              <SortableFileTable
+                                files={typeFiles}
+                                fileType={type}
+                                sortField={sort.field}
+                                sortOrder={sort.order}
+                                onSort={(field) => handleSort(type, field)}
+                                accentColor={config.colorHex}
+                              />
+                            </div>
+                          )}
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -720,6 +817,58 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
         }
         .cd-type-table-wrap {
           padding: 8px 8px 12px;
+        }
+        .cd-authors-wrap {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          padding: 8px;
+        }
+        .cd-author-group {
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 12px;
+          background: rgba(255, 255, 255, 0.02);
+          overflow: hidden;
+        }
+        .cd-author-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          width: 100%;
+          padding: 10px 14px;
+          background: transparent;
+          border: none;
+          color: var(--text);
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+        .cd-author-header:hover {
+          background: rgba(255, 255, 255, 0.05);
+        }
+        .cd-author-title {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-family: 'Outfit', sans-serif;
+          font-size: 0.88rem;
+          font-weight: 600;
+          color: #f0f0f0;
+        }
+        .cd-author-meta {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: rgba(255, 255, 255, 0.4);
+        }
+        .cd-author-count {
+          font-family: 'Outfit', sans-serif;
+          font-size: 0.72rem;
+          background: rgba(255, 255, 255, 0.06);
+          padding: 2px 8px;
+          border-radius: 6px;
+        }
+        .cd-author-body {
+          border-top: 1px solid rgba(255, 255, 255, 0.05);
         }
         .cd-books-header {
           display: flex;

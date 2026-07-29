@@ -9,6 +9,7 @@ import { incrementFileDownloads } from '@/lib/api-client';
 import { useAuth } from './AuthProvider';
 import { checkIsDev } from '@/lib/auth';
 import { useToast } from './Toast';
+import { getProfessorAcronym } from '@/lib/utils';
 import FilePreviewModal from './FilePreviewModal';
 
 type SortField = 'fileName' | 'professor' | 'uploaderName' | 'year' | 'examType' | 'downloadCount';
@@ -37,13 +38,20 @@ export default function SortableFileTable({
   const { showToast } = useToast();
   const [previewFile, setPreviewFile] = useState<SheetRow | null>(null);
 
-  const triggerDownloadAction = (file: SheetRow) => {
+  const triggerDownloadAction = (file: SheetRow, targetTab?: Window | null) => {
     incrementFileDownloads(file.fileId);
     const downloadUrl = `https://drive.google.com/uc?export=download&id=${file.driveFileId}`;
-    window.open(downloadUrl, '_blank');
+    if (targetTab && !targetTab.closed) {
+      targetTab.location.href = downloadUrl;
+    } else {
+      window.open(downloadUrl, '_blank');
+    }
   };
 
   const handleDownload = (file: SheetRow) => {
+    // Open blank tab synchronously to prevent popup blocker on mobile Safari
+    const newTab = typeof window !== 'undefined' ? window.open('about:blank', '_blank') : null;
+
     const checkAndDownload = (currUser: any) => {
       if (siteConfig?.requireNiserToDownload) {
         const email = currUser?.email || '';
@@ -53,11 +61,12 @@ export default function SortableFileTable({
         const isBioarchive = email.toLowerCase() === 'bioarchive007@gmail.com' || email.toLowerCase().startsWith('bioarchive007@');
         const isAllowed = isNiser || isAdmin || isBioarchive || (isDev && email.toLowerCase().endsWith('@gmail.com'));
         if (!isAllowed) {
+          if (newTab && !newTab.closed) newTab.close();
           showToast('Access Restricted: Only @niser.ac.in institutional accounts are authorized to download study materials.', 'error');
           return;
         }
       }
-      triggerDownloadAction(file);
+      triggerDownloadAction(file, newTab);
     };
 
     if (!user) {
@@ -68,6 +77,7 @@ export default function SortableFileTable({
             const cachedUser = JSON.parse(cachedUserStr);
             checkAndDownload(cachedUser);
           } catch (e) {
+            if (newTab && !newTab.closed) newTab.close();
             checkAndDownload(null);
           }
         } else {
@@ -97,7 +107,7 @@ export default function SortableFileTable({
   const columns = React.useMemo(() => {
     const cols: { key: SortField; label: string; width?: string }[] = [
       { key: 'fileName', label: 'File Name' },
-      { key: 'professor', label: 'Professor', width: '140px' },
+      { key: 'professor', label: 'Professor', width: '160px' },
       { key: 'uploaderName', label: 'Uploader', width: '120px' },
       { key: 'year', label: 'Year', width: '80px' },
     ];
@@ -139,7 +149,9 @@ export default function SortableFileTable({
                   {file.fileName}
                 </span>
               </td>
-              <td className="sft-td sft-prof">{file.professor || '—'}</td>
+              <td className="sft-td sft-prof" title={file.professor || ''}>
+                {file.professor || '—'}
+              </td>
               <td className="sft-td sft-uploader">{file.uploaderName || 'Anonymous'}</td>
               <td className="sft-td">
                 {file.year ? (
