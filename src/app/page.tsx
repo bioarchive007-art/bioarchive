@@ -265,13 +265,20 @@ export default function HomePage() {
         }
         @media (max-width: 768px) {
           .hero {
-            grid-template-columns: 1fr;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             text-align: center;
-            padding: 60px 16px 100px;
-            gap: 20px;
-            min-height: calc(100vh - var(--nav-h));
+            padding: 30px 16px 40px;
+            gap: 16px;
+            min-height: 45vh;
+            max-height: 440px;
             position: relative;
-            overflow: visible;
+            overflow: hidden;
+          }
+          .hero-heading {
+            font-size: clamp(2.2rem, 8vw, 3.2rem) !important;
           }
           .hero-animate-wrap {
             align-items: center !important;
@@ -287,7 +294,10 @@ export default function HomePage() {
             justify-content: center !important;
           }
 
-          .semesters-section { padding: 8px 12px 40px; }
+          .semesters-section {
+            padding: 8px 16px 40px;
+            box-sizing: border-box;
+          }
         }
       `}</style>
     </>
