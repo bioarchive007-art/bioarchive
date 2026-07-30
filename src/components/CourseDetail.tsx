@@ -41,7 +41,7 @@ const FILE_TYPE_ORDER = ['qpaper', 'notes', 'slides', 'lab', 'assignment', 'othe
 export default function CourseDetail({ courseCode, semester }: CourseDetailProps) {
   const searchParams = useSearchParams();
   const activeSemester = semester || searchParams.get('semester') || '1';
-  const { siteConfig, user, idToken, triggerLogin } = useAuth();
+  const { siteConfig, user, idToken, triggerLogin, logout } = useAuth();
 
   const [files, setFiles] = useState<SheetRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,6 +64,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
   const [booksLoading, setBooksLoading] = useState(false);
   const [booksError, setBooksError] = useState('');
   const [booksFetched, setBooksFetched] = useState(false);
+  const [booksAuthExpired, setBooksAuthExpired] = useState(false);
 
   // Determine if user has access to books
   const isNiserOrPrivileged = !!user && (
@@ -72,6 +73,59 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
     user.email.toLowerCase().startsWith('bioarchive007@') ||
     user.isAdmin === true
   );
+
+  const fetchBooks = useCallback(async () => {
+    if (!isNiserOrPrivileged || !idToken) return;
+    setBooksLoading(true);
+    setBooksError('');
+    setBooksAuthExpired(false);
+    try {
+      const params = new URLSearchParams({ semester: activeSemester, courseCode });
+      if (idToken) params.set('token', idToken);
+      const res = await fetch(`/api/books?${params.toString()}`);
+      if (res.status === 401) {
+        setBooksAuthExpired(true);
+        setBooksError('Session expired. Please sign in again.');
+        return;
+      }
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        const msg = errData.error || 'Failed to load books';
+        if (res.status === 401 || msg.toLowerCase().includes('sign in') || msg.toLowerCase().includes('auth') || msg.toLowerCase().includes('unauthorized') || msg.toLowerCase().includes('token')) {
+          setBooksAuthExpired(true);
+        }
+        throw new Error(msg);
+      }
+      const data = await res.json();
+      setBooks(Array.isArray(data) ? data : []);
+    } catch (err: any) {
+      setBooksError(err.message || 'Could not load books');
+    } finally {
+      setBooksLoading(false);
+      setBooksFetched(true);
+    }
+  }, [activeSemester, courseCode, idToken, isNiserOrPrivileged]);
+
+  const handleReLoginForBooks = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('bioarchive:auto_open_books', courseCode);
+    }
+    logout();
+    setTimeout(() => {
+      triggerLogin();
+    }, 150);
+  }, [courseCode, logout, triggerLogin]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const autoOpenCourse = sessionStorage.getItem('bioarchive:auto_open_books');
+      if (autoOpenCourse === courseCode && user && isNiserOrPrivileged && idToken) {
+        sessionStorage.removeItem('bioarchive:auto_open_books');
+        setBooksExpanded(true);
+        fetchBooks();
+      }
+    }
+  }, [courseCode, user, isNiserOrPrivileged, idToken, fetchBooks]);
 
   // Find the course from curriculum
   const course = useMemo(() => {
@@ -645,25 +699,8 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
                 onClick={async () => {
                   const newExpanded = !booksExpanded;
                   setBooksExpanded(newExpanded);
-                  if (newExpanded && !booksFetched && isNiserOrPrivileged && idToken) {
-                    setBooksLoading(true);
-                    setBooksError('');
-                    try {
-                      const params = new URLSearchParams({ semester: activeSemester, courseCode });
-                      if (idToken) params.set('token', idToken);
-                      const res = await fetch(`/api/books?${params.toString()}`);
-                      if (!res.ok) {
-                        const errData = await res.json().catch(() => ({}));
-                        throw new Error(errData.error || 'Failed to load books');
-                      }
-                      const data = await res.json();
-                      setBooks(Array.isArray(data) ? data : []);
-                    } catch (err: any) {
-                      setBooksError(err.message || 'Could not load books');
-                    } finally {
-                      setBooksLoading(false);
-                      setBooksFetched(true);
-                    }
+                  if (newExpanded && (!booksFetched || booksAuthExpired) && isNiserOrPrivileged && idToken) {
+                    fetchBooks();
                   }
                 }}
               >
@@ -726,6 +763,29 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
                         </div>
                       )}
 
+                      {/* Session / Auth Expired Prompt */}
+                      {isNiserOrPrivileged && !booksLoading && (booksAuthExpired || (booksError && (booksError.toLowerCase().includes('auth') || booksError.toLowerCase().includes('sign in') || booksError.toLowerCase().includes('unauthorized') || booksError.toLowerCase().includes('expired')))) && (
+                        <div style={{ textAlign: 'center', padding: '24px 16px', background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '12px', margin: '8px 0' }}>
+                          <Lock size={30} strokeWidth={1.5} style={{ color: '#f87171', opacity: 0.8, marginBottom: '10px' }} />
+                          <h4 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '0.92rem', fontWeight: 600, color: '#e0e0e0', margin: '0 0 6px' }}>
+                            Session Expired
+                          </h4>
+                          <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: '0.78rem', color: 'rgba(255, 255, 255, 0.6)', margin: '0 0 14px', maxWidth: '380px', marginLeft: 'auto', marginRight: 'auto' }}>
+                            Your login session has expired after a few hours. Please sign in again to view and download reference books.
+                          </p>
+                          <button
+                            className="btn-gold"
+                            style={{ fontSize: '0.78rem' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleReLoginForBooks();
+                            }}
+                          >
+                            Sign In Again
+                          </button>
+                        </div>
+                      )}
+
                       {/* Authorized: loading */}
                       {isNiserOrPrivileged && booksLoading && (
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '20px 0', color: 'rgba(255,255,255,0.4)', fontFamily: "'Outfit', sans-serif", fontSize: '0.82rem' }}>
@@ -733,22 +793,22 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
                         </div>
                       )}
 
-                      {/* Authorized: error */}
-                      {isNiserOrPrivileged && !booksLoading && booksError && (
+                      {/* Authorized: general error (non-auth) */}
+                      {isNiserOrPrivileged && !booksLoading && booksError && !booksAuthExpired && !(booksError.toLowerCase().includes('auth') || booksError.toLowerCase().includes('sign in') || booksError.toLowerCase().includes('unauthorized') || booksError.toLowerCase().includes('expired')) && (
                         <div style={{ color: '#f87171', fontFamily: "'Outfit', sans-serif", fontSize: '0.82rem', textAlign: 'center', padding: '12px 0' }}>
                           {booksError}
                         </div>
                       )}
 
                       {/* Authorized: empty */}
-                      {isNiserOrPrivileged && !booksLoading && !booksError && booksFetched && books.length === 0 && (
+                      {isNiserOrPrivileged && !booksLoading && !booksError && !booksAuthExpired && booksFetched && books.length === 0 && (
                         <div style={{ textAlign: 'center', padding: '20px 0', fontFamily: "'Outfit', sans-serif", fontSize: '0.82rem', color: 'rgba(255,255,255,0.35)' }}>
                           No reference books available for this course yet.
                         </div>
                       )}
 
                       {/* Authorized: files list */}
-                      {isNiserOrPrivileged && !booksLoading && !booksError && books.length > 0 && (
+                      {isNiserOrPrivileged && !booksLoading && !booksError && !booksAuthExpired && books.length > 0 && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
                           {books.map((book) => (
                             <div key={book.id} className="cd-book-row">
@@ -759,6 +819,12 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
                                   target="_blank"
                                   rel="noreferrer"
                                   className="cd-book-btn openlib"
+                                  onClick={(e) => {
+                                    if (!idToken) {
+                                      e.preventDefault();
+                                      handleReLoginForBooks();
+                                    }
+                                  }}
                                   style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                                 >
                                   <Download size={12} strokeWidth={1.5} /> Download
