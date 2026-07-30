@@ -33,20 +33,25 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const forceRefresh = searchParams.get('refresh') === 'true' || request.headers.get('cache-control') === 'no-cache';
     const { oldCode } = normalizeCourseCode(courseCode);
     const cacheKey = `files:${oldCode.toLowerCase()}:${semester.toLowerCase().trim()}`;
 
-    // Try cache first
-    const cached = await apiCache.get(cacheKey);
-    if (cached) {
-      return NextResponse.json(cached);
+    if (forceRefresh) {
+      await apiCache.delete(cacheKey);
+    } else {
+      // Try cache first
+      const cached = await apiCache.get(cacheKey);
+      if (cached) {
+        return NextResponse.json(cached);
+      }
     }
 
     // Cache miss — fetch from Google Sheets
     const files = await getFilesByCourse(courseCode, semester);
 
-    // Cache the result with 5-day TTL (432000 seconds)
-    await apiCache.set(cacheKey, files, 432000);
+    // Cache the result with 5-minute TTL (300 seconds)
+    await apiCache.set(cacheKey, files, 300);
 
     return NextResponse.json(files);
   } catch (err: any) {

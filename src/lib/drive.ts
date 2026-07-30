@@ -409,3 +409,23 @@ export async function renameDriveFile(driveFileId: string, newName: string): Pro
   }
 }
 
+/**
+ * Retrieves file metadata (id, name, parents) from Google Drive.
+ */
+export async function getDriveFileMetadata(driveFileId: string): Promise<{ id: string; name: string; parents?: string[] }> {
+  const token = await getAccessToken();
+  const res = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${driveFileId}?fields=id,name,parents`,
+    {
+      headers: { Authorization: `Bearer ${token}` }
+    }
+  );
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to get file metadata from Google Drive: ${res.statusText} - ${errorText}`);
+  }
+
+  return (await res.json()) as { id: string; name: string; parents?: string[] };
+}
+

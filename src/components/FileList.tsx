@@ -8,7 +8,7 @@ import {
 import { SheetRow } from '@/types';
 import { CONFIG } from '@/config';
 import { fetchFilesByCourse, incrementFileDownloads } from '@/lib/api-client';
-import { stripHiddenRemarks } from '@/lib/utils';
+import { stripHiddenRemarks, formatFileProfessors, getFileProfessors } from '@/lib/utils';
 
 interface FileListProps {
   courseCode: string;
@@ -185,9 +185,9 @@ export default function FileList({ courseCode, semester }: FileListProps) {
 
               {/* Metadata */}
               <div className="fl-meta">
-                {file.professor && (
+                {getFileProfessors(file).length > 0 && (
                   <span className="fl-meta-item">
-                    <User size={12} strokeWidth={1.5} /> {file.professor}
+                    <User size={12} strokeWidth={1.5} /> {formatFileProfessors(file)}
                   </span>
                 )}
                 {file.year && (

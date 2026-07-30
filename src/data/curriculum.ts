@@ -23,7 +23,7 @@ export const CURRICULUM: Record<string, Course[]> = {
       name: 'Biology I',
       image: 'courseicons/b101.png',
       description: 'Science of Life',
-      professors: ['Dr. R. Srinivasan, Dr. A. Datta Roy', 'Dr. Rittik Deb', 'Dr. Abdur Rehman', 'Other'],
+      professors: ['Dr. Ramanujam Srinivasan', 'Dr. Aniruddha Datta Roy', 'Dr. Rittik Deb', 'Dr. Abdur Rehman', 'Other'],
       textbooks: ['Campbell Biology by Lisa A. Urry', 'Biology by Peter H. Raven'],
     },
     {
@@ -31,7 +31,7 @@ export const CURRICULUM: Record<string, Course[]> = {
       name: 'Biology Laboratory-I',
       image: 'courseicons/b141.png',
       description: '',
-      professors: ['Dr. R. Srinivasan', 'Dr. Md. Saleem','Other'],
+      professors: ['Dr. Ramanujam Srinivasan', 'Dr. Mohammed Saleem', 'Other'],
     },
   ],
   '2': [
@@ -40,7 +40,7 @@ export const CURRICULUM: Record<string, Course[]> = {
       name: 'Biology II',
       image: 'courseicons/b102.png',
       description: 'Cellular and Genetic Basis of Life',
-      professors: ['Dr. Majusha Dixit', 'Dr. R. Srinivasan', 'Dr. Rittik Deb', 'Dr. A. Datta Roy','Other'],
+      professors: ['Dr. Majusha Dixit', 'Dr. Ramanujam Srinivasan', 'Dr. Rittik Deb', 'Dr. Aniruddha Datta Roy', 'Other'],
       textbooks: ['Essential Cell Biology by Bruce Alberts', 'iGenetics: A Molecular Approach by Peter J. Russell'],
     },
     {
@@ -48,7 +48,7 @@ export const CURRICULUM: Record<string, Course[]> = {
       name: 'Biology Laboratory-2',
       image: 'courseicons/b142.png',
       description: '',
-      professors: ['Dr. R. Srinivasan', 'Dr. Majusha Dixit', 'Dr. Hemabindu Vasuki','Other'],
+      professors: ['Dr. Ramanujam Srinivasan', 'Dr. Majusha Dixit', 'Dr. K Himabindu Vasuki', 'Other'],
     },
   ],
   '3': [
@@ -57,31 +57,30 @@ export const CURRICULUM: Record<string, Course[]> = {
       name: 'Microbiology',
       image: 'courseicons/b201.png',
       description: '',
-      professors: ['Dr. R. Srinivasan', 'Dr. Harapriya Mohapatra','Other'],
-      textbooks: ['Brock Biology of Microorganisms by Michael T. Madigan', 'Prescott\'s Microbiology by Joanne Willey'],
+      professors: ['Dr. Ramanujam Srinivasan', 'Dr. Harapriya Mohapatra', 'Other'],
+      textbooks: ['Brock Biology of Microorganisms by Michael T. Madigan', "Prescott's Microbiology by Joanne Willey"],
     },
     {
       code: 'B202',
       name: 'Biochemistry',
       image: 'courseicons/b202.png',
       description: '',
-      professors: ['Dr. Abdur Rehman','Other'],
+      professors: ['Dr. Abdur Rehman', 'Other'],
       textbooks: ['Lehninger Principles of Biochemistry by David L. Nelson', 'Biochemistry by Donald Voet'],
     },
-    
     {
       code: 'B241',
       name: 'Microbiology Laboratory',
       image: 'courseicons/b241.png',
       description: '',
-      professors: ['Dr. R. Srinivasan', 'Dr. Harapriya Mohapatra','Other'],
+      professors: ['Dr. Ramanujam Srinivasan', 'Dr. Harapriya Mohapatra', 'Other'],
     },
     {
       code: 'B242',
       name: 'Biochemistry Laboratory',
       image: 'courseicons/b242.png',
       description: '',
-      professors: ['Dr. Abdur Rehman','Other'],
+      professors: ['Dr. Abdur Rehman', 'Other'],
     },
   ],
   '4': [
@@ -90,30 +89,30 @@ export const CURRICULUM: Record<string, Course[]> = {
       name: 'Cell Biology',
       image: 'courseicons/b204.png',
       description: '',
-      professors: ['Dr. Chandan Goswami', 'Dr. K.C.S. Panigrahi','Other'],
-      textbooks: ['Molecular Biology of the Cell by Bruce Alberts', 'Karp\'s Cell and Molecular Biology by Gerald Karp'],
+      professors: ['Prof. Chandan Goswami', 'Dr. Kishore C.S. Panigrahi', 'Other'],
+      textbooks: ['Molecular Biology of the Cell by Bruce Alberts', "Karp's Cell and Molecular Biology by Gerald Karp"],
     },
     {
       code: 'B206',
       name: 'Molecular Biology',
       image: 'courseicons/b206.png',
       description: '',
-      professors: ['Dr. Pankaj Alone', 'Dr. Tridib Mahata','Other'],
-      textbooks: ['Molecular Biology of the Gene by James D. Watson', 'Lewin\'s Genes by Jocelyn E. Krebs'],
+      professors: ['Dr. Pankaj Vidyadhar Alone', 'Dr. Tridib Mahata', 'Other'],
+      textbooks: ['Molecular Biology of the Gene by James D. Watson', "Lewin's Genes by Jocelyn E. Krebs"],
     },
     {
       code: 'B243',
       name: 'Cell Biology Laboratory',
       image: 'courseicons/b243.png',
       description: '',
-      professors: ['Dr. Chandan Goswami', 'Dr. K.C.S. Panigrahi','Other'],
+      professors: ['Prof. Chandan Goswami', 'Dr. Kishore C.S. Panigrahi', 'Other'],
     },
     {
       code: 'B245',
       name: 'Molecular Biology Laboratory',
       image: 'courseicons/b245.png',
       description: '',
-      professors: ['Dr. Pankaj Alone', 'Dr. Tridib Mahata','Other'],
+      professors: ['Dr. Pankaj Vidyadhar Alone', 'Dr. Tridib Mahata', 'Other'],
     },
   ],
   '5': [
@@ -130,7 +129,7 @@ export const CURRICULUM: Record<string, Course[]> = {
       name: 'Plant Physiology',
       image: 'courseicons/b302.png',
       description: '',
-      professors: ['Dr. K.C.S. Panigrahi', 'Dr. Himabindu Vasuki'],
+      professors: ['Dr. Kishore C.S. Panigrahi', 'Dr. K Himabindu Vasuki'],
       textbooks: ['Plant Physiology and Development by Lincoln Taiz'],
     },
     {
@@ -138,7 +137,7 @@ export const CURRICULUM: Record<string, Course[]> = {
       name: 'Ecology',
       image: 'courseicons/b303.png',
       description: '',
-      professors: ['Dr. A. Datta Roy','Dr. Rittik Deb'],
+      professors: ['Dr. Aniruddha Datta Roy', 'Dr. Rittik Deb'],
       textbooks: ['Ecology: From Individuals to Ecosystems by Michael Begon', 'Elements of Ecology by Thomas M. Smith'],
     },
     {
@@ -153,7 +152,7 @@ export const CURRICULUM: Record<string, Course[]> = {
       name: 'Plant Physiology Laboratory',
       image: 'courseicons/b342.png',
       description: '',
-      professors: ['Dr. K.C.S. Panigrahi', 'Dr. Himabindu Vasuki'],
+      professors: ['Dr. Kishore C.S. Panigrahi', 'Dr. K Himabindu Vasuki'],
     },
   ],
   '6': [
@@ -163,14 +162,14 @@ export const CURRICULUM: Record<string, Course[]> = {
       image: 'courseicons/b305.png',
       description: '',
       professors: ['Dr. Subhasis Chattopadhyay'],
-      textbooks: ['Kuby Immunology by Jenni Punt', 'Janeway\'s Immunobiology by Kenneth Murphy'],
+      textbooks: ['Kuby Immunology by Jenni Punt', "Janeway's Immunobiology by Kenneth Murphy"],
     },
     {
       code: 'B307',
       name: 'Genetics',
       image: 'courseicons/b307.png',
       description: '',
-      professors: ['Dr. Majusha Dixit', 'Dr. Debasmita P. Alone', 'Other'],
+      professors: ['Dr. Majusha Dixit', 'Dr. Debasmita Pankaj Alone', 'Other'],
       textbooks: ['Principles of Genetics by D. Peter Snustad', 'Genetics: A Conceptual Approach by Benjamin A. Pierce'],
     },
     {
@@ -178,7 +177,7 @@ export const CURRICULUM: Record<string, Course[]> = {
       name: 'Evolutionary Biology',
       image: 'courseicons/b306.png',
       description: '',
-      professors: ['Dr. A. Datta Roy','Dr. Rittik Deb'],
+      professors: ['Dr. Aniruddha Datta Roy', 'Dr. Rittik Deb'],
       textbooks: ['Evolution by Douglas J. Futuyma', 'Evolutionary Analysis by Jon C. Herron'],
     },
     {
@@ -193,7 +192,7 @@ export const CURRICULUM: Record<string, Course[]> = {
       name: 'Genetics Laboratory',
       image: 'courseicons/b345.png',
       description: '',
-      professors: ['Dr. Majusha Dixit', 'Dr. Debasmita P. Alone', 'Other'],
+      professors: ['Dr. Majusha Dixit', 'Dr. Debasmita Pankaj Alone', 'Other'],
     },
   ],
   '7': [
@@ -228,16 +227,15 @@ export const CURRICULUM: Record<string, Course[]> = {
       name: 'Bio-informatics and Computational Biology',
       image: 'courseicons/b403.png',
       description: '',
-      professors: ['Dr. Badiree Konimala', 'Dr. Mohammed Saleem'],
+      professors: ['Dr. V Badireenath Konkimalla', 'Dr. Mohammed Saleem'],
     },
     {
       code: 'B407',
       name: 'Quantitative and Systems Biology',
       image: 'courseicons/b407.png',
       description: '',
-      professors: ['Dr. Palok Aich', 'Other'],
+      professors: ['Prof. Palok Aich', 'Other'],
     },
-    
   ],
   'ADVANCE COURSES': [
     {
@@ -245,14 +243,14 @@ export const CURRICULUM: Record<string, Course[]> = {
       name: 'Advanced Cell Biology',
       image: 'courseicons/b451.png',
       description: '',
-      professors: ['Dr. Chandan Goswami'],
+      professors: ['Prof. Chandan Goswami'],
     },
     {
       code: 'B455',
       name: 'Enzymology',
       image: 'courseicons/b455.png',
       description: '',
-      professors: ['Dr. Tirumala K Chaudhary'],
+      professors: ['Dr. Tirumala Kumar Chowdary'],
     },
     {
       code: 'B453',
@@ -266,7 +264,7 @@ export const CURRICULUM: Record<string, Course[]> = {
       name: 'Virology',
       image: 'courseicons/b460.png',
       description: '',
-      professors: ['Dr. Tirumala K Chaudhary'],
+      professors: ['Dr. Tirumala Kumar Chowdary'],
     },
     {
       code: 'B462',
@@ -280,7 +278,7 @@ export const CURRICULUM: Record<string, Course[]> = {
       name: 'Plant Developmental Biology',
       image: 'courseicons/b463.png',
       description: '',
-      professors: ['Dr. K.C.S. Panigrahi', 'Dr. Himabindu Vasuki', 'Other'],
+      professors: ['Dr. Kishore C.S. Panigrahi', 'Dr. K Himabindu Vasuki', 'Other'],
     },
     {
       code: 'B464',
@@ -301,7 +299,7 @@ export const CURRICULUM: Record<string, Course[]> = {
       name: 'Advanced Molecular Biology',
       image: 'courseicons/b551.png',
       description: '',
-      professors: ['Dr. Pankaj Alone', 'Dr. Tridib Mahata'],
+      professors: ['Dr. Pankaj Vidyadhar Alone', 'Dr. Tridib Mahata'],
     },
     {
       code: 'B554',
@@ -315,7 +313,7 @@ export const CURRICULUM: Record<string, Course[]> = {
       name: 'Molecular Genetics',
       image: 'courseicons/b555.png',
       description: '',
-      professors: ['Dr. Pankaj Alone', 'Dr. Tridib Mahata'],
+      professors: ['Dr. Pankaj Vidyadhar Alone', 'Dr. Tridib Mahata'],
     },
     {
       code: 'BIO700',
@@ -326,4 +324,3 @@ export const CURRICULUM: Record<string, Course[]> = {
     },
   ],
 };
-

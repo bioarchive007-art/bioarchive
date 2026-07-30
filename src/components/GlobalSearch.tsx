@@ -9,16 +9,30 @@ import { SheetRow } from '@/types';
 import { incrementFileDownloads } from '@/lib/api-client';
 import { CONFIG } from '@/config';
 import { findProfessorProfile } from '@/lib/search-utils';
+import { formatFileProfessors, getFileProfessors } from '@/lib/utils';
 
 const categoryMeta = CONFIG.FILE_CATEGORIES;
 
-export default function GlobalSearch() {
+interface GlobalSearchProps {
+  autoFocus?: boolean;
+  onClose?: () => void;
+}
+
+export default function GlobalSearch({ autoFocus, onClose }: GlobalSearchProps = {}) {
   const [query, setQuery] = useState('');
   const [matchingFiles, setMatchingFiles] = useState<SheetRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (autoFocus && inputRef.current) {
+      inputRef.current.focus();
+      setIsFocused(true);
+    }
+  }, [autoFocus]);
 
   // Flatten courses with their semester for easy searching
   const coursesList = useMemo(() => {
@@ -166,8 +180,9 @@ export default function GlobalSearch() {
       <div className={`search-input-wrapper ${isFocused ? 'focused' : ''}`}>
         <Search size={18} className="search-icon" />
         <input
+          ref={inputRef}
           type="text"
-          placeholder="Search files, courses, topics, or professors..."
+          placeholder="Search files, courses, topics, or professors... (Ctrl + K)"
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -186,6 +201,11 @@ export default function GlobalSearch() {
         {!isLoading && query && (
           <button onClick={clearSearch} className="search-clear-btn" aria-label="Clear search">
             <X size={16} />
+          </button>
+        )}
+        {onClose && (
+          <button onClick={onClose} className="search-clear-btn" aria-label="Close modal" style={{ marginLeft: 4 }}>
+            <X size={18} />
           </button>
         )}
       </div>
@@ -271,10 +291,10 @@ export default function GlobalSearch() {
                                     <span className="sfi-year">{file.year}</span>
                                   </>
                                 )}
-                                {file.professor && (
+                                {getFileProfessors(file).length > 0 && (
                                   <>
                                     <span className="sfi-divider">•</span>
-                                    <span className="sfi-prof">{file.professor}</span>
+                                    <span className="sfi-prof">{formatFileProfessors(file)}</span>
                                   </>
                                 )}
                               </div>

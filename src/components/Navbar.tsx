@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Upload, AlertCircle, Info, LogOut, Lock } from 'lucide-react';
+import { Menu, X, Upload, AlertCircle, Info, LogOut, Lock, Search } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from './AuthProvider';
+import GlobalSearch from './GlobalSearch';
 
 interface NavbarProps {
   onUploadClick: () => void;
@@ -25,10 +26,22 @@ const getInitials = (name: string) => {
 
 export default function Navbar({ onUploadClick }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
   const { user, logout, triggerLogin, siteConfig } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
 
   const isAdmin = !!(user && user.isAdmin);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setSearchModalOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleUploadClick = () => {
     onUploadClick();
@@ -229,6 +242,28 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
               </button>
             )}
 
+            <button
+              className="navbar-search-btn"
+              onClick={() => setSearchModalOpen(true)}
+              title="Search (Ctrl + K)"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '34px',
+                height: '34px',
+                borderRadius: '8px',
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid var(--glass-border)',
+                color: 'var(--text-2)',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                marginRight: '8px'
+              }}
+            >
+              <Search size={16} />
+            </button>
+
             {siteConfig?.enableUploads !== false && (
               <button className="navbar-upload-btn" onClick={handleUploadClick}>
                 <Upload size={16} />
@@ -238,6 +273,48 @@ export default function Navbar({ onUploadClick }: NavbarProps) {
           </div>
         </div>
       </motion.nav>
+
+      {/* Global Search Modal */}
+      <AnimatePresence>
+        {searchModalOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                background: 'rgba(0, 0, 0, 0.75)',
+                backdropFilter: 'blur(8px)',
+                zIndex: 9999,
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'center',
+                paddingTop: '80px',
+                paddingLeft: '16px',
+                paddingRight: '16px'
+              }}
+              onClick={() => setSearchModalOpen(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0, y: -20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: -20 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                style={{
+                  width: '100%',
+                  maxWidth: '680px'
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <GlobalSearch autoFocus onClose={() => setSearchModalOpen(false)} />
+              </motion.div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Mobile Menu Drawer */}
       <AnimatePresence>

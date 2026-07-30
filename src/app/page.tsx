@@ -141,11 +141,12 @@ export default function HomePage() {
           align-items: center;
           justify-content: center;
           text-align: center;
-          padding: 80px 20px 100px;
+          padding: 40px 20px 50px;
           max-width: 800px;
           margin: 0 auto;
           width: 100%;
-          min-height: calc(100vh - var(--nav-h));
+          min-height: 50vh;
+          max-height: 520px;
           overflow: hidden;
         }
         .scroll-indicator-wrap {

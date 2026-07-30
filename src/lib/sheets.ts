@@ -53,6 +53,48 @@ function rowToSheetRow(row: any[], headerMap: Record<string, number>): SheetRow 
     return row[idx];
   };
 
+  const remarksVal = getVal('remarks');
+
+  let contentScope = getVal('contentScope');
+  if (!contentScope && remarksVal) {
+    const match = remarksVal.match(/\[Content:\s*([^\]]+)\]/i);
+    if (match) contentScope = match[1].trim();
+  }
+
+  let authorName = getVal('authorName');
+  if (!authorName && remarksVal) {
+    const match = remarksVal.match(/\[Author:\s*([^\]]+)\]/i);
+    if (match) authorName = match[1].trim();
+  }
+
+  let authorBatch = getVal('authorBatch');
+  if (!authorBatch && remarksVal) {
+    const match = remarksVal.match(/\[Batch:\s*([^\]]+)\]/i);
+    if (match) authorBatch = match[1].trim();
+  }
+
+  // Parse embedded batch from authorName string if present (e.g. "The ONE (Batch: 22)" or "The ONE (22)")
+  if (authorName) {
+    const embeddedBatchMatch = authorName.match(/\s*\((?:Batch:\s*)?([^)]+)\)/i);
+    if (embeddedBatchMatch) {
+      if (!authorBatch) {
+        authorBatch = embeddedBatchMatch[1].trim();
+      }
+      authorName = authorName.replace(/\s*\((?:Batch:\s*)?([^)]+)\)/i, '').trim();
+    }
+  }
+
+  // Also extract batch from remarks if present inside (Batch: ...)
+  if (!authorBatch && remarksVal) {
+    const batchInRemarks = remarksVal.match(/\(Batch:\s*([^)]+)\)/i);
+    if (batchInRemarks) {
+      authorBatch = batchInRemarks[1].trim();
+    }
+  }
+
+  const rawStatus = getVal('status');
+  const statusVal = (!rawStatus || String(rawStatus).trim() === '') ? 'approved' : String(rawStatus).trim().toLowerCase();
+
   return {
     fileId: getVal('fileId'),
     r2Key: getVal('r2Key'),
@@ -73,8 +115,11 @@ function rowToSheetRow(row: any[], headerMap: Record<string, number>): SheetRow 
     r2Url: getVal('r2Url'),
     driveWebViewLink: getVal('driveWebViewLink'),
     downloadCount: Number(getVal('downloadCount', 0)) || 0,
-    remarks: getVal('remarks'),
-    status: getVal('status', 'approved'),
+    remarks: remarksVal,
+    contentScope: contentScope || undefined,
+    authorName: authorName || undefined,
+    authorBatch: authorBatch || undefined,
+    status: statusVal,
   };
 }
 
@@ -157,9 +202,10 @@ export async function getFilesByCourse(courseCode: string, semester: string, inc
   return allFiles.filter(
     (file) => {
       const { oldCode: fileOld } = normalizeCourseCode(file.courseCode);
+      const isApproved = !file.status || file.status === 'approved' || file.status === 'approved_registry';
       return fileOld.toLowerCase() === queryOld.toLowerCase() &&
         file.semester.toString() === semester.toString() &&
-        (includePending || file.status === 'approved');
+        (includePending || isApproved);
     }
   );
 }

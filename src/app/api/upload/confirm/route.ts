@@ -159,6 +159,9 @@ export async function POST(request: NextRequest) {
       driveWebViewLink: metadata.driveWebViewLink || '',
       downloadCount: 0,
       remarks: finalRemarks,
+      contentScope: metadata.contentScope || undefined,
+      authorName: metadata.authorName || undefined,
+      authorBatch: metadata.authorBatch || undefined,
       status,
     };
 

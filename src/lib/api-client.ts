@@ -45,6 +45,9 @@ export interface UploadSessionParams {
   professor2?: string;
   professor3?: string;
   uploaderName: string;
+  authorName?: string;
+  authorBatch?: string;
+  contentScope?: string;
   remarks?: string;
 }
 
@@ -63,6 +66,9 @@ export interface UploadSessionResult {
     examType: string;
     fileType: string;
     uploaderName: string;
+    authorName?: string;
+    authorBatch?: string;
+    contentScope?: string;
     remarks?: string;
     mimeType: string;
     fileSize: number;

@@ -46,7 +46,10 @@ export const CONFIG = Object.freeze({
     'driveWebViewLink',
     'downloadCount',
     'remarks',
-    'status'
+    'status',
+    'contentScope',
+    'authorName',
+    'authorBatch'
   ] as const,
   MAX_FILE_SIZE_MB: 500,
 });

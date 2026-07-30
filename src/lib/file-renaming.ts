@@ -13,6 +13,8 @@ export function toTraditionalCase(str: string): string {
 
   return str
     .trim()
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
     .replace(/[^\w\s\-]/g, '')
     .split(/[\s_\-]+/)
     .filter(Boolean)
@@ -22,7 +24,7 @@ export function toTraditionalCase(str: string): string {
       if (/^[A-Z]*\d+[A-Z0-9]*$/i.test(word)) return upper;
       return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
     })
-    .join('');
+    .join(' ');
 }
 
 /**
@@ -59,10 +61,10 @@ export function formatFileTypeLabel(fileType: string): string {
 export function sanitizeForFilename(str: string): string {
   return str
     .trim()
-    .replace(/\s+/g, '_')
-    .replace(/[^\w\-]/g, '')
-    .replace(/_+/g, '_')
-    .replace(/^_+|_+$/g, '');
+    .replace(/\s+/g, ' ')
+    .replace(/[^\w\s\-]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 /**
@@ -98,7 +100,7 @@ export function generateRenamedFilename(
   const year = metadata.year.trim();
 
   let suffix = '';
-  if (originalFileName.toLowerCase().includes('_all_files')) {
+  if (originalFileName.toLowerCase().includes('_all_files') || originalFileName.toLowerCase().includes(' all files')) {
     suffix = '_AllFiles';
   }
 
@@ -110,19 +112,19 @@ export function generateRenamedFilename(
     const dotIndex = originalFileName.lastIndexOf('.');
     const originalNameWithoutExt = dotIndex !== -1 ? originalFileName.substring(0, dotIndex) : originalFileName;
 
-    // Clean up original filename if it already contains old prefix patterns (e.g. B202_, DR_REHMAN_, NOTES_, 2024_, etc.)
+    // Clean up original filename if it already contains old prefix patterns
     let cleanTopic = originalNameWithoutExt
-      .replace(/^B\d{3}_/i, '')
-      .replace(/^(DR_[A-Z_]+|DR[A-Z_]+|PROF_[A-Z_]+)_/i, '')
-      .replace(/^(NOTES|SLIDES|QPAPER|LAB|ASSIGNMENT|ASGN)_/i, '')
+      .replace(/^(B\d{3}|BIO\d{3}|[A-Z]{2,4}\d{3})_/i, '')
+      .replace(/^(DR_[A-Z_]+|DR[A-Z_]+|PROF_[A-Z_]+|[A-Z]{2,4})_/i, '')
+      .replace(/^(NOTES|SLIDES|QPAPER|LAB|ASSIGNMENT|ASGN|OTHER)_/i, '')
       .replace(/^\d{4}_/i, '')
       .replace(/_\d{2}_\d{2}_\d{4}$/, '')
       .replace(/_AllFiles$/i, '');
 
-    // Convert topic to traditional case (PascalCase / Title Case, not all caps)
+    // Convert topic to traditional case with spaces between words
     let traditionalTopic = toTraditionalCase(cleanTopic);
     if (traditionalTopic.length > 50) {
-      traditionalTopic = traditionalTopic.substring(0, 50);
+      traditionalTopic = traditionalTopic.substring(0, 50).trim();
     }
     const topicPart = traditionalTopic ? `_${traditionalTopic}` : '';
     newName = `${courseCode}_${profAcronym}_${fileTypeStr}_${year}${topicPart}${suffix}`;

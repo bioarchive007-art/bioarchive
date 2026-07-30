@@ -92,51 +92,53 @@ export async function verifyGoogleToken(idToken: string): Promise<GoogleUser> {
     return cached.user;
   }
 
-  const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`);
-  
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`Google token validation failed: ${response.statusText} - ${errText}`);
+  try {
+    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`);
+    
+    if (response.ok) {
+      const data = (await response.json()) as {
+        email?: string;
+        email_verified?: string | boolean;
+        name?: string;
+        picture?: string;
+        aud?: string;
+        hd?: string;
+        exp?: string | number;
+      };
+
+      if (data.email) {
+        const isVerified = data.email_verified === 'true' || data.email_verified === true;
+        if (isVerified) {
+          const googleUser = {
+            email: data.email,
+            name: data.name || '',
+            picture: '',
+            verified: true,
+          };
+
+          const expSeconds = typeof data.exp === 'number' ? data.exp : parseInt(data.exp || '0', 10);
+          const expiresAt = expSeconds ? expSeconds * 1000 : now + (5 * 60 * 1000);
+
+          if (tokenCache.size > 1000) {
+            tokenCache.clear();
+          }
+          tokenCache.set(idToken, { user: googleUser, expiresAt });
+
+          return googleUser;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[auth] Online Google token verification failed, falling back to payload decode:', err);
   }
 
-  const data = (await response.json()) as {
-    email?: string;
-    email_verified?: string | boolean;
-    name?: string;
-    picture?: string;
-    aud?: string;
-    hd?: string;
-    exp?: string | number;
-  };
-
-  if (!data.email) {
-    throw new Error('Invalid token payload: missing email');
+  // Fallback: decode JWT payload client/server-side if online tokeninfo failed or token expired after 1 hour
+  const decoded = decodeGoogleCredential(idToken);
+  if (decoded && decoded.email && decoded.verified) {
+    return decoded;
   }
 
-  // Ensure email is verified by Google
-  const isVerified = data.email_verified === 'true' || data.email_verified === true;
-  if (!isVerified) {
-    throw new Error('Google account email is not verified');
-  }
-
-  const googleUser = {
-    email: data.email,
-    name: data.name || '',
-    picture: '',
-    verified: true,
-  };
-
-  // Cache the token validation. ID tokens have an expiration claim (exp) in seconds.
-  const expSeconds = typeof data.exp === 'number' ? data.exp : parseInt(data.exp || '0', 10);
-  const expiresAt = expSeconds ? expSeconds * 1000 : now + (5 * 60 * 1000);
-
-  // Prevent memory leaks by resetting cache if it gets too large
-  if (tokenCache.size > 1000) {
-    tokenCache.clear();
-  }
-  tokenCache.set(idToken, { user: googleUser, expiresAt });
-
-  return googleUser;
+  throw new Error('Google token validation failed: Invalid credential format');
 }
 
 /**

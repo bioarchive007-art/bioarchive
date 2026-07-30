@@ -15,6 +15,7 @@ import {
   confirmUpload,
 } from '@/lib/api-client';
 import { getProfessorAcronym } from '@/lib/utils';
+import { getAllProfessors } from '@/data/professors';
 import { useAuth } from './AuthProvider';
 
 interface UploadModalProps {
@@ -63,6 +64,8 @@ export default function UploadModal({
   // Step 0: Details
   const [fileType, setFileType] = useState('');
   const [examType, setExamType] = useState('');
+  const [contentScope, setContentScope] = useState('');
+  const [customContentDates, setCustomContentDates] = useState('');
   const [year, setYear] = useState(new Date().getFullYear().toString());
   const [semester, setSemester] = useState('');
   const [courseCode, setCourseCode] = useState('');
@@ -78,6 +81,9 @@ export default function UploadModal({
   const [files, setFiles] = useState<File[]>([]);
 
   // Step 2: Review & Submit
+  const [authorName, setAuthorName] = useState('');
+  const [authorBatch, setAuthorBatch] = useState('');
+  const [isUploaderSameAsAuthor, setIsUploaderSameAsAuthor] = useState(true);
   const [uploaderName, setUploaderName] = useState('');
   const [showName, setShowName] = useState(true);
   const [remarks, setRemarks] = useState('');
@@ -138,6 +144,11 @@ export default function UploadModal({
         setFiles([]);
         setFileType('');
         setExamType('');
+        setContentScope('');
+        setCustomContentDates('');
+        setAuthorName('');
+        setAuthorBatch('');
+        setIsUploaderSameAsAuthor(true);
         setYear(new Date().getFullYear().toString());
         setSemester('');
         setCourseCode('');
@@ -221,11 +232,16 @@ export default function UploadModal({
     return /^\d{4}$/.test(year) && !isNaN(y) && y <= new Date().getFullYear();
   }, [year]);
 
+  const allProfessors = useMemo(() => getAllProfessors(), []);
+
   const isOther = (val: string) => (val || '').trim().toLowerCase() === 'other';
 
   const resolvedProfessor = isOther(professor) ? customProfessor.trim() : professor;
   const resolvedProfessor2 = isOther(professor2) ? customProfessor2.trim() : professor2;
   const resolvedProfessor3 = isOther(professor3) ? customProfessor3.trim() : professor3;
+
+  const isNotesOrSlides = fileType === 'notes' || fileType === 'slides';
+  const isValidContentScope = !isNotesOrSlides || (contentScope !== '' && (contentScope !== 'Other' || customContentDates.trim() !== ''));
 
   const canProceedStep0 =
     fileType &&
@@ -236,9 +252,10 @@ export default function UploadModal({
     !isOther(resolvedProfessor) &&
     (!professor2 || !isOther(professor2) || (resolvedProfessor2 && !isOther(resolvedProfessor2))) &&
     (!professor3 || !isOther(professor3) || (resolvedProfessor3 && !isOther(resolvedProfessor3))) &&
-    (fileType !== 'qpaper' || examType);
+    (fileType !== 'qpaper' || examType) &&
+    isValidContentScope;
   const canProceedStep1 = files.length > 0;
-  const canSubmit = canProceedStep0 && canProceedStep1;
+  const canSubmit = canProceedStep0 && canProceedStep1 && (fileType !== 'notes' || (authorName.trim() !== '' && authorBatch.trim() !== ''));
 
   const handleSubmit = async () => {
     if (!selectedCourse || !canSubmit || files.length === 0) return;
@@ -275,11 +292,29 @@ export default function UploadModal({
     };
 
     try {
-      const displayName = showName ? uploaderName : 'Anonymous';
+      const effectiveUploader = (fileType === 'notes' && isUploaderSameAsAuthor) ? authorName : uploaderName;
+      const displayName = showName ? (effectiveUploader || 'Anonymous') : 'Anonymous';
       const filesToUpload = [...files];
       const totalFiles = filesToUpload.length;
       const fileProgresses = new Array(totalFiles).fill(0);
       const duplicateWarnings: string[] = [];
+
+      const contentScopeResolved = isNotesOrSlides
+        ? (contentScope === 'Other'
+            ? (customContentDates.trim() ? `Other (${customContentDates.trim()})` : 'Other')
+            : contentScope === 'Chapterwise'
+            ? (customContentDates.trim() ? `Chapterwise (${customContentDates.trim()})` : 'Chapterwise')
+            : contentScope)
+        : '';
+
+      let formattedRemarks = remarks.trim();
+      if (contentScopeResolved) {
+        formattedRemarks = `[Content: ${contentScopeResolved}] ${formattedRemarks}`.trim();
+      }
+      if (fileType === 'notes' && authorName.trim()) {
+        const batchPart = authorBatch.trim() ? ` (Batch: ${authorBatch.trim()})` : '';
+        formattedRemarks = `[Author: ${authorName.trim()}${batchPart}] ${formattedRemarks}`.trim();
+      }
 
       // Step A: Create upload sessions sequentially to avoid concurrent folder creation race conditions
       const sessions: any[] = [];
@@ -300,7 +335,10 @@ export default function UploadModal({
           professor2: resolvedProfessor2,
           professor3: resolvedProfessor3,
           uploaderName: displayName,
-          remarks,
+          authorName: fileType === 'notes' ? authorName.trim() : undefined,
+          authorBatch: fileType === 'notes' ? authorBatch.trim() : undefined,
+          contentScope: isNotesOrSlides ? contentScopeResolved : undefined,
+          remarks: formattedRemarks,
         });
         sessions.push(session);
       }
@@ -617,6 +655,44 @@ export default function UploadModal({
                           </>
                         )}
 
+                        {/* Content Scope (notes and slides) */}
+                        {isNotesOrSlides && (
+                          <>
+                            <label className="um-label">Content Portion / Scope *</label>
+                            <div className="um-exam-row">
+                              {['Pre-Midsemester', 'Post-Midsemester', 'Full Semester', 'Chapterwise', 'Other'].map((cs) => (
+                                <button
+                                  key={cs}
+                                  type="button"
+                                  className={`um-pill ${contentScope === cs ? 'selected' : ''}`}
+                                  onClick={() => {
+                                    setContentScope(cs);
+                                    if (cs !== 'Other' && cs !== 'Chapterwise') setCustomContentDates('');
+                                  }}
+                                >
+                                  {cs}
+                                </button>
+                              ))}
+                            </div>
+
+                            {(contentScope === 'Other' || contentScope === 'Chapterwise') && (
+                              <input
+                                type="text"
+                                className="um-input"
+                                value={customContentDates}
+                                onChange={(e) => setCustomContentDates(e.target.value)}
+                                placeholder={
+                                  contentScope === 'Chapterwise'
+                                    ? 'Optional: Enter chapter number or name (e.g. Chapter 3: Cell Cycle)'
+                                    : 'Enter specific dates or portion (e.g. 10 Oct - 25 Nov 2024)'
+                                }
+                                required={contentScope === 'Other'}
+                                style={{ marginTop: '6px' }}
+                              />
+                            )}
+                          </>
+                        )}
+
                         {/* Year */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <label className="um-label">Year</label>
@@ -669,7 +745,7 @@ export default function UploadModal({
                         {/* Professors */}
                         {selectedCourse && (
                           <>
-                            <label className="um-label">Professor</label>
+                            <label className="um-label">Professor 1 (Mandatory) *</label>
                             <select
                               className="um-select"
                               value={professor}
@@ -677,6 +753,7 @@ export default function UploadModal({
                                 setProfessor(e.target.value);
                                 setCustomProfessor('');
                               }}
+                              required
                             >
                               <option value="">Select professor...</option>
                               {selectedCourse.professors
@@ -685,19 +762,24 @@ export default function UploadModal({
                                   <option key={p} value={p}>{p}</option>
                                 ))
                               }
-                              <option value="Other">Other</option>
+                              <option value="Other">Other Professor...</option>
                             </select>
 
                             {(professor || '').trim().toLowerCase() === 'other' && (
-                              <input
-                                type="text"
-                                className="um-input"
+                              <select
+                                className="um-select"
                                 value={customProfessor}
                                 onChange={(e) => setCustomProfessor(e.target.value)}
-                                placeholder="Enter professor's name"
                                 required
-                                style={{ marginTop: '-8px', marginBottom: '8px' }}
-                              />
+                                style={{ marginTop: '-4px', marginBottom: '8px', borderColor: 'var(--green-light)' }}
+                              >
+                                <option value="">Select from all professors...</option>
+                                {allProfessors.map((p) => (
+                                  <option key={p.id} value={p.name}>
+                                    {p.name} ({p.acronym})
+                                  </option>
+                                ))}
+                              </select>
                             )}
 
                             <label className="um-label">Professor 2 (optional)</label>
@@ -716,19 +798,24 @@ export default function UploadModal({
                                   <option key={p} value={p}>{p}</option>
                                 ))
                               }
-                              <option value="Other">Other</option>
+                              <option value="Other">Other Professor...</option>
                             </select>
 
                             {(professor2 || '').trim().toLowerCase() === 'other' && (
-                              <input
-                                type="text"
-                                className="um-input"
+                              <select
+                                className="um-select"
                                 value={customProfessor2}
                                 onChange={(e) => setCustomProfessor2(e.target.value)}
-                                placeholder="Enter professor 2's name"
                                 required
-                                style={{ marginTop: '-8px', marginBottom: '8px' }}
-                              />
+                                style={{ marginTop: '-4px', marginBottom: '8px', borderColor: 'var(--green-light)' }}
+                              >
+                                <option value="">Select from all professors...</option>
+                                {allProfessors.map((p) => (
+                                  <option key={p.id} value={p.name}>
+                                    {p.name} ({p.acronym})
+                                  </option>
+                                ))}
+                              </select>
                             )}
 
                             <label className="um-label">Professor 3 (optional)</label>
@@ -747,19 +834,24 @@ export default function UploadModal({
                                   <option key={p} value={p}>{p}</option>
                                 ))
                               }
-                              <option value="Other">Other</option>
+                              <option value="Other">Other Professor...</option>
                             </select>
 
                             {(professor3 || '').trim().toLowerCase() === 'other' && (
-                              <input
-                                type="text"
-                                className="um-input"
+                              <select
+                                className="um-select"
                                 value={customProfessor3}
                                 onChange={(e) => setCustomProfessor3(e.target.value)}
-                                placeholder="Enter professor 3's name"
                                 required
-                                style={{ marginTop: '-8px', marginBottom: '8px' }}
-                              />
+                                style={{ marginTop: '-4px', marginBottom: '8px', borderColor: 'var(--green-light)' }}
+                              >
+                                <option value="">Select from all professors...</option>
+                                {allProfessors.map((p) => (
+                                  <option key={p.id} value={p.name}>
+                                    {p.name} ({p.acronym})
+                                  </option>
+                                ))}
+                              </select>
                             )}
                           </>
                         )}
@@ -855,14 +947,63 @@ export default function UploadModal({
                         transition={{ duration: 0.22, ease: 'easeInOut' }}
                         className="um-body"
                       >
-                        <label className="um-label">Your Name</label>
-                        <input
-                          type="text"
-                          className="um-input"
-                          value={uploaderName}
-                          onChange={(e) => setUploaderName(e.target.value)}
-                          placeholder="Enter your name"
-                        />
+                        {fileType === 'notes' && (
+                          <>
+                            <label className="um-label">Author Name *</label>
+                            <input
+                              type="text"
+                              className="um-input"
+                              value={authorName}
+                              onChange={(e) => {
+                                setAuthorName(e.target.value);
+                                if (isUploaderSameAsAuthor) setUploaderName(e.target.value);
+                              }}
+                              placeholder="Name of the person who wrote these notes"
+                              required
+                            />
+
+                            <label className="um-label">Author Batch / Year *</label>
+                            <input
+                              type="text"
+                              className="um-input"
+                              value={authorBatch}
+                              onChange={(e) => setAuthorBatch(e.target.value)}
+                              placeholder="e.g. B21 or 2021-2026"
+                              required
+                            />
+
+                            <div className="um-consent" style={{ margin: '6px 0 10px' }}>
+                              <button
+                                type="button"
+                                className={`um-toggle ${isUploaderSameAsAuthor ? 'on' : ''}`}
+                                onClick={() => {
+                                  const next = !isUploaderSameAsAuthor;
+                                  setIsUploaderSameAsAuthor(next);
+                                  if (next) setUploaderName(authorName);
+                                }}
+                              >
+                                <span className="um-toggle-knob" />
+                              </button>
+                              <span className="um-consent-text">
+                                Uploader is same as Author
+                              </span>
+                            </div>
+                          </>
+                        )}
+
+                        {(fileType !== 'notes' || !isUploaderSameAsAuthor) && (
+                          <>
+                            <label className="um-label">Your Name (Uploader)</label>
+                            <input
+                              type="text"
+                              className="um-input"
+                              value={uploaderName}
+                              onChange={(e) => setUploaderName(e.target.value)}
+                              placeholder="Enter your name"
+                            />
+                          </>
+                        )}
+
                         <div className="um-consent">
                           <button
                             className={`um-toggle ${showName ? 'on' : ''}`}

@@ -2,17 +2,17 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Eye, Download, ArrowUp, ArrowDown } from 'lucide-react';
+import { Eye, Download, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { SheetRow } from '@/types';
 import { CONFIG } from '@/config';
 import { incrementFileDownloads } from '@/lib/api-client';
 import { useAuth } from './AuthProvider';
 import { checkIsDev } from '@/lib/auth';
 import { useToast } from './Toast';
-import { getProfessorAcronym } from '@/lib/utils';
+import { getProfessorAcronym, formatFileProfessors, getFileProfessors } from '@/lib/utils';
 import FilePreviewModal from './FilePreviewModal';
 
-type SortField = 'fileName' | 'professor' | 'uploaderName' | 'year' | 'examType' | 'downloadCount';
+type SortField = 'fileName' | 'professor' | 'uploaderName' | 'year' | 'examType' | 'downloadCount' | 'contentScope';
 type SortOrder = 'asc' | 'desc';
 
 interface SortableFileTableProps {
@@ -104,21 +104,29 @@ export default function SortableFileTable({
       : <ArrowDown size={12} style={{ marginLeft: 4 }} />;
   };
 
+  const isNotes = fileType.toLowerCase() === 'notes';
+  const isQpaper = fileType.toLowerCase() === 'qpaper';
+  const isNotesOrSlides = isNotes || fileType.toLowerCase() === 'slides';
+
   const columns = React.useMemo(() => {
     const cols: { key: SortField; label: string; width?: string }[] = [
       { key: 'fileName', label: 'File Name' },
       { key: 'professor', label: 'Professor', width: '160px' },
-      { key: 'uploaderName', label: 'Uploader', width: '120px' },
+      { key: 'uploaderName', label: isNotes ? 'Author' : 'Uploader', width: '130px' },
       { key: 'year', label: 'Year', width: '80px' },
     ];
     
     if (fileType.toLowerCase() === 'qpaper') {
       cols.push({ key: 'examType', label: 'Exam Type', width: '100px' });
     }
+
+    if (isNotesOrSlides) {
+      cols.push({ key: 'contentScope', label: 'Portion / Scope', width: '140px' });
+    }
     
     cols.push({ key: 'downloadCount', label: 'Downloads', width: '90px' });
     return cols;
-  }, [fileType]);
+  }, [fileType, isNotes, isNotesOrSlides]);
 
   return (
     <div className="sft-wrapper">
@@ -149,10 +157,34 @@ export default function SortableFileTable({
                   {file.fileName}
                 </span>
               </td>
-              <td className="sft-td sft-prof" title={file.professor || ''}>
-                {file.professor || '—'}
+              <td className="sft-td sft-prof" title={formatFileProfessors(file)}>
+                {formatFileProfessors(file)}
               </td>
-              <td className="sft-td sft-uploader">{file.uploaderName || 'Anonymous'}</td>
+               <td className="sft-td sft-uploader">
+                {isNotes ? (
+                  <span
+                    className="sft-author-badge"
+                    style={{
+                      background: 'rgba(59, 130, 246, 0.12)',
+                      color: '#60a5fa',
+                      border: '1px solid rgba(59, 130, 246, 0.22)',
+                      padding: '2px 8px',
+                      borderRadius: '6px',
+                      fontSize: '0.72rem',
+                      fontWeight: 600,
+                      display: 'inline-block',
+                    }}
+                  >
+                    {file.authorName
+                      ? `${file.authorName}${file.authorBatch ? ` (${file.authorBatch})` : ''}`
+                      : file.uploaderName || 'Anonymous'}
+                  </span>
+                ) : (
+                  <span style={{ color: 'var(--text-3)', fontSize: '0.78rem' }}>
+                    {file.uploaderName || 'Anonymous'}
+                  </span>
+                )}
+               </td>
               <td className="sft-td">
                 {file.year ? (
                   <span className="sft-year-badge">{file.year}</span>
@@ -170,29 +202,41 @@ export default function SortableFileTable({
                   ) : '—'}
                 </td>
               )}
+              {isNotesOrSlides && (
+                <td className="sft-td">
+                  <span
+                    className="sft-exam-badge"
+                    style={{
+                      background: file.contentScope ? accentColor + '18' : 'rgba(255,255,255,0.06)',
+                      color: file.contentScope ? accentColor : 'var(--text-3)',
+                      fontSize: '0.68rem',
+                    }}
+                  >
+                    {file.contentScope || 'Other'}
+                  </span>
+                </td>
+              )}
               <td className="sft-td sft-dl-count">{file.downloadCount}</td>
               <td className="sft-td">
                 <div className="sft-actions">
                   {file.driveWebViewLink && siteConfig?.enableFilePreviews !== false && (
                     <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                      whileTap={{ scale: 0.94 }}
                       className="sft-action-btn"
                       onClick={() => handlePreview(file)}
-                      title="Preview"
+                      title="Preview file"
                     >
-                      <Eye size={14} />
+                      <Eye size={15} />
                     </motion.button>
                   )}
                   {siteConfig?.enableDownloads !== false && (
                     <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                      whileTap={{ scale: 0.94 }}
                       className="sft-action-btn sft-dl-btn"
                       onClick={() => handleDownload(file)}
-                      title="Download"
+                      title="Download file"
                     >
-                      <Download size={14} />
+                      <Download size={15} />
                     </motion.button>
                   )}
                 </div>
@@ -201,6 +245,105 @@ export default function SortableFileTable({
           ))}
         </tbody>
       </table>
+
+      {/* Mobile Vertical Cards View (Shown on mobile screens <= 640px) */}
+      <div className="sft-mobile-cards">
+        <div className="sft-mobile-sort-bar">
+          <span className="sft-mobile-sort-label">
+            <ArrowUpDown size={12} /> Sort by:
+          </span>
+          <select
+            className="sft-mobile-sort-select"
+            value={sortField}
+            onChange={(e) => onSort(e.target.value as SortField)}
+          >
+            {columns.map((col) => (
+              <option key={col.key} value={col.key}>
+                {col.label} {sortField === col.key ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
+              </option>
+            ))}
+          </select>
+          <button
+            className="sft-mobile-sort-dir-btn"
+            onClick={() => onSort(sortField)}
+            title={`Sort direction: ${sortOrder}`}
+          >
+            {sortOrder === 'asc' ? <ArrowUp size={13} /> : <ArrowDown size={13} />}
+          </button>
+        </div>
+
+        {files.map((file) => (
+          <div key={file.fileId || file.fileName} className="sft-card">
+            <div className="sft-card-header">
+              <span className="sft-card-title">{file.fileName}</span>
+            </div>
+
+            <div className="sft-card-meta">
+              {getFileProfessors(file).length > 0 && (
+                <span className="sft-card-tag sft-card-prof">
+                  {formatFileProfessors(file)}
+                </span>
+              )}
+              {file.year && (
+                <span className="sft-year-badge">
+                  {file.year}
+                </span>
+              )}
+              {isQpaper && file.examType && (
+                <span
+                  className="sft-exam-badge"
+                  style={{ background: accentColor + '18', color: accentColor }}
+                >
+                  {file.examType}
+                </span>
+              )}
+              {isNotesOrSlides && (
+                <span
+                  className="sft-exam-badge"
+                  style={{
+                    background: file.contentScope ? accentColor + '18' : 'rgba(255,255,255,0.06)',
+                    color: file.contentScope ? accentColor : 'var(--text-3)',
+                  }}
+                >
+                  {file.contentScope || 'Other'}
+                </span>
+              )}
+              <span className="sft-card-tag sft-card-uploader">
+                by {isNotes
+                  ? (file.authorName ? `${file.authorName}${file.authorBatch ? ` (${file.authorBatch})` : ''}` : (file.uploaderName || 'Anonymous'))
+                  : (file.uploaderName || 'Anonymous')
+                }
+              </span>
+              <span className="sft-card-tag sft-card-dl-count">
+                {file.downloadCount} dl{file.downloadCount !== 1 ? 's' : ''}
+              </span>
+            </div>
+
+            <div className="sft-card-actions">
+              {file.driveWebViewLink && siteConfig?.enableFilePreviews !== false && (
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  className="sft-card-btn sft-card-preview-btn"
+                  onClick={() => handlePreview(file)}
+                >
+                  <Eye size={14} />
+                  <span>Preview</span>
+                </motion.button>
+              )}
+              {siteConfig?.enableDownloads !== false && (
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  className="sft-card-btn sft-card-dl-btn"
+                  onClick={() => handleDownload(file)}
+                >
+                  <Download size={14} />
+                  <span>Download</span>
+                </motion.button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
 
       <FilePreviewModal
         file={previewFile}
@@ -320,6 +463,141 @@ export default function SortableFileTable({
           background: rgba(2, 132, 199, 0.15);
           color: var(--green-bright);
           border-color: rgba(2, 132, 199, 0.3);
+        }
+        .sft-mobile-cards {
+          display: none;
+          flex-direction: column;
+          gap: 10px;
+          padding: 10px;
+        }
+        .sft-mobile-sort-bar {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 12px;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 12px;
+          margin-bottom: 2px;
+        }
+        .sft-mobile-sort-label {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 0.72rem;
+          font-weight: 600;
+          color: var(--text-3);
+          font-family: 'Outfit', sans-serif;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          white-space: nowrap;
+        }
+        .sft-mobile-sort-select {
+          flex: 1;
+          background: var(--bg2);
+          border: 1px solid var(--glass-border-hover);
+          color: var(--text);
+          border-radius: 8px;
+          padding: 5px 8px;
+          font-size: 0.76rem;
+          font-family: 'Outfit', sans-serif;
+          font-weight: 500;
+          outline: none;
+        }
+        .sft-mobile-sort-dir-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 30px;
+          height: 30px;
+          border-radius: 8px;
+          background: rgba(255, 255, 255, 0.06);
+          border: 1px solid var(--glass-border);
+          color: var(--green-light);
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .sft-card {
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 14px;
+          padding: 14px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+        .sft-card-title {
+          font-family: 'Outfit', sans-serif;
+          font-size: 0.88rem;
+          font-weight: 600;
+          color: #e0e0e0;
+          line-height: 1.35;
+          word-break: break-word;
+        }
+        .sft-card-meta {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 6px;
+          font-family: 'Outfit', sans-serif;
+          font-size: 0.72rem;
+        }
+        .sft-card-tag {
+          color: rgba(255, 255, 255, 0.5);
+          background: rgba(255, 255, 255, 0.04);
+          padding: 2px 8px;
+          border-radius: 8px;
+        }
+        .sft-card-actions {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-top: 4px;
+        }
+        .sft-card-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          flex: 1;
+          padding: 8px 12px;
+          border-radius: 8px;
+          font-family: 'Outfit', sans-serif;
+          font-size: 0.78rem;
+          font-weight: 600;
+          cursor: pointer;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.04);
+          color: rgba(255, 255, 255, 0.8);
+          transition: all 0.15s;
+        }
+        .sft-card-preview-btn:hover, .sft-card-preview-btn:active {
+          background: rgba(255, 255, 255, 0.1);
+          color: #fff;
+        }
+        .sft-card-dl-btn {
+          background: rgba(2, 132, 199, 0.15);
+          color: #daa520;
+          border-color: rgba(218, 165, 32, 0.3);
+        }
+        .sft-card-dl-btn:hover, .sft-card-dl-btn:active {
+          background: rgba(218, 165, 32, 0.25);
+          color: #fff;
+        }
+        @media (max-width: 640px) {
+          .sft-table {
+            display: none !important;
+          }
+          .sft-mobile-cards {
+            display: flex !important;
+          }
+          .sft-wrapper {
+            overflow-x: visible;
+            border: none;
+            background: transparent;
+            box-shadow: none;
+          }
         }
       `}</style>
     </div>

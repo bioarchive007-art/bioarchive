@@ -11,7 +11,7 @@ import { SheetRow } from '@/types';
 import { CONFIG } from '@/config';
 import { CURRICULUM } from '@/data/curriculum';
 import { fetchFilesByCourse } from '@/lib/api-client';
-import { normalizeCourseCode, getProfessorAcronym } from '@/lib/utils';
+import { normalizeCourseCode, getProfessorAcronym, getFileProfessors, resolveCanonicalProfessor } from '@/lib/utils';
 import SortableFileTable from './SortableFileTable';
 import UploadModal from './UploadModal';
 import { useAuth } from './AuthProvider';
@@ -21,7 +21,7 @@ interface CourseDetailProps {
   semester?: string;
 }
 
-type SortField = 'fileName' | 'professor' | 'uploaderName' | 'year' | 'examType' | 'downloadCount';
+type SortField = 'fileName' | 'professor' | 'uploaderName' | 'year' | 'examType' | 'downloadCount' | 'contentScope';
 type SortOrder = 'asc' | 'desc';
 
 const FILE_TYPE_CONFIG: Record<
@@ -103,7 +103,14 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
       groups[type] = [];
     }
     for (const file of files) {
-      const key = file.fileType.toLowerCase();
+      const raw = (file.fileType || '').toLowerCase().trim();
+      let key = 'other';
+      if (['notes', 'note'].includes(raw)) key = 'notes';
+      else if (['slides', 'slide', 'ppt', 'pptx'].includes(raw)) key = 'slides';
+      else if (['qpaper', 'qpapers', 'pyq', 'question paper', 'question papers', 'exam', 'paper'].includes(raw)) key = 'qpaper';
+      else if (['lab', 'manual'].includes(raw)) key = 'lab';
+      else if (['assignment', 'asgn', 'homework'].includes(raw)) key = 'assignment';
+
       if (groups[key]) groups[key].push(file);
       else groups['other'].push(file);
     }
@@ -134,26 +141,39 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
     return result;
   }, [filesByType, sortStates]);
 
-  // Group notes files by author (uploaderName)
+  // Group notes files by author (authorName / uploaderName)
   const notesByAuthor = useMemo(() => {
     const notesFiles = sortedFilesByType['notes'] || [];
     const groups: Record<string, SheetRow[]> = {};
 
     for (const file of notesFiles) {
-      const raw = (file.uploaderName || '').trim();
-      let authorName = raw;
-      if (!raw || raw.toLowerCase() === 'anonymous' || raw.toLowerCase() === 'unknown') {
-        authorName = 'Unknown';
+      let name = (file.authorName || file.uploaderName || '').trim();
+      let batch = (file.authorBatch || '').trim();
+
+      // Clean embedded batch from name if present
+      const embeddedMatch = name.match(/\s*\((?:Batch:\s*)?([^)]+)\)/i);
+      if (embeddedMatch) {
+        if (!batch) batch = embeddedMatch[1].trim();
+        name = name.replace(/\s*\((?:Batch:\s*)?([^)]+)\)/i, '').trim();
       }
-      if (!groups[authorName]) {
-        groups[authorName] = [];
+
+      let authorDisplay = name;
+      if (!name || name.toLowerCase() === 'anonymous' || name.toLowerCase() === 'unknown') {
+        authorDisplay = 'Unknown';
+      } else if (batch) {
+        const cleanBatch = batch.replace(/^batch\s*[:\s]*/i, '').trim();
+        authorDisplay = `${name} (${cleanBatch})`;
       }
-      groups[authorName].push(file);
+
+      if (!groups[authorDisplay]) {
+        groups[authorDisplay] = [];
+      }
+      groups[authorDisplay].push(file);
     }
 
     const keys = Object.keys(groups).sort((a, b) => {
-      if (a === 'Unknown') return 1;
-      if (b === 'Unknown') return -1;
+      if (a.startsWith('Unknown')) return 1;
+      if (b.startsWith('Unknown')) return -1;
       return a.localeCompare(b);
     });
 
@@ -162,6 +182,73 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
       files: groups[key],
     }));
   }, [sortedFilesByType]);
+
+  // Group non-notes files by professor (course professors and multi-professor combinations)
+  const profGroups = useMemo(() => {
+    const rawCourseProfs = (course?.professors || []).filter(
+      (p) => p.trim().toLowerCase() !== 'other' && p.trim().toLowerCase() !== 'na'
+    );
+
+    const result: Record<string, { prof: string; files: SheetRow[] }[]> = {};
+
+    for (const type of FILE_TYPE_ORDER) {
+      if (type === 'notes') continue;
+
+      const categoryTypeFiles = sortedFilesByType[type] || [];
+      const groupMap = new Map<string, { prof: string; files: SheetRow[] }>();
+
+      // 1. Initialize single course professor groups to maintain empty state headers
+      for (const prof of rawCourseProfs) {
+        groupMap.set(prof.toLowerCase(), { prof, files: [] });
+      }
+
+      // 2. Assign files to their selected professor(s) group
+      for (const file of categoryTypeFiles) {
+        const fileProfs = getFileProfessors(file);
+
+        if (fileProfs.length === 0) {
+          const key = 'other professors';
+          if (!groupMap.has(key)) {
+            groupMap.set(key, { prof: 'Other Professors', files: [] });
+          }
+          groupMap.get(key)!.files.push(file);
+          continue;
+        }
+
+        // Match selected professor strings or acronyms to canonical course professors if available
+        const resolvedProfs = fileProfs.map((fp) => resolveCanonicalProfessor(fp, rawCourseProfs));
+
+        // Deduplicate resolved names
+        const uniqueResolved: string[] = [];
+        for (const rp of resolvedProfs) {
+          if (!uniqueResolved.some((u) => u.toLowerCase() === rp.toLowerCase())) {
+            uniqueResolved.push(rp);
+          }
+        }
+
+        const groupName = uniqueResolved.join(', ');
+        const groupKey = groupName.toLowerCase();
+
+        if (!groupMap.has(groupKey)) {
+          groupMap.set(groupKey, { prof: groupName, files: [] });
+        }
+        groupMap.get(groupKey)!.files.push(file);
+      }
+
+      // 3. Keep single course professors (even if empty) + any active multi-prof or active Other groups
+      const groupsList: { prof: string; files: SheetRow[] }[] = [];
+      groupMap.forEach((group, key) => {
+        const isSingleCourseProf = rawCourseProfs.some((cp) => cp.toLowerCase() === key);
+        if (isSingleCourseProf || group.files.length > 0) {
+          groupsList.push(group);
+        }
+      });
+
+      result[type] = groupsList;
+    }
+
+    return result;
+  }, [course, sortedFilesByType]);
 
   const toggleSection = useCallback((section: string) => {
     setExpandedSection((prev) => (prev === section ? null : section));
@@ -426,7 +513,7 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
                           {type === 'notes' ? (
                             <div className="cd-authors-wrap">
                               {notesByAuthor.map(({ author, files: authorFiles }) => {
-                                const isAuthorOpen = expandedAuthors[author] !== false;
+                                const isAuthorOpen = expandedAuthors[author] !== undefined ? expandedAuthors[author] : authorFiles.length > 0;
                                 return (
                                   <div key={author} className="cd-author-group">
                                     <button
@@ -477,15 +564,64 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
                               })}
                             </div>
                           ) : (
-                            <div className="cd-type-table-wrap">
-                              <SortableFileTable
-                                files={typeFiles}
-                                fileType={type}
-                                sortField={sort.field}
-                                sortOrder={sort.order}
-                                onSort={(field) => handleSort(type, field)}
-                                accentColor={config.colorHex}
-                              />
+                            <div className="cd-authors-wrap">
+                              {(profGroups[type] || []).map(({ prof, files: profFiles }) => {
+                                const profKey = `${type}-${prof}`;
+                                const isProfOpen = expandedAuthors[profKey] !== undefined ? expandedAuthors[profKey] : profFiles.length > 0;
+                                return (
+                                  <div key={profKey} className="cd-author-group">
+                                    <button
+                                      className="cd-author-header"
+                                      onClick={() => toggleAuthor(profKey)}
+                                    >
+                                      <div className="cd-author-title">
+                                        <Users size={14} style={{ color: config.colorHex }} />
+                                        <span>{prof}</span>
+                                      </div>
+                                      <div className="cd-author-meta">
+                                        <span className="cd-author-count">
+                                          {profFiles.length} file{profFiles.length !== 1 ? 's' : ''}
+                                        </span>
+                                        <motion.span
+                                          animate={{ rotate: isProfOpen ? 180 : 0 }}
+                                          transition={{ duration: 0.2 }}
+                                          style={{ display: 'flex' }}
+                                        >
+                                          <ChevronDown size={15} strokeWidth={1.5} />
+                                        </motion.span>
+                                      </div>
+                                    </button>
+                                    <AnimatePresence initial={false}>
+                                      {isProfOpen && (
+                                        <motion.div
+                                          initial={{ height: 0, opacity: 0 }}
+                                          animate={{ height: 'auto', opacity: 1 }}
+                                          exit={{ height: 0, opacity: 0 }}
+                                          transition={{ duration: 0.2, ease: 'easeInOut' }}
+                                          className="cd-author-body"
+                                        >
+                                          {profFiles.length > 0 ? (
+                                            <div className="cd-type-table-wrap">
+                                              <SortableFileTable
+                                                files={profFiles}
+                                                fileType={type}
+                                                sortField={sort.field}
+                                                sortOrder={sort.order}
+                                                onSort={(field) => handleSort(type, field)}
+                                                accentColor={config.colorHex}
+                                              />
+                                            </div>
+                                          ) : (
+                                            <div className="cd-prof-empty">
+                                              No {config.label.toLowerCase()} available for {prof} yet.
+                                            </div>
+                                          )}
+                                        </motion.div>
+                                      )}
+                                    </AnimatePresence>
+                                  </div>
+                                );
+                              })}
                             </div>
                           )}
                         </motion.div>
@@ -869,6 +1005,18 @@ export default function CourseDetail({ courseCode, semester }: CourseDetailProps
         }
         .cd-author-body {
           border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .cd-prof-empty {
+          padding: 14px 18px;
+          font-family: 'Outfit', sans-serif;
+          font-size: 0.78rem;
+          color: rgba(255, 255, 255, 0.3);
+          font-style: italic;
+          text-align: center;
+          background: rgba(255, 255, 255, 0.015);
+          border: 1px dashed rgba(255, 255, 255, 0.06);
+          border-radius: 10px;
+          margin: 8px 12px;
         }
         .cd-books-header {
           display: flex;

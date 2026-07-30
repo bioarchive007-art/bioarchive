@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ExternalLink, Download, User, Calendar, FileText, Bookmark } from 'lucide-react';
 import { SheetRow } from '@/types';
-import { stripHiddenRemarks } from '@/lib/utils';
+import { stripHiddenRemarks, formatFileProfessors } from '@/lib/utils';
 
 interface FilePreviewModalProps {
   file: SheetRow | null;
@@ -94,7 +94,7 @@ export default function FilePreviewModal({
                     color: 'var(--text-3)',
                     fontFamily: "'Outfit', sans-serif"
                   }}>
-                    {file.courseCode} · {file.professor} · {file.year}
+                    {file.courseCode} · {formatFileProfessors(file)} · {file.year}
                   </span>
                 </div>
               </div>
@@ -108,18 +108,22 @@ export default function FilePreviewModal({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    width: '32px',
+                    gap: '6px',
+                    padding: '0 12px',
                     height: '32px',
                     borderRadius: '8px',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    color: 'var(--text-2)',
+                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                    background: 'rgba(59, 130, 246, 0.15)',
+                    color: '#60a5fa',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
                     cursor: 'pointer',
                     transition: 'all 0.15s'
                   }}
                   title="Download File"
                 >
                   <Download size={14} />
+                  <span>Download</span>
                 </button>
                 <a
                   href={file.driveWebViewLink}

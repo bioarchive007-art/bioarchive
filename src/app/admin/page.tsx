@@ -8,6 +8,7 @@ import Navbar from '@/components/Navbar';
 import { SheetRow } from '@/types';
 import { CONFIG } from '@/config';
 import { useAuth } from '@/components/AuthProvider';
+import { formatFileProfessors } from '@/lib/utils';
 
 export default function AdminPage() {
   const [tokenInput, setTokenInput] = useState('');
@@ -556,7 +557,7 @@ export default function AdminPage() {
                                 <strong>File:</strong> {file.fileName}
                               </div>
                               <div style={{ display: 'flex', gap: '16px', color: 'var(--text-3)', fontSize: '0.74rem' }}>
-                                <span><strong>Prof:</strong> {file.professor}</span>
+                                <span><strong>Prof:</strong> {formatFileProfessors(file)}</span>
                                 <span><strong>Year:</strong> {file.year}</span>
                                 {file.examType && <span><strong>Exam:</strong> {file.examType}</span>}
                               </div>
@@ -662,7 +663,7 @@ export default function AdminPage() {
                                     {file.fileType.toUpperCase()}
                                   </span>
                                 </td>
-                                <td className="sft-td" style={{ verticalAlign: 'middle', fontSize: '0.78rem', color: 'var(--text-2)' }}>{file.professor}</td>
+                                <td className="sft-td" style={{ verticalAlign: 'middle', fontSize: '0.78rem', color: 'var(--text-2)' }}>{formatFileProfessors(file)}</td>
                                 <td className="sft-td" style={{ verticalAlign: 'middle', fontSize: '0.78rem', color: 'var(--text-2)' }}>{file.uploaderName || 'Anonymous'}</td>
                                 <td className="sft-td" style={{ verticalAlign: 'middle', fontSize: '0.78rem', color: 'var(--text-3)', textAlign: 'center' }}>{file.downloadCount}</td>
                                 <td className="sft-td" style={{ verticalAlign: 'middle' }}>

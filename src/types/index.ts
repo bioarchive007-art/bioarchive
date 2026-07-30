@@ -19,6 +19,9 @@ export interface SheetRow {
   driveWebViewLink: string;
   downloadCount: number;
   remarks: string;
+  contentScope?: string;
+  authorName?: string;
+  authorBatch?: string;
   status: string; // 'pending_approval' | 'approved'
 }
 

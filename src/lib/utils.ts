@@ -82,48 +82,44 @@ export function normalizeCourseCode(code: string): { oldCode: string; newCode: s
   };
 }
 
+export { getProfessorAcronym, resolveCanonicalProfessor } from '@/data/professors';
+
 /**
- * Automatically computes a 2-3 letter acronym from the first letters of a professor's name.
- * e.g. "Dr. Rittik Deb" -> "RD", "Dr. Tirumala K Chaudhary" -> "TKC", "Dr. Abdur Rehman" -> "AR"
+ * Returns an array of non-empty selected professor names for a given file object.
+ * Handles single or multiple professor fields (professor, professor2, professor3)
+ * as well as comma-separated values.
  */
-export function getProfessorAcronym(profName: string): string {
-  if (!profName || profName.trim() === '') return 'Unknown';
-  const trimmed = profName.trim();
+export function getFileProfessors(file: { professor?: string; professor2?: string; professor3?: string }): string[] {
+  const rawList: string[] = [];
+  [file.professor, file.professor2, file.professor3].forEach((p) => {
+    if (p && p.trim()) {
+      p.split(',').forEach((part) => {
+        const trimmed = part.trim();
+        if (trimmed && !['na', 'n/a', 'other', 'none', 'unknown'].includes(trimmed.toLowerCase())) {
+          rawList.push(trimmed);
+        }
+      });
+    }
+  });
 
-  // If profName is already a short uppercase acronym (e.g. TKC, AR, RD)
-  if (/^[A-Z]{2,4}$/.test(trimmed)) {
-    return trimmed;
+  const unique: string[] = [];
+  for (const item of rawList) {
+    if (!unique.some((u) => u.toLowerCase() === item.toLowerCase())) {
+      unique.push(item);
+    }
   }
-
-  const lower = trimmed.toLowerCase();
-  if (lower === 'other') return 'Other';
-  if (lower === 'na' || lower === 'n/a') return 'NA';
-  if (lower === 'unknown') return 'Unknown';
-
-  // Strip prefixes like Dr., Prof., Dr_, Prof_ (case-insensitive)
-  const clean = trimmed.replace(/^(Dr\.|Prof\.|Dr|Prof)[\s._-]*/i, '').trim();
-  if (!clean) return 'Unknown';
-
-  // Split name by spaces, dots, hyphens, underscores and filter out empty strings
-  const parts = clean.split(/[\s._-]+/).filter(Boolean);
-  if (parts.length === 0) return 'Unknown';
-
-  if (parts.length === 1) {
-    const word = parts[0];
-    if (/^[A-Z]{2,4}$/i.test(word)) return word.toUpperCase();
-    const upperWord = word.toUpperCase();
-    if (upperWord === 'REHMAN') return 'AR';
-    if (upperWord === 'CHAUDHARY') return 'TKC';
-    if (upperWord === 'SRINIVASAN') return 'RS';
-    if (upperWord === 'DIXIT') return 'MD';
-    if (upperWord === 'DEB') return 'RD';
-    return word.slice(0, 2).toUpperCase();
-  }
-
-  // Extract first letter of each word in uppercase
-  const acronym = parts.map((part) => part[0].toUpperCase()).join('');
-  return acronym || clean;
+  return unique;
 }
+
+/**
+ * Formats all selected professors for a file as a joined string (e.g. "Prof X, Prof Y").
+ */
+export function formatFileProfessors(file: { professor?: string; professor2?: string; professor3?: string }): string {
+  const profs = getFileProfessors(file);
+  return profs.length > 0 ? profs.join(', ') : (file.professor || '—');
+}
+
+
 
 
 

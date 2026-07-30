@@ -55,6 +55,9 @@ export async function POST(request: NextRequest) {
       professor2,
       professor3,
       uploaderName,
+      authorName,
+      authorBatch,
+      contentScope,
       remarks,
     } = body;
 
@@ -178,6 +181,9 @@ export async function POST(request: NextRequest) {
         professor2: professor2 || '',
         professor3: professor3 || '',
         uploaderName: uploaderName || '',
+        authorName: authorName || '',
+        authorBatch: authorBatch || '',
+        contentScope: contentScope || '',
         remarks: remarks || '',
         mimeType,
         fileSize,
