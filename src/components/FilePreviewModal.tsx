@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ExternalLink, Download, User, Calendar, FileText, Bookmark } from 'lucide-react';
+import { X, ExternalLink, Download, User, Calendar, FileText, Bookmark, Check, Trash2 } from 'lucide-react';
 import { SheetRow } from '@/types';
 import { stripHiddenRemarks, formatFileProfessors } from '@/lib/utils';
 
@@ -12,6 +12,9 @@ interface FilePreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   onDownload: (file: SheetRow) => void;
+  onApprove?: (fileId: string, driveFileId: string) => void;
+  onReject?: (fileId: string, driveFileId: string) => void;
+  actionLoading?: string | null;
 }
 
 export default function FilePreviewModal({
@@ -19,6 +22,9 @@ export default function FilePreviewModal({
   isOpen,
   onClose,
   onDownload,
+  onApprove,
+  onReject,
+  actionLoading,
 }: FilePreviewModalProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -101,6 +107,60 @@ export default function FilePreviewModal({
 
               {/* Action items */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                {onApprove && file.status === 'pending_approval' && (
+                  <button
+                    onClick={() => {
+                      onApprove(file.fileId, file.driveFileId);
+                    }}
+                    disabled={actionLoading === file.fileId}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '0 12px',
+                      height: '32px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      background: 'rgba(16, 185, 129, 0.15)',
+                      color: '#34d399',
+                      fontSize: '0.78rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s'
+                    }}
+                    title="Approve File"
+                  >
+                    <Check size={14} />
+                    <span>{actionLoading === file.fileId ? 'Approving...' : 'Approve'}</span>
+                  </button>
+                )}
+                {onReject && (
+                  <button
+                    onClick={() => {
+                      onReject(file.fileId, file.driveFileId);
+                    }}
+                    disabled={actionLoading === file.fileId}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '0 12px',
+                      height: '32px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      background: 'rgba(239, 68, 68, 0.15)',
+                      color: '#f87171',
+                      fontSize: '0.78rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s'
+                    }}
+                    title="Reject/Delete File"
+                  >
+                    <Trash2 size={14} />
+                    <span>Reject</span>
+                  </button>
+                )}
                 <button
                   onClick={() => onDownload(file)}
                   className="sfi-action-btn sfi-dl"

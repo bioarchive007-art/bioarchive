@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, ArrowLeft, Check, Trash2, X, RefreshCw, AlertTriangle, FileText, Calendar, User, BookOpen, Settings2 } from 'lucide-react';
+import { Lock, ArrowLeft, Check, Trash2, X, RefreshCw, AlertTriangle, FileText, Calendar, User, BookOpen, Settings2, Eye } from 'lucide-react';
 import Navbar from '@/components/Navbar';
+import FilePreviewModal from '@/components/FilePreviewModal';
 import { SheetRow } from '@/types';
 import { CONFIG } from '@/config';
 import { useAuth } from '@/components/AuthProvider';
@@ -20,6 +21,7 @@ export default function AdminPage() {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [previewFile, setPreviewFile] = useState<SheetRow | null>(null);
 
   // Site Configuration Toggles state
   const [config, setConfig] = useState({
@@ -108,6 +110,14 @@ export default function AdminPage() {
     verifyAndLoad(tokenInput.trim(), idToken);
   };
 
+  const handleDownload = (file: SheetRow) => {
+    if (file.driveWebViewLink) {
+      window.open(file.driveWebViewLink, '_blank');
+    } else if (file.driveFileId) {
+      window.open(`https://drive.google.com/file/d/${file.driveFileId}/view`, '_blank');
+    }
+  };
+
   const handleApprove = async (fileId: string, driveFileId: string) => {
     if (!idToken) return;
     setActionLoading(fileId);
@@ -125,6 +135,9 @@ export default function AdminPage() {
 
       if (res.ok) {
         setSuccessMsg('File approved successfully and moved to curriculum folder.');
+        if (previewFile?.fileId === fileId) {
+          setPreviewFile(null);
+        }
         verifyAndLoad(adminToken, idToken);
       } else {
         const errData = await res.json();
@@ -155,6 +168,9 @@ export default function AdminPage() {
 
       if (res.ok) {
         setSuccessMsg('File rejected and permanently deleted.');
+        if (previewFile?.fileId === fileId) {
+          setPreviewFile(null);
+        }
         verifyAndLoad(adminToken, idToken);
       } else {
         const errData = await res.json();
@@ -587,8 +603,24 @@ export default function AdminPage() {
                                   Uploaded {file.uploadDate}
                                 </span>
                               </div>
-
                               <div style={{ display: 'flex', gap: '8px' }}>
+                                <button
+                                  className="request-upload-btn"
+                                  onClick={() => setPreviewFile(file)}
+                                  style={{
+                                    background: 'rgba(59, 130, 246, 0.12)',
+                                    borderColor: 'rgba(59, 130, 246, 0.25)',
+                                    color: '#60a5fa',
+                                    cursor: 'pointer',
+                                    outline: 'none',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '5px'
+                                  }}
+                                >
+                                  <Eye size={13} />
+                                  <span>Preview</span>
+                                </button>
                                 <button
                                   className="request-upload-btn"
                                   onClick={() => handleApprove(file.fileId, file.driveFileId)}
@@ -631,7 +663,7 @@ export default function AdminPage() {
                             <th className="sft-th">Professor</th>
                             <th className="sft-th">Uploader</th>
                             <th className="sft-th">Downloads</th>
-                            <th className="sft-th" style={{ width: '80px' }}>Actions</th>
+                            <th className="sft-th" style={{ width: '100px', textAlign: 'center' }}>Actions</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -667,27 +699,47 @@ export default function AdminPage() {
                                 <td className="sft-td" style={{ verticalAlign: 'middle', fontSize: '0.78rem', color: 'var(--text-2)' }}>{file.uploaderName || 'Anonymous'}</td>
                                 <td className="sft-td" style={{ verticalAlign: 'middle', fontSize: '0.78rem', color: 'var(--text-3)', textAlign: 'center' }}>{file.downloadCount}</td>
                                 <td className="sft-td" style={{ verticalAlign: 'middle' }}>
-                                  <button
-                                    onClick={() => handleReject(file.fileId, file.driveFileId)}
-                                    disabled={actionLoading === file.fileId}
-                                    style={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      width: '28px',
-                                      height: '28px',
-                                      borderRadius: '6px',
-                                      border: '1px solid rgba(239, 68, 68, 0.15)',
-                                      background: 'rgba(239, 68, 68, 0.03)',
-                                      color: '#f77171',
-                                      cursor: 'pointer',
-                                      transition: 'all 0.15s',
-                                      margin: '0 auto'
-                                    }}
-                                    title="Delete/Reject"
-                                  >
-                                    <Trash2 size={13} />
-                                  </button>
+                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                                    <button
+                                      onClick={() => setPreviewFile(file)}
+                                      style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        width: '28px',
+                                        height: '28px',
+                                        borderRadius: '6px',
+                                        border: '1px solid rgba(59, 130, 246, 0.2)',
+                                        background: 'rgba(59, 130, 246, 0.06)',
+                                        color: '#60a5fa',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.15s'
+                                      }}
+                                      title="Preview File"
+                                    >
+                                      <Eye size={13} />
+                                    </button>
+                                    <button
+                                      onClick={() => handleReject(file.fileId, file.driveFileId)}
+                                      disabled={actionLoading === file.fileId}
+                                      style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        width: '28px',
+                                        height: '28px',
+                                        borderRadius: '6px',
+                                        border: '1px solid rgba(239, 68, 68, 0.15)',
+                                        background: 'rgba(239, 68, 68, 0.03)',
+                                        color: '#f77171',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.15s'
+                                      }}
+                                      title="Delete/Reject"
+                                    >
+                                      <Trash2 size={13} />
+                                    </button>
+                                  </div>
                                 </td>
                               </tr>
                             ))

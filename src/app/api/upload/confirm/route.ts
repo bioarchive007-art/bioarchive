@@ -126,8 +126,12 @@ export async function POST(request: NextRequest) {
     }
     // ──────────────────────────────────────────────────────────────────────────
 
+    // Always make file viewable via link so admins & users can preview in iframe
+    await makeFilePublic(driveFileId).catch((err) => {
+      console.error('[api/upload/confirm] Failed to make file public on Drive:', err);
+    });
+
     if (!siteConfig.requireModeration) {
-      await makeFilePublic(driveFileId).catch(() => {});
       if (CONFIG.BACKUP_DRIVE_FOLDER_ID) {
         await copyToBackupFolder(driveFileId, CONFIG.BACKUP_DRIVE_FOLDER_ID).catch((err) =>
           console.error('[api/upload/confirm] Failed to copy to backup folder:', err)
@@ -169,8 +173,6 @@ export async function POST(request: NextRequest) {
     await initializeSheetHeaders();
     await appendFileRecord(sheetRow, isDuplicate);
 
-
-
     // Step 3.5: If uploaded for a request, fulfill it
     if (metadata.requestId) {
       await fulfillRequest(metadata.requestId, fileId).catch((err) =>
@@ -182,8 +184,9 @@ export async function POST(request: NextRequest) {
     const cacheKey = `files:${oldCode.toLowerCase()}:${sheetRow.semester.toLowerCase().trim()}`;
     await apiCache.delete(cacheKey).catch(() => { });
 
-    // Step 5: Notify moderators (fire-and-forget, only on the last file in the batch)
-    if (isLastFile) {
+    // Step 5: Notify moderators (fire-and-forget, on last file or single uploads)
+    const isLast = isLastFile !== false;
+    if (isLast) {
       const fileNamesList = Array.isArray(batchFiles) && batchFiles.length > 0
         ? batchFiles
         : [canonicalFileName];
@@ -195,7 +198,10 @@ export async function POST(request: NextRequest) {
         semester: sheetRow.semester,
         uploaderName: sheetRow.uploaderName,
         fileType: sheetRow.fileType,
-      }).catch(() => { });
+        remarks: metadata.remarks,
+      }).catch((err) => {
+        console.error('[api/upload/confirm] Error sending moderator upload notification:', err);
+      });
     }
 
     return NextResponse.json({ success: true, fileName: canonicalFileName });
