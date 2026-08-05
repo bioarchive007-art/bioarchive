@@ -35,8 +35,11 @@ next-env.d.ts
 dist
 .vercel/output/static
 
-# ⚠️  wrangler.toml is gitignored because ALL secrets live in the
+# wrangler.toml is gitignored because ALL secrets live in the
 # Cloudflare Dashboard. Use wrangler.example.toml as the template.
 # The real wrangler.toml only has SITE_NAME so it is mostly safe,
 # but we keep it out of git as a permanent security best practice.
 wrangler.toml
+
+# scratch / temp directories
+scratch/

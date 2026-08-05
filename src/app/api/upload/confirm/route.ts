@@ -184,14 +184,14 @@ export async function POST(request: NextRequest) {
     const cacheKey = `files:${oldCode.toLowerCase()}:${sheetRow.semester.toLowerCase().trim()}`;
     await apiCache.delete(cacheKey).catch(() => { });
 
-    // Step 5: Notify moderators (fire-and-forget, on last file or single uploads)
+    // Step 5: Notify moderators (await email send so Edge runtime finishes request)
     const isLast = isLastFile !== false;
     if (isLast) {
       const fileNamesList = Array.isArray(batchFiles) && batchFiles.length > 0
         ? batchFiles
         : [canonicalFileName];
 
-      notifyModsOfUpload({
+      await notifyModsOfUpload({
         fileNames: fileNamesList,
         courseCode: sheetRow.courseCode,
         courseName: sheetRow.courseName,

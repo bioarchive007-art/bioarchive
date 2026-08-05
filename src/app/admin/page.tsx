@@ -800,6 +800,16 @@ export default function AdminPage() {
         </div>
       </div>
 
+      <FilePreviewModal
+        file={previewFile}
+        isOpen={!!previewFile}
+        onClose={() => setPreviewFile(null)}
+        onDownload={handleDownload}
+        onApprove={(fileId, driveFileId) => handleApprove(fileId, driveFileId)}
+        onReject={(fileId, driveFileId) => handleReject(fileId, driveFileId)}
+        actionLoading={actionLoading}
+      />
+
       <style jsx global>{`
         .spinner {
           animation: spin 1s linear infinite;

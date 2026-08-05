@@ -35,9 +35,11 @@ export default function FilePreviewModal({
   if (!file) return null;
 
   // Google Drive preview URL format
-  const previewUrl = file.driveWebViewLink
+  const previewUrl = file.driveFileId
+    ? `https://drive.google.com/file/d/${file.driveFileId}/preview`
+    : file.driveWebViewLink
     ? file.driveWebViewLink.replace(/\/view.*$/, '/preview')
-    : `https://drive.google.com/file/d/${file.driveFileId}/preview`;
+    : '';
 
   const modalContent = (
     <AnimatePresence>
