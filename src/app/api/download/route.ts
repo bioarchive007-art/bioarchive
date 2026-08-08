@@ -83,6 +83,9 @@ export async function POST(request: NextRequest) {
     }
 
     const userAgent = request.headers.get('user-agent') || 'Unknown';
+    const forwarded = request.headers.get('x-forwarded-for');
+    const ipAddress = forwarded ? forwarded.split(',')[0].trim() : (request.headers.get('cf-connecting-ip') || request.headers.get('x-real-ip') || 'Unknown');
+    const referrer = request.headers.get('referer') || request.headers.get('referrer') || 'Direct';
 
     // Log the download details (fire-and-forget/non-blocking)
     getAllFiles()
@@ -97,6 +100,8 @@ export async function POST(request: NextRequest) {
             uploaderName: record.uploaderName || 'Anonymous',
             userEmail,
             userAgent,
+            ipAddress,
+            referrer,
           });
         }
       })

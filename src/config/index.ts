@@ -23,6 +23,7 @@ export const CONFIG = Object.freeze({
     slides: { label: 'Slides', emoji: '', colorHex: '#F59E0B' },
     lab: { label: 'Lab Material', emoji: '', colorHex: '#10B981' },
     assignment: { label: 'Assignment', emoji: '', colorHex: '#8B5CF6' },
+    book: { label: 'Reference Book', emoji: '📚', colorHex: '#EC4899' },
     other: { label: 'Other', emoji: '', colorHex: '#6B7280' },
   } as const,
   SHEET_HEADERS: [

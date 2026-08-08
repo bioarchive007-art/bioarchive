@@ -104,6 +104,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Extract optional verified user email from token if provided
+    let userEmail = 'Anonymous';
+    const authHeader = request.headers.get('Authorization') || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    if (token) {
+      try {
+        const { verifyGoogleToken } = await import('@/lib/auth');
+        const googleUser = await verifyGoogleToken(token);
+        userEmail = googleUser.email;
+      } catch {
+        // Token optional, fallback to Anonymous
+      }
+    }
+
+    const userAgent = request.headers.get('user-agent') || 'Unknown';
+    const forwarded = request.headers.get('x-forwarded-for');
+    const ipAddress = forwarded ? forwarded.split(',')[0].trim() : (request.headers.get('cf-connecting-ip') || request.headers.get('x-real-ip') || 'Unknown');
+
     const newRequest: FileRequest = {
       requestId: crypto.randomUUID(),
       courseCode: courseCode.trim().toUpperCase(),
@@ -118,8 +136,13 @@ export async function POST(request: NextRequest) {
       fulfilledFileId: '',
     };
 
-    // Append to sheets
-    await appendRequestRecord(newRequest);
+    // Append to sheets with metadata
+    await appendRequestRecord({
+      ...newRequest,
+      userEmail,
+      ipAddress,
+      userAgent,
+    });
 
     // Invalidate KV cache
     const kv = (globalThis as any).BIOARCHIVE_CACHE;

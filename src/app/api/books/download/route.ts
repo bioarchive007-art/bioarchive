@@ -1,7 +1,7 @@
 export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSiteConfig } from '@/lib/sheets';
+import { getSiteConfig, appendBookDownloadRecord } from '@/lib/sheets';
 import { getAccessToken } from '@/lib/google-auth';
 import { verifyGoogleToken, isAdminEmail, checkIsDev } from '@/lib/auth';
 import { fetchWithTimeout } from '@/lib/utils';
@@ -10,10 +10,16 @@ import { serverError } from '@/lib/errors';
 // Shadow global fetch with our custom timeout wrapper
 const fetch = fetchWithTimeout;
 
+function getClientIp(request: NextRequest): string {
+  const forwarded = request.headers.get('x-forwarded-for');
+  if (forwarded) return forwarded.split(',')[0].trim();
+  return request.headers.get('cf-connecting-ip') || request.headers.get('x-real-ip') || 'Unknown';
+}
+
 /**
  * GET /api/books/download
  *
- * Logs book access details (bookName, courseCode, semester, driveFileId, userAgent)
+ * Logs book access details (bookName, courseCode, semester, driveFileId, userAgent, ipAddress, referrer)
  * to a tab in Google Sheets, then streams the file content directly from Google Drive.
  */
 export async function GET(request: NextRequest) {
@@ -78,8 +84,20 @@ export async function GET(request: NextRequest) {
     }
 
     const userAgent = request.headers.get('user-agent') || 'Unknown';
+    const ipAddress = getClientIp(request);
+    const referrer = request.headers.get('referer') || request.headers.get('referrer') || 'Direct';
 
-    // Note: Direct book download logging removed; book access is now tracked via the Request system.
+    // Log book download record to Google Sheets (fire-and-forget/non-blocking)
+    appendBookDownloadRecord({
+      bookName,
+      courseCode,
+      semester,
+      driveFileId: fileId,
+      userEmail: email,
+      userAgent,
+      ipAddress,
+      referrer,
+    }).catch((err) => console.error('[api/books/download] Logging failed:', err));
 
     // Fetch the file directly from Google Drive using administrator access token
     const token = await getAccessToken();

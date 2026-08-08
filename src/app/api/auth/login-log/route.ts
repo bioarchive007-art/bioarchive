@@ -35,9 +35,12 @@ export async function POST(request: NextRequest) {
     }
 
     const userAgent = request.headers.get('user-agent') || 'Unknown';
+    const forwarded = request.headers.get('x-forwarded-for');
+    const ipAddress = forwarded ? forwarded.split(',')[0].trim() : (request.headers.get('cf-connecting-ip') || request.headers.get('x-real-ip') || 'Unknown');
+    const referrer = request.headers.get('referer') || request.headers.get('referrer') || 'Direct';
 
     // Log login event to Google Sheets using verified data only
-    await appendLoginRecord({ email: verifiedEmail, name: verifiedName, userAgent });
+    await appendLoginRecord({ email: verifiedEmail, name: verifiedName, userAgent, ipAddress, referrer });
 
     const isAdmin = isAdminEmail(verifiedEmail);
     return NextResponse.json({ success: true, isAdmin });

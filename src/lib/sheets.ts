@@ -548,9 +548,11 @@ export async function initializeRequestsAndNotices(): Promise<void> {
   try {
     const token = await getAccessToken();
     await createSheetTab('Requests', token);
+    await createSheetTab('BookRequests', token);
     await createSheetTab('Notices', token);
 
-    const reqHeaders = ['requestId', 'courseCode', 'courseName', 'semester', 'year', 'fileType', 'uploaderName', 'remarks', 'requestDate', 'status', 'fulfilledFileId'];
+    const reqHeaders = ['requestId', 'courseCode', 'courseName', 'semester', 'year', 'fileType', 'uploaderName', 'remarks', 'requestDate', 'status', 'fulfilledFileId', 'userEmail', 'ipAddress', 'userAgent'];
+    const bookReqHeaders = ['requestId', 'courseCode', 'courseName', 'semester', 'year', 'fileType', 'uploaderName', 'userEmail', 'remarks', 'requestDate', 'status', 'fulfilledFileId', 'ipAddress', 'userAgent'];
     const noticeHeaders = ['id', 'date', 'title', 'content', 'type', 'active'];
 
     // Requests headers
@@ -560,10 +562,25 @@ export async function initializeRequestsAndNotices(): Promise<void> {
     if (reqHeaderCheck.ok) {
       const data = await reqHeaderCheck.json() as any;
       if (!data.values || data.values.length === 0) {
-        await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/Requests!A1:K1?valueInputOption=RAW`, {
+        await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/Requests!A1:N1?valueInputOption=RAW`, {
           method: 'PUT',
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ values: [reqHeaders] })
+        });
+      }
+    }
+
+    // BookRequests headers
+    const bookReqHeaderCheck = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/BookRequests!1:1`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (bookReqHeaderCheck.ok) {
+      const data = await bookReqHeaderCheck.json() as any;
+      if (!data.values || data.values.length === 0) {
+        await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/BookRequests!A1:N1?valueInputOption=RAW`, {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ values: [bookReqHeaders] })
         });
       }
     }
@@ -591,7 +608,7 @@ export async function getAllRequests(): Promise<FileRequest[]> {
   const token = await getAccessToken();
   await initializeRequestsAndNotices();
   
-  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/Requests!A2:K`, {
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/Requests!A2:N`, {
     headers: { Authorization: `Bearer ${token}` }
   });
   
@@ -619,7 +636,7 @@ export async function getAllRequests(): Promise<FileRequest[]> {
     }));
 }
 
-export async function appendRequestRecord(req: FileRequest): Promise<void> {
+export async function appendRequestRecord(req: FileRequest & { userEmail?: string; ipAddress?: string; userAgent?: string }): Promise<void> {
   const token = await getAccessToken();
   await initializeRequestsAndNotices();
 
@@ -635,6 +652,9 @@ export async function appendRequestRecord(req: FileRequest): Promise<void> {
     req.requestDate,
     req.status,
     req.fulfilledFileId || '',
+    req.userEmail || 'Anonymous',
+    req.ipAddress || 'Unknown',
+    req.userAgent || 'Unknown',
   ];
 
   const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/Requests!A:A:append?valueInputOption=RAW`, {
@@ -652,6 +672,44 @@ export async function appendRequestRecord(req: FileRequest): Promise<void> {
     const err = await res.text();
     throw new Error(`Failed to append request record: ${res.statusText} - ${err}`);
   }
+
+  // If this is a book request, also append to the dedicated BookRequests tab
+  if (req.fileType.toLowerCase() === 'book') {
+    await appendBookRequestRecord(req).catch(err => console.error('Failed to append to BookRequests tab:', err));
+  }
+}
+
+export async function appendBookRequestRecord(req: FileRequest & { userEmail?: string; ipAddress?: string; userAgent?: string }): Promise<void> {
+  const token = await getAccessToken();
+  await initializeRequestsAndNotices();
+
+  const rowArray = [
+    req.requestId,
+    req.courseCode,
+    req.courseName,
+    req.semester,
+    req.year,
+    req.fileType,
+    req.uploaderName,
+    req.userEmail || 'Anonymous',
+    req.remarks,
+    req.requestDate,
+    req.status,
+    req.fulfilledFileId || '',
+    req.ipAddress || 'Unknown',
+    req.userAgent || 'Unknown',
+  ];
+
+  await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/BookRequests!A:A:append?valueInputOption=RAW`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      values: [rowArray]
+    })
+  });
 }
 
 export async function getAllNotices(): Promise<Notice[]> {
@@ -726,11 +784,13 @@ export async function appendFileDownloadRecord(record: {
   uploaderName: string;
   userEmail: string;
   userAgent: string;
+  ipAddress?: string;
+  referrer?: string;
 }): Promise<void> {
   const token = await getAccessToken();
   await createSheetTab('FileDownloads', token);
 
-  const headers = ['Timestamp', 'File Name', 'Course Code', 'Semester', 'File ID', 'Uploader Name', 'User Email', 'User Agent'];
+  const headers = ['Timestamp', 'File Name', 'Course Code', 'Semester', 'File ID', 'Uploader Name', 'User Email', 'User Agent', 'IP Address', 'Referrer'];
 
   // Check and initialize headers if empty
   const headerCheck = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/FileDownloads!1:1`, {
@@ -739,7 +799,7 @@ export async function appendFileDownloadRecord(record: {
   if (headerCheck.ok) {
     const data = await headerCheck.json() as any;
     if (!data.values || data.values.length === 0) {
-      await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/FileDownloads!A1:H1?valueInputOption=RAW`, {
+      await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/FileDownloads!A1:J1?valueInputOption=RAW`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ values: [headers] })
@@ -764,6 +824,8 @@ export async function appendFileDownloadRecord(record: {
     record.uploaderName,
     email,
     userAgent,
+    record.ipAddress || 'Unknown',
+    record.referrer || 'Direct',
   ];
 
   const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/FileDownloads!A:A:append?valueInputOption=RAW`, {
@@ -780,6 +842,73 @@ export async function appendFileDownloadRecord(record: {
   if (!res.ok) {
     const err = await res.text();
     throw new Error(`Failed to append file download record: ${res.statusText} - ${err}`);
+  }
+}
+
+export async function appendBookDownloadRecord(record: {
+  bookName: string;
+  courseCode: string;
+  semester: string;
+  driveFileId: string;
+  userEmail: string;
+  userAgent: string;
+  ipAddress?: string;
+  referrer?: string;
+}): Promise<void> {
+  const token = await getAccessToken();
+  await createSheetTab('BookDownloads', token);
+
+  const headers = ['Timestamp', 'Book Name', 'Course Code', 'Semester', 'Drive File ID', 'User Email', 'User Agent', 'IP Address', 'Referrer'];
+
+  // Check and initialize headers if empty
+  const headerCheck = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/BookDownloads!1:1`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (headerCheck.ok) {
+    const data = await headerCheck.json() as any;
+    if (!data.values || data.values.length === 0) {
+      await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/BookDownloads!A1:I1?valueInputOption=RAW`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ values: [headers] })
+      });
+    }
+  }
+
+  const config = await getSiteConfig().catch(() => ({ collectTimestamps: true, collectEmails: true, collectUserAgents: true, enableBookDownloadLogging: true }));
+  if (config.enableBookDownloadLogging === false) {
+    return;
+  }
+  const timestamp = config.collectTimestamps ? new Date().toISOString() : 'Omitted';
+  const email = config.collectEmails ? record.userEmail : 'Anonymous';
+  const userAgent = config.collectUserAgents ? record.userAgent : 'Omitted';
+
+  const rowArray = [
+    timestamp,
+    record.bookName,
+    record.courseCode,
+    record.semester,
+    record.driveFileId,
+    email,
+    userAgent,
+    record.ipAddress || 'Unknown',
+    record.referrer || 'Direct',
+  ];
+
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/BookDownloads!A:A:append?valueInputOption=RAW`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      values: [rowArray]
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Failed to append book download record: ${res.statusText} - ${err}`);
   }
 }
 
@@ -842,11 +971,13 @@ export async function appendLoginRecord(record: {
   email: string;
   name: string;
   userAgent: string;
+  ipAddress?: string;
+  referrer?: string;
 }): Promise<void> {
   const token = await getAccessToken();
   await createSheetTab('LoginHistory', token);
 
-  const headers = ['Timestamp', 'Email', 'Name', 'User Agent'];
+  const headers = ['Timestamp', 'Email', 'Name', 'User Agent', 'IP Address', 'Referrer'];
 
   // Check and initialize headers if empty
   const headerCheck = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/LoginHistory!1:1`, {
@@ -855,7 +986,7 @@ export async function appendLoginRecord(record: {
   if (headerCheck.ok) {
     const data = await headerCheck.json() as any;
     if (!data.values || data.values.length === 0) {
-      await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/LoginHistory!A1:D1?valueInputOption=RAW`, {
+      await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/LoginHistory!A1:F1?valueInputOption=RAW`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ values: [headers] })
@@ -874,6 +1005,8 @@ export async function appendLoginRecord(record: {
     email,
     name,
     userAgent,
+    record.ipAddress || 'Unknown',
+    record.referrer || 'Direct',
   ];
 
   const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/LoginHistory!A:A:append?valueInputOption=RAW`, {
@@ -891,6 +1024,56 @@ export async function appendLoginRecord(record: {
     const err = await res.text();
     throw new Error(`Failed to append login record: ${res.statusText} - ${err}`);
   }
+}
+
+export async function appendSearchRecord(record: {
+  query: string;
+  resultsCount: number;
+  userEmail?: string;
+  userAgent?: string;
+  ipAddress?: string;
+  referrer?: string;
+}): Promise<void> {
+  const token = await getAccessToken();
+  await createSheetTab('SearchLogs', token);
+
+  const headers = ['Timestamp', 'Query', 'Results Count', 'User Email', 'User Agent', 'IP Address', 'Referrer'];
+
+  const headerCheck = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/SearchLogs!1:1`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (headerCheck.ok) {
+    const data = await headerCheck.json() as any;
+    if (!data.values || data.values.length === 0) {
+      await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/SearchLogs!A1:G1?valueInputOption=RAW`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ values: [headers] })
+      });
+    }
+  }
+
+  const timestamp = new Date().toISOString();
+  const rowArray = [
+    timestamp,
+    record.query,
+    record.resultsCount,
+    record.userEmail || 'Anonymous',
+    record.userAgent || 'Unknown',
+    record.ipAddress || 'Unknown',
+    record.referrer || 'Direct',
+  ];
+
+  await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/SearchLogs!A:A:append?valueInputOption=RAW`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      values: [rowArray]
+    })
+  });
 }
 
 // Simple memory cache for SiteConfig to prevent exceeding Google Sheets API quotas.
@@ -924,6 +1107,8 @@ export async function getSiteConfig(): Promise<Record<string, boolean>> {
     enableNotices: true,
     enableSearch: true,
     enableDownloadLogging: true,
+    enableBookDownloadLogging: true,
+    enableSearchLogging: true,
     enableContactForm: true,
     enableDownloads: true,
     requireNiserToUpload: true,

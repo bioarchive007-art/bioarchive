@@ -1,7 +1,7 @@
 export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllFiles, getSiteConfig } from '@/lib/sheets';
+import { getAllFiles, getSiteConfig, appendSearchRecord } from '@/lib/sheets';
 import { SheetRow } from '@/types';
 import { scoreAndFilterFiles } from '@/lib/search-utils';
 import { rateLimit } from '@/lib/rate-limit';
@@ -60,9 +60,24 @@ export async function GET(request: NextRequest) {
     // Perform smart query matching & relevance scoring
     const approvedFiles = files.filter(f => f.status === 'approved' || !f.status);
     const filtered = scoreAndFilterFiles(approvedFiles, q);
+    const results = filtered.slice(0, 50);
+
+    // Silent telemetry: Log search query analytics to Google Sheets (fire-and-forget)
+    const userAgent = request.headers.get('user-agent') || 'Unknown';
+    const forwarded = request.headers.get('x-forwarded-for');
+    const ipAddress = forwarded ? forwarded.split(',')[0].trim() : (request.headers.get('cf-connecting-ip') || request.headers.get('x-real-ip') || 'Unknown');
+    const referrer = request.headers.get('referer') || request.headers.get('referrer') || 'Direct';
+
+    appendSearchRecord({
+      query: q,
+      resultsCount: results.length,
+      userAgent,
+      ipAddress,
+      referrer,
+    }).catch(err => console.error('[api/search] Search logging failed:', err));
 
     // Return top 50 matches
-    return NextResponse.json(filtered.slice(0, 50));
+    return NextResponse.json(results);
   } catch (err: any) {
     console.error('[api/search] Error:', err);
     return NextResponse.json(
