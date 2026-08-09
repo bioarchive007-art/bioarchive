@@ -967,6 +967,80 @@ export async function approveFileRecord(fileId: string): Promise<void> {
   }
 }
 
+export async function updateFileRecordStatus(fileId: string, newStatus: string, remarks?: string): Promise<void> {
+  const token = await getAccessToken();
+  const headerMap = await getSheetHeaderMap();
+
+  const lastCol = getColumnLetter(CONFIG.SHEET_HEADERS.length - 1);
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/Sheet1!A:${lastCol}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch sheet values for status update: ${res.statusText}`);
+  }
+
+  const data = (await res.json()) as { values?: any[][] };
+  const rows = data.values || [];
+
+  const fileIdColIdx = headerMap['fileId'];
+  const statusColIdx = headerMap['status'];
+  const remarksColIdx = headerMap['remarks'];
+
+  if (fileIdColIdx === undefined || statusColIdx === undefined) {
+    throw new Error('Missing fileId or status columns in the sheet registry');
+  }
+
+  let sheetRowIndex = -1;
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][fileIdColIdx] === fileId) {
+      sheetRowIndex = i + 1;
+      break;
+    }
+  }
+
+  if (sheetRowIndex === -1) {
+    throw new Error(`File record with fileId ${fileId} not found`);
+  }
+
+  const statusColLetter = getColumnLetter(statusColIdx);
+  const cellRange = `Sheet1!${statusColLetter}${sheetRowIndex}`;
+
+  const updateRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${cellRange}?valueInputOption=RAW`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      values: [[newStatus]]
+    })
+  });
+
+  if (!updateRes.ok) {
+    const err = await updateRes.text();
+    throw new Error(`Failed to update status in sheets: ${updateRes.statusText} - ${err}`);
+  }
+
+  if (remarks && remarksColIdx !== undefined) {
+    const remarksColLetter = getColumnLetter(remarksColIdx);
+    const existingRemarks = rows[sheetRowIndex - 1][remarksColIdx] || '';
+    const updatedRemarks = existingRemarks ? `${existingRemarks} | ${remarks}` : remarks;
+
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/Sheet1!${remarksColLetter}${sheetRowIndex}?valueInputOption=RAW`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        values: [[updatedRemarks]]
+      })
+    });
+  }
+}
+
+
 export async function appendLoginRecord(record: {
   email: string;
   name: string;

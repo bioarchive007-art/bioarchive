@@ -3,6 +3,7 @@
 const DRIVE_FOLDER_ID = process.env.DRIVE_FOLDER_ID || '';
 const DRIVE_QUARANTINE_FOLDER_ID = process.env.DRIVE_QUARANTINE_FOLDER_ID || '';
 const BACKUP_DRIVE_FOLDER_ID = process.env.BACKUP_DRIVE_FOLDER_ID || '';
+const DRIVE_DUPLICATES_FOLDER_ID = process.env.DRIVE_DUPLICATES_FOLDER_ID || DRIVE_QUARANTINE_FOLDER_ID;
 const SHEET_ID = process.env.SHEET_ID || '';
 // R2 public URL and Google Client ID are legitimately public-facing values.
 const R2_PUBLIC_BASE_URL = process.env.R2_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_URL || '';
@@ -12,6 +13,7 @@ export const CONFIG = Object.freeze({
   GOOGLE_CLIENT_ID,
   DRIVE_FOLDER_ID,
   DRIVE_QUARANTINE_FOLDER_ID,
+  DRIVE_DUPLICATES_FOLDER_ID,
   BACKUP_DRIVE_FOLDER_ID,
   SHEET_ID,
   R2_PUBLIC_BASE_URL,

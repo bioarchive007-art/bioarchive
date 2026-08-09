@@ -110,6 +110,56 @@ export async function moveToQuarantine(driveFileId: string): Promise<void> {
 }
 
 /**
+ * Moves a Google Drive file to a target folder by ID.
+ */
+export async function moveDriveFileToFolder(driveFileId: string, targetFolderId: string): Promise<void> {
+  const token = await getAccessToken();
+
+  const getRes = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${driveFileId}?fields=parents`,
+    {
+      headers: { Authorization: `Bearer ${token}` }
+    }
+  );
+
+  if (!getRes.ok) {
+    const errorText = await getRes.text();
+    throw new Error(`Failed to get file metadata from Google Drive: ${getRes.statusText} - ${errorText}`);
+  }
+
+  const fileData = (await getRes.json()) as { parents?: string[] };
+  const currentParents = fileData.parents?.join(',') || '';
+
+  const patchUrl = new URL(`https://www.googleapis.com/drive/v3/files/${driveFileId}`);
+  patchUrl.searchParams.append('addParents', targetFolderId);
+  if (currentParents) {
+    patchUrl.searchParams.append('removeParents', currentParents);
+  }
+
+  const patchRes = await fetch(patchUrl.toString(), {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!patchRes.ok) {
+    const errorText = await patchRes.text();
+    throw new Error(`Failed to move file to folder ${targetFolderId} on Google Drive: ${patchRes.statusText} - ${errorText}`);
+  }
+}
+
+/**
+ * Moves a file to the dedicated duplicates folder on Google Drive.
+ */
+export async function moveToDuplicatesFolder(driveFileId: string): Promise<void> {
+  const targetFolderId = CONFIG.DRIVE_DUPLICATES_FOLDER_ID || CONFIG.DRIVE_QUARANTINE_FOLDER_ID;
+  if (!targetFolderId) return;
+  await moveDriveFileToFolder(driveFileId, targetFolderId);
+}
+
+
+/**
  * Deletes a file from Google Drive permanently.
  */
 export async function deleteFromDrive(driveFileId: string): Promise<void> {

@@ -3,8 +3,9 @@ export const runtime = 'edge';
 import { NextRequest, NextResponse } from 'next/server';
 import { CONFIG } from '@/config';
 import { SheetRow } from '@/types';
-import { makeFilePublic, copyToBackupFolder } from '@/lib/drive';
-import { checkDuplicate, appendFileRecord, initializeSheetHeaders, fulfillRequest, getSiteConfig } from '@/lib/sheets';
+import { makeFilePublic, copyToBackupFolder, moveToDuplicatesFolder } from '@/lib/drive';
+import { checkDuplicate, checkDuplicateMetadata, appendFileRecord, updateFileRecordStatus, initializeSheetHeaders, fulfillRequest, getSiteConfig } from '@/lib/sheets';
+import { calculateDocumentQualityScore } from '@/lib/qualityScore';
 import { notifyModsOfUpload } from '@/lib/notify';
 import { apiCache } from '@/lib/api-cache';
 import { verifyGoogleToken, isAdminEmail } from '@/lib/auth';
@@ -139,6 +140,59 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // ── Smart Quality-Based Duplicate Evaluation & Relocation ─────────────────
+    let finalStatus = status;
+    const isNotes = (metadata.fileType || '').toLowerCase() === 'notes';
+
+    if (isDuplicate && !isNotes) {
+      try {
+        const driveFileMeta = await verifyDriveFile(driveFileId).catch(() => ({ size: 500000, mimeType: 'application/pdf' }));
+        const newQuality = calculateDocumentQualityScore({
+          fileName: canonicalFileName,
+          mimeType: driveFileMeta.mimeType,
+          sizeBytes: Number(driveFileMeta.size),
+        });
+
+        const existingMatch = (await checkDuplicate(md5Hash)) || (await checkDuplicateMetadata({
+          semester: metadata.semester || '',
+          year: metadata.year || '',
+          courseName: metadata.courseName || '',
+          professor: metadata.professor || '',
+          fileType: metadata.fileType || '',
+          examType: metadata.examType || '',
+        }));
+
+        if (existingMatch) {
+          const existingQuality = calculateDocumentQualityScore({
+            fileName: existingMatch.fileName,
+            mimeType: 'application/pdf',
+            sizeBytes: 500000,
+          });
+
+          if (newQuality.totalScore > existingQuality.totalScore + 10) {
+            // New upload is higher quality -> demote existing file to duplicates folder
+            await moveToDuplicatesFolder(existingMatch.driveFileId).catch((err) =>
+              console.error('[api/upload/confirm] Failed to move lower quality existing file to duplicates folder:', err)
+            );
+            await updateFileRecordStatus(
+              existingMatch.fileId,
+              'archived_duplicate',
+              `Demoted: Replaced by higher quality file (${newQuality.details})`
+            ).catch((err) => console.error('[api/upload/confirm] Failed to update demoted file status in sheets:', err));
+          } else {
+            // Existing file is higher/equal quality -> move new file to duplicates folder
+            await moveToDuplicatesFolder(driveFileId).catch((err) =>
+              console.error('[api/upload/confirm] Failed to move new file to duplicates folder:', err)
+            );
+            finalStatus = 'archived_duplicate';
+          }
+        }
+      } catch (dupErr) {
+        console.error('[api/upload/confirm] Error during quality score comparison:', dupErr);
+      }
+    }
+    // ──────────────────────────────────────────────────────────────────────────
+
     // Step 2: Build SheetRow
     const fileId = crypto.randomUUID();
     const { canonical, oldCode } = normalizeCourseCode(metadata.courseCode);
@@ -166,7 +220,7 @@ export async function POST(request: NextRequest) {
       contentScope: metadata.contentScope || undefined,
       authorName: metadata.authorName || undefined,
       authorBatch: metadata.authorBatch || undefined,
-      status,
+      status: finalStatus,
     };
 
     // Step 3: Ensure sheet headers are up to date, then append record
