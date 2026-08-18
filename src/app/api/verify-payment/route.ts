@@ -1,12 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
 
-export const runtime = 'nodejs';
+export const runtime = 'edge';
+
+/**
+ * Verifies Razorpay payment signature using Web Crypto HMAC-SHA256
+ * (fully compatible with Cloudflare Edge runtime and Node.js).
+ */
+async function verifyHmacSha256(
+  data: string,
+  secret: string,
+  expectedHexSignature: string
+): Promise<boolean> {
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
+  const messageData = encoder.encode(data);
+
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+
+  const signatureBuffer = await crypto.subtle.sign('HMAC', cryptoKey, messageData);
+  const hashArray = Array.from(new Uint8Array(signatureBuffer));
+  const generatedSignature = hashArray
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+
+  // Constant-time comparison to prevent timing attacks
+  if (generatedSignature.length !== expectedHexSignature.length) {
+    return false;
+  }
+
+  let mismatch = 0;
+  for (let i = 0; i < generatedSignature.length; i++) {
+    mismatch |= generatedSignature.charCodeAt(i) ^ expectedHexSignature.charCodeAt(i);
+  }
+
+  return mismatch === 0;
+}
 
 /**
  * POST /api/verify-payment
  *
- * Verifies the Razorpay payment signature using HMAC SHA-256.
+ * Cloudflare Edge Runtime compatible payment verification route.
  * Expected payload:
  * {
  *   razorpay_order_id: string,
@@ -52,20 +91,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate expected HMAC-SHA256 signature
     const dataToSign = `${razorpay_order_id}|${razorpay_payment_id}`;
-    const expectedSignature = crypto
-      .createHmac('sha256', key_secret)
-      .update(dataToSign)
-      .digest('hex');
-
-    // Constant-time comparison to prevent timing attacks
-    const expectedBuffer = Buffer.from(expectedSignature, 'utf-8');
-    const receivedBuffer = Buffer.from(razorpay_signature, 'utf-8');
-
-    const isValid =
-      expectedBuffer.length === receivedBuffer.length &&
-      crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
+    const isValid = await verifyHmacSha256(dataToSign, key_secret, razorpay_signature);
 
     if (!isValid) {
       console.warn(

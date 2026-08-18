@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Razorpay from 'razorpay';
 
-export const runtime = 'nodejs';
+export const runtime = 'edge';
 
 /**
  * POST /api/create-order
  *
- * Creates a new Razorpay order.
+ * Cloudflare Edge Runtime compatible order creator using native fetch and Razorpay REST API.
  * Expected payload: { amount: number (in paise), currency?: string, receipt?: string, notes?: object }
  * Minimum amount: 100 paise (₹1)
  */
@@ -43,12 +42,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const razorpay = new Razorpay({
-      key_id,
-      key_secret,
-    });
-
-    const orderOptions = {
+    const orderPayload = {
       amount: Math.round(amountInPaise),
       currency: (currency || 'INR').toUpperCase(),
       receipt: receipt || `rcpt_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -57,21 +51,44 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    const order = await razorpay.orders.create(orderOptions);
+    // Basic Auth for Razorpay REST API (Edge compatible)
+    const basicAuth = btoa(`${key_id}:${key_secret}`);
+
+    const razorpayResponse = await fetch('https://api.razorpay.com/v1/orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Basic ${basicAuth}`,
+      },
+      body: JSON.stringify(orderPayload),
+    });
+
+    const responseData = await razorpayResponse.json();
+
+    if (!razorpayResponse.ok) {
+      console.error('[api/create-order] Razorpay API error:', responseData);
+      return NextResponse.json(
+        {
+          error:
+            responseData?.error?.description ||
+            responseData?.error?.message ||
+            'Failed to create payment order with Razorpay.',
+        },
+        { status: razorpayResponse.status }
+      );
+    }
 
     return NextResponse.json({
-      order_id: order.id,
-      amount: order.amount,
-      currency: order.currency,
+      order_id: responseData.id,
+      amount: responseData.amount,
+      currency: responseData.currency,
       key_id: key_id,
     });
   } catch (err: any) {
-    console.error('[api/create-order] Razorpay order creation failed:', err);
-    const errorMessage =
-      err?.error?.description ||
-      err?.message ||
-      'Failed to create payment order. Please try again.';
-    const statusCode = err?.statusCode || 500;
-    return NextResponse.json({ error: errorMessage }, { status: statusCode });
+    console.error('[api/create-order] Unexpected error:', err);
+    return NextResponse.json(
+      { error: err?.message || 'Failed to create payment order. Please try again.' },
+      { status: 500 }
+    );
   }
 }
