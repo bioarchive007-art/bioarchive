@@ -9,18 +9,28 @@ export const runtime = 'edge';
  * Expected payload: { amount: number (in paise), currency?: string, receipt?: string, notes?: object }
  * Minimum amount: 100 paise (₹1)
  */
+function getEnv(key: string): string | undefined {
+  return (
+    process.env[key] ||
+    (globalThis as any)?.[key] ||
+    (globalThis as any)?.__ENV__?.[key] ||
+    (globalThis as any)?.env?.[key]
+  );
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const key_id = process.env.RAZORPAY_KEY_ID;
-    const key_secret = process.env.RAZORPAY_KEY_SECRET;
+    const key_id = getEnv('RAZORPAY_KEY_ID');
+    const key_secret = getEnv('RAZORPAY_KEY_SECRET');
 
     if (!key_id || !key_secret) {
-      console.error('[api/create-order] Missing RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET');
+      console.error('[api/create-order] Missing RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET in environment');
       return NextResponse.json(
-        { error: 'Payment gateway configuration missing.' },
+        { error: 'Payment gateway configuration missing. Please ensure RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are set in Cloudflare Pages dashboard.' },
         { status: 500 }
       );
     }
+
 
     let body: any;
     try {

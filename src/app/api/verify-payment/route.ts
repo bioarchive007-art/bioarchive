@@ -53,17 +53,27 @@ async function verifyHmacSha256(
  *   razorpay_signature: string
  * }
  */
+function getEnv(key: string): string | undefined {
+  return (
+    process.env[key] ||
+    (globalThis as any)?.[key] ||
+    (globalThis as any)?.__ENV__?.[key] ||
+    (globalThis as any)?.env?.[key]
+  );
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const key_secret = process.env.RAZORPAY_KEY_SECRET;
+    const key_secret = getEnv('RAZORPAY_KEY_SECRET');
 
     if (!key_secret) {
-      console.error('[api/verify-payment] Missing RAZORPAY_KEY_SECRET');
+      console.error('[api/verify-payment] Missing RAZORPAY_KEY_SECRET in environment');
       return NextResponse.json(
         { error: 'Payment gateway configuration missing.' },
         { status: 500 }
       );
     }
+
 
     let body: any;
     try {
