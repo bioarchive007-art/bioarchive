@@ -102,7 +102,7 @@ export default function BuyMeCoffee({ position = 'bottom-right' }: BuyMeCoffeePr
         amount: orderData.amount,
         currency: orderData.currency || 'INR',
         name: 'BioArchive',
-        description: 'Support BioArchive Server & Hosting Costs',
+        description: 'Buy Us a Coffee/Chai',
         image: '/favicon-32x32.png',
         order_id: orderData.order_id,
         handler: async function (response: {
@@ -127,7 +127,7 @@ export default function BuyMeCoffee({ position = 'bottom-right' }: BuyMeCoffeePr
             if (verifyRes.ok && verifyData.success) {
               setIsOpen(false);
               showToast(
-                '🎉 Thank you for supporting BioArchive! Your contribution means a lot.',
+                '🎉 Thank you for supporting us! Your contribution means a lot.',
                 'success'
               );
             } else {
@@ -266,11 +266,11 @@ export default function BuyMeCoffee({ position = 'bottom-right' }: BuyMeCoffeePr
               </div>
               <div>
                 <h3 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
-                  Support BioArchive
+                  Buy Us a Coffee/Chai!
                   <Heart className="w-4 h-4 text-rose-400 fill-rose-400" />
                 </h3>
                 <p className="text-xs text-slate-400">
-                  Help keep NISER Biology study resources free & fast for everyone.
+                  Help keep BioArchive free for everyone.
                 </p>
               </div>
             </div>
