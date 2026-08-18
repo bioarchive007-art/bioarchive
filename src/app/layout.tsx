@@ -5,6 +5,8 @@ import Script from 'next/script';
 import AuthProvider from '@/components/AuthProvider';
 import LayoutLoginModalWrapper from '@/components/LayoutLoginModalWrapper';
 import { ToastProvider } from '@/components/Toast';
+import BuyMeCoffee from '@/components/BuyMeCoffee';
+
 
 const fontCinzel = Cinzel({
   subsets: ['latin'],
@@ -149,7 +151,9 @@ export default function RootLayout({
             </div>
 
             <LayoutLoginModalWrapper />
+            <BuyMeCoffee position="bottom-right" />
           </AuthProvider>
+
         </ToastProvider>
 
         {/* Inline script: optimized loading screen transition */}

@@ -13,6 +13,7 @@
     "framer-motion": "latest",
     "lucide-react": "latest",
     "next": "^14.2.0",
+    "razorpay": "^2.9.8",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "resend": "latest",
